@@ -18,8 +18,10 @@ COLOUR_BRIGHT_MAGENTA  = 13
 COLOUR_BRIGHT_CYAN     = 14
 COLOUR_BRIGHT_WHITE    = 15
 
+COLOUR_DEFAULT = 16
+
 class UI:
-    def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK): raise NotImplementedError
+    def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT): raise NotImplementedError
     def set_pixel(self, colour, x, y): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
     def main_loop(self, tick_callback, key_callback): raise NotImplementedError
@@ -27,26 +29,37 @@ class UI:
 class TerminalUI(UI):
     fg_colour_codes = [f"\x1b[3{x}m" for x in range(8)] + [f"\x1b[9{x}m" for x in range(8)] + ["\x1b[0m"]
     bg_colour_codes = [f"\x1b[4{x}m" for x in range(8)] + [f"\x1b[10{x}m" for x in range(8)] + ["\x1b[0m"]
+    reset_code = "\x1b[0m"
     def __init__(self):
-        self.prev_fg_colour = None
-        self.prev_bg_colour = None
-        self.buffer = ""
+        self.fg_colour = COLOUR_DEFAULT
+        self.bg_colour = COLOUR_DEFAULT
         self.initial_options = termios.tcgetattr(0)
-        self.set_fg_colour(COLOUR_WHITE)
-        self.set_bg_colour(COLOUR_BLACK)
+        self.buffer = TerminalUI.reset_code
         self.update_screen()
         os.system("clear")
     def set_fg_colour(self, colour):
-        if colour != self.prev_fg_colour:
-            self.buffer += TerminalUI.fg_colour_codes[colour]
-            self.prev_fg_colour = colour
+        if colour != self.fg_colour:
+            if colour == COLOUR_DEFAULT:
+                self.buffer += TerminalUI.reset_code
+                old_bg_colour = self.bg_colour
+                self.fg_colour = self.bg_colour = COLOUR_DEFAULT
+                self.set_bg_colour(old_bg_colour)
+            else:
+                self.buffer += TerminalUI.fg_colour_codes[colour]
+                self.fg_colour = colour
     def set_bg_colour(self, colour):
-        if colour != self.prev_bg_colour:
-            self.buffer += TerminalUI.bg_colour_codes[colour]
-            self.prev_bg_colour = colour
+        if colour != self.bg_colour:
+            if colour == COLOUR_DEFAULT:
+                self.buffer += TerminalUI.reset_code
+                old_fg_colour = self.fg_colour
+                self.fg_colour = self.bg_colour = COLOUR_DEFAULT
+                self.set_fg_colour(old_fg_colour)
+            else:
+                self.buffer += TerminalUI.bg_colour_codes[colour]
+                self.bg_colour = colour
     def goto(self, x, y):
         self.buffer += f"\x1b[{y+1};{x+1}H"
-    def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK):
+    def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT):
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
         self.goto(x, y)

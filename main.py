@@ -51,7 +51,7 @@ class Piece:
                         return True
                     if not 0 <= x < len(board[y]):
                         return True
-                    if board[y][x]:
+                    if board[y][x] != ui.COLOUR_DEFAULT:
                         return True
         return False
     def on_floor(self):
@@ -62,14 +62,12 @@ class Piece:
     def down(self):
         if self.on_floor():
             return
-        self.draw(colour=0)
+        self.draw(colour=ui.COLOUR_DEFAULT)
         self.y += 1
         self.draw()
     def hard_drop(self):
-        self.draw(colour=0)
         while not self.on_floor():
             self.y += 1
-        self.draw()
         snap_piece()
     def snap(self):
         for y, row in enumerate(self.shape):
@@ -79,13 +77,13 @@ class Piece:
                 if c:
                     board[y][x] = self.colour
     def left(self):
-        self.draw(colour=ui.COLOUR_BLACK)
+        self.draw(colour=ui.COLOUR_DEFAULT)
         self.x -= 1
         if self.intersect():
             self.x += 1
         self.draw()
     def right(self):
-        self.draw(colour=ui.COLOUR_BLACK)
+        self.draw(colour=ui.COLOUR_DEFAULT)
         self.x += 1
         if self.intersect():
             self.x -= 1
@@ -98,7 +96,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[x][-y-1] = c
-        self.draw(colour=0)
+        self.draw(colour=ui.COLOUR_DEFAULT)
         self.rotate(shape)
         self.draw()
     def rotate_left(self):
@@ -106,7 +104,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[-x-1][y] = c
-        self.draw(colour=0)
+        self.draw(colour=ui.COLOUR_DEFAULT)
         self.rotate(shape)
         self.draw()
     def rotate(self, new_shape):
@@ -161,17 +159,16 @@ def snap_piece():
     ground_ticks = SNAP_TIME * TPS
     fall_ticks = TPS / FALL_SPEED
     current_piece = Piece()
-    current_piece.draw()
     full = []
     for i, line in enumerate(board):
-        if all(line):
+        if all([x != ui.COLOUR_DEFAULT for x in line]):
             full.append(i)
     offset = 0
     for i in full:
         del board[i-offset]
         offset += 1
     for i in full:
-        board.insert(0, [0]*10)
+        board.insert(0, [ui.COLOUR_DEFAULT]*10)
     redraw()
     if current_piece.intersect():
         main_ui.draw_text("You died", 7, 14)
@@ -198,7 +195,7 @@ def key(c):
     elif c == 'c' or c == 'v': # hold
         ground_ticks = SNAP_TIME * TPS
         fall_ticks = TPS / FALL_SPEED
-        current_piece.draw(colour=0)
+        current_piece.draw(colour=ui.COLOUR_DEFAULT)
         if hold_piece:
             hold_piece, current_piece = current_piece, hold_piece
         else:
@@ -222,7 +219,7 @@ class ExitException(Exception):
     pass
 
 colour_buffer = []
-board = [[0]*10 for i in range(20)]
+board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
 hold_piece = None
 ground_ticks = SNAP_TIME * TPS
 fall_ticks = TPS / FALL_SPEED
