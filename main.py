@@ -131,11 +131,10 @@ def generate_shape():
     t = [[0, 1, 0], [1, 1, 1], [0, 0, 0]]
     s = [[0, 1, 1], [1, 1, 0], [0, 0, 0]]
     z = [[1, 1, 0], [0, 1, 1], [0, 0, 0]]
-    i = [[0]*4, [1]*4, [1]*4, [0]*4]
+    i = [[0]*4, [1]*4, [0]*4, [0]*4]
     return random.choice([l, j, o, i, s, z, t])
 
 def redraw():
-    prev_colour = 0
     for y, row in enumerate(board):
         ty = y + 6
         for x, c in enumerate(row):
