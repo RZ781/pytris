@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-import termios, select, time, sys, os, random, copy
+import random, copy, sys
+import ui
 
 TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
@@ -22,32 +23,24 @@ class Piece:
         self.colour = colour_buffer.pop() if colour is None else colour
         self.buffer = ""
     def get_shadow(self): # create shadow/ghost piece
-        shadow = Piece(self.shape, self.x, self.y, 8)
+        shadow = Piece(self.shape, self.x, self.y, ui.COLOUR_BRIGHT_BLACK)
         while not shadow.on_floor():
             shadow.y += 1
         return shadow
-    def draw(self, colour=None, shadow=True, flush=True):
+    def draw(self, colour=None, shadow=True):
         if shadow:
-            shadow = self.get_shadow()
-            shadow.draw(colour=colour, shadow=False, flush=False)
-            self.buffer += shadow.buffer
+            self.get_shadow().draw(colour=colour, shadow=False)
         if colour is None:
             colour = self.colour
-        # set colour
-        self.buffer += colours[colour]
         for y, row in enumerate(self.shape):
             if 1 not in row:
                 continue
             x = row.index(1)
             count = sum(row[x:])
-            # goto position and draw it
-            self.buffer += f"\x1b[{7+y+self.y};{2+2*x+2*self.x}H" + "  " * count
-        # reset
-        if flush:
-            self.buffer += "\x1b[;H\x1b[0m"
-            sys.stdout.write(self.buffer)
-            sys.stdout.flush()
-            self.buffer = ""
+            tx = self.x + x + 1
+            ty = self.y + y + 6
+            for dx in range(count):
+                main_ui.set_pixel(colour, tx+dx, ty)
     def intersect(self):
         for y, row in enumerate(self.shape):
             y += self.y
@@ -69,11 +62,11 @@ class Piece:
     def down(self):
         if self.on_floor():
             return
-        self.draw(colour=0, flush=False)
+        self.draw(colour=0)
         self.y += 1
         self.draw()
     def hard_drop(self):
-        self.draw(colour=0, flush=False)
+        self.draw(colour=0)
         while not self.on_floor():
             self.y += 1
         self.draw()
@@ -86,13 +79,13 @@ class Piece:
                 if c:
                     board[y][x] = self.colour
     def left(self):
-        self.draw(colour=0, flush=False)
+        self.draw(colour=ui.COLOUR_BLACK)
         self.x -= 1
         if self.intersect():
             self.x += 1
         self.draw()
     def right(self):
-        self.draw(colour=0, flush=False)
+        self.draw(colour=ui.COLOUR_BLACK)
         self.x += 1
         if self.intersect():
             self.x -= 1
@@ -105,7 +98,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[x][-y-1] = c
-        self.draw(colour=0, flush=False)
+        self.draw(colour=0)
         self.rotate(shape)
         self.draw()
     def rotate_left(self):
@@ -113,7 +106,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[-x-1][y] = c
-        self.draw(colour=0, flush=False)
+        self.draw(colour=0)
         self.rotate(shape)
         self.draw()
     def rotate(self, new_shape):
@@ -142,30 +135,25 @@ def generate_shape():
     return random.choice([l, j, o, i, s, z, t])
 
 def redraw():
-    buffer = colours[0]
     prev_colour = 0
     for y, row in enumerate(board):
-        buffer += f"\x1b[{7+y};2H"
-        for c in row:
-            if c != prev_colour:
-                prev_colour = c
-                buffer += colours[c]
-            buffer += "  "
-    sys.stdout.write(buffer)
-    sys.stdout.flush()
+        ty = y + 6
+        for x, c in enumerate(row):
+            tx = x + 1
+            main_ui.set_pixel(c, tx, ty)
     current_piece.draw()
+    main_ui.update_screen()
 
 def init():
-    print(colours[0])
-    os.system("clear")
-    print("arrows\t- move")
-    print("up/z/x\t- rotate")
-    print("down\t- soft drop")
-    print("space\t- hard drop")
-    print("c, v\t- hold")
-    print(colours[7], end="")
-    for  i in range(22):
-        print(" "*22)
+    main_ui.draw_text("arrows - move", 0, 0)
+    main_ui.draw_text("up/z/x - rotate", 0, 1)
+    main_ui.draw_text("down   - soft drop", 0, 2)
+    main_ui.draw_text("space  - hard drop", 0, 3)
+    main_ui.draw_text("c      - hold", 0, 4)
+    for x in range(12):
+        for y in range(22):
+            main_ui.set_pixel(ui.COLOUR_WHITE, x, y+5)
+    main_ui.update_screen()
     redraw()
 
 def snap_piece():
@@ -187,7 +175,7 @@ def snap_piece():
         board.insert(0, [0]*10)
     redraw()
     if current_piece.intersect():
-        print(colours[0] + "\x1b[15;8HYou died")
+        main_ui.draw_text("You died", 7, 14)
         raise ExitException
 
 def tick():
@@ -201,6 +189,7 @@ def tick():
     if fall_ticks <= 0:
         fall_ticks = TPS / FALL_SPEED
         current_piece.down()
+    main_ui.update_screen()
 
 def key(c):
     global hold_piece, current_piece, ground_ticks, fall_ticks
@@ -228,47 +217,24 @@ def key(c):
         current_piece.rotate_right()
     elif c == ' ': # hard drop
         current_piece.hard_drop()
+    main_ui.update_screen()
 
 class ExitException(Exception):
     pass
 
 colour_buffer = []
-colours = ["\x1b[0m"] + [f"\x1b[4{x}m\x1b[3{x}m" for x in range(1, 8)] + ["\x1b[100m"]
 board = [[0]*10 for i in range(20)]
 hold_piece = None
 ground_ticks = SNAP_TIME * TPS
 fall_ticks = TPS / FALL_SPEED
 current_piece = Piece()
-initial_options = termios.tcgetattr(0)
+main_ui = ui.TerminalUI()
 
 try:
-    # set up terminal options
-    tetris_options = initial_options.copy()
-    tetris_options[3] &= ~termios.ECHO
-    tetris_options[3] &= ~termios.ICANON
-    termios.tcsetattr(0, termios.TCSANOW, tetris_options)
     # game loop
-    time_left = 1/TPS
     init()
-    while True:
-        start_time = time.perf_counter()
-        r, _, _ = select.select([0], [], [], time_left)
-        end_time = time.perf_counter()
-        time_left -= end_time - start_time
-        if r:
-            key(os.read(0, 100))
-        while time_left < 0:
-            time_left += 1/TPS
-            tick()
+    main_ui.main_loop(tick, key, tps=TPS)
 except ExitException: # proper exit
     current_piece.draw()
 except KeyboardInterrupt: # ctrl-c
     pass
-except BaseException as e: # error
-    print(colours[0] + "\x1b[30;H")
-    raise
-finally:
-    # reset terminal options
-    termios.tcsetattr(0, termios.TCSANOW, initial_options)
-    # reset terminal
-    print(colours[0] + "\x1b[30;H")
