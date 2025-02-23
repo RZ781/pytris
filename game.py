@@ -239,7 +239,21 @@ class ClassicRandomiser(Randomiser):
         while i == self.previous:
             i = random.randint(0, 6)
         self.previous = i
-        return shapes[i].copy()
+        return pieces[i]
+
+class BagRandomiser(Randomiser):
+    def __init__(self, n_7_pieces, n_extras):
+        self.n_7_pieces = n_7_pieces;
+        self.n_extras = n_extras
+        self.bag = []
+    def next_piece(self):
+        if not self.bag:
+            for i in range(self.n_7_pieces):
+                self.bag += pieces
+            for i in range(self.n_extras):
+                self.bag.append(random.choice(pieces))
+            random.shuffle(self.bag)
+        return self.bag.pop()
 
 L = Piece([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, 0)
 J = Piece([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, 0)
@@ -248,4 +262,4 @@ T = Piece([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, 0)
 S = Piece([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, 3, 0)
 Z = Piece([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, 0)
 I = Piece([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, 0)
-shapes = [L, J, O, T, S, Z, I]
+pieces = [L, J, O, T, S, Z, I]

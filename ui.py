@@ -140,9 +140,9 @@ class TerminalMenu:
         ui.update_screen()
     def key(self, c):
         self.ui.draw_text(" ", 0, self.current)
-        if c == '\x1b[A' or c == 'j':
+        if c == '\x1b[A' or c == 'k':
             self.current -= 1
-        elif c == '\x1b[B' or c == 'k':
+        elif c == '\x1b[B' or c == 'j':
             self.current += 1
         elif c == '\n':
             raise ExitException
