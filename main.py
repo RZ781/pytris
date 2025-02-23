@@ -10,7 +10,7 @@ try:
     while playing:
         option = main_ui.menu(("Play", "Quit"))
         if option == 0:
-            main_ui.main_loop(game.Game(), tps=game.TPS)
+            main_ui.main_loop(game.Game(game.ClassicRandomiser()), tps=game.TPS)
         else:
             playing = False
 except KeyboardInterrupt: # ctrl-c

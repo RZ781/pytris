@@ -5,29 +5,18 @@ TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
 SNAP_TIME = 1 # seconds
 
-def generate_shape():
-    l = [[0, 0, 1], [1, 1, 1], [0, 0, 0]]
-    j = [[1, 0, 0], [1, 1, 1], [0, 0, 0]]
-    o = [[1, 1], [1, 1]]
-    t = [[0, 1, 0], [1, 1, 1], [0, 0, 0]]
-    s = [[0, 1, 1], [1, 1, 0], [0, 0, 0]]
-    z = [[1, 1, 0], [0, 1, 1], [0, 0, 0]]
-    i = [[0]*4, [1]*4, [0]*4, [0]*4]
-    return random.choice([l, j, o, i, s, z, t])
-
 class Piece:
-    def __init__(self, shape, colour, game, x=None, y=None):
+    def __init__(self, shape, colour, x, y, game=None, base=None):
         self.shape = shape
-        self.game = game
         self.x = x
         self.y = y
-        if x is None or y is None:
-            self.reset_position()
         self.colour = colour
-        self.buffer = ""
+        self.base = base
+        self.game = game
 
     def get_shadow(self): # create shadow/ghost piece
-        shadow = Piece(self.shape, ui.COLOUR_BRIGHT_BLACK, self.game, self.x, self.y)
+        shadow = self.copy()
+        shadow.colour = ui.COLOUR_BRIGHT_BLACK
         while not shadow.on_floor():
             shadow.y += 1
         return shadow
@@ -101,9 +90,13 @@ class Piece:
             self.x -= 1
         self.draw()
 
-    def reset_position(self):
-        self.x = 5 - len(self.shape[0]) // 2
-        self.y = 0
+    def reset(self):
+        self.x = self.base.x
+        self.y = self.base.y
+        self.shape = copy.deepcopy(self.base.shape)
+
+    def copy(self):
+        return Piece(copy.deepcopy(self.shape), self.colour, self.x, self.y, game=self.game, base=self)
 
     def rotate_right(self):
         shape = copy.deepcopy(self.shape)
@@ -139,21 +132,19 @@ class Piece:
         self.shape = old_shape
 
 class Game(ui.Menu):
-    def __init__(self):
+    def __init__(self, randomiser):
         self.colour_buffer = []
         self.board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
         self.hold_piece = None
         self.ground_ticks = SNAP_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
+        self.randomiser = randomiser
         self.current_piece = self.new_piece()
 
     def new_piece(self):
-        if not self.colour_buffer:
-            for i in range(1, 7):
-                self.colour_buffer.append(i)
-            random.shuffle(self.colour_buffer)
-        colour = self.colour_buffer.pop()
-        return Piece(generate_shape(), colour, self)
+        piece = self.randomiser.next_piece().copy()
+        piece.game = self
+        return piece
 
     def snap_piece(self):
         self.current_piece.snap()
@@ -214,7 +205,7 @@ class Game(ui.Menu):
             else:
                 self.hold_piece = self.current_piece
                 self.current_piece = self.new_piece()
-            self.current_piece.reset_position()
+            self.current_piece.reset()
             self.current_piece.draw()
         elif c == 'h' or c == '\x1b[D': # left
             self.current_piece.left()
@@ -236,3 +227,25 @@ class Game(ui.Menu):
                 self.ui.set_pixel(c, tx, ty)
         self.current_piece.draw()
         self.ui.update_screen()
+
+class Randomiser:
+    def next_piece(self): raise NotImplemented
+
+class ClassicRandomiser(Randomiser):
+    def __init__(self):
+        self.previous = None
+    def next_piece(self):
+        i = self.previous
+        while i == self.previous:
+            i = random.randint(0, 6)
+        self.previous = i
+        return shapes[i].copy()
+
+L = Piece([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, 0)
+J = Piece([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, 0)
+O = Piece([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, 0)
+T = Piece([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, 0)
+S = Piece([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, 3, 0)
+Z = Piece([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, 0)
+I = Piece([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, 0)
+shapes = [L, J, O, T, S, Z, I]
