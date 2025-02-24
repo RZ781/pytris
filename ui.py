@@ -34,7 +34,7 @@ class UI:
     def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT): raise NotImplementedError
     def set_pixel(self, colour, x, y): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
-    def main_loop(self, tick_callback, key_callback): raise NotImplementedError
+    def main_loop(self, menu, tps=10): raise NotImplementedError
     def menu(self, options, starting_option=0): raise NotImplementedError
 
 class TerminalUI(UI):
