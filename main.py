@@ -23,7 +23,7 @@ try:
                 randomiser = game.ClassicRandomiser()
             main_ui.main_loop(game.Game(randomiser), tps=game.TPS)
         elif option == 1:
-            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"))
+            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         else:
             playing = False
 except KeyboardInterrupt: # ctrl-c
