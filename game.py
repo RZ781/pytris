@@ -5,6 +5,15 @@ TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
 SNAP_TIME = 1 # seconds
 
+KEY_LEFT = 0
+KEY_RIGHT = 1
+KEY_SOFT_DROP = 2
+KEY_HARD_DROP = 3
+KEY_ROTATE = 4
+KEY_CLOCKWISE = 5
+KEY_ANTICLOCKWISE = 6
+KEY_HOLD = 7
+
 class Piece:
     def __init__(self, shape, colour, x, y, game=None, base=None):
         self.shape = shape
@@ -132,7 +141,7 @@ class Piece:
         self.shape = old_shape
 
 class Game(ui.Menu):
-    def __init__(self, randomiser):
+    def __init__(self, randomiser, controls):
         self.colour_buffer = []
         self.board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
         self.hold_piece = None
@@ -140,6 +149,7 @@ class Game(ui.Menu):
         self.fall_ticks = TPS / FALL_SPEED
         self.randomiser = randomiser
         self.current_piece = self.new_piece()
+        self.controls = controls
 
     def new_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -194,9 +204,9 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def key(self, c):
-        if c == 'j' or c == '\x1b[B': # down
+        if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.down()
-        elif c == 'c' or c == 'v': # hold
+        elif c == self.controls[KEY_HOLD]:
             self.ground_ticks = SNAP_TIME * TPS
             self.fall_ticks = TPS / FALL_SPEED
             self.current_piece.draw(colour=ui.COLOUR_DEFAULT)
@@ -207,15 +217,15 @@ class Game(ui.Menu):
                 self.current_piece = self.new_piece()
             self.current_piece.reset()
             self.current_piece.draw()
-        elif c == 'h' or c == '\x1b[D': # left
+        elif c == self.controls[KEY_LEFT]:
             self.current_piece.left()
-        elif c == 'l' or c == '\x1b[C': # right
+        elif c == self.controls[KEY_RIGHT]:
             self.current_piece.right()
-        elif c == 'z': # anticlockwise
+        elif c == self.controls[KEY_ANTICLOCKWISE]:
             self.current_piece.rotate_left()
-        elif c == 'x' or c == '\x1b[A': # clockwise
+        elif c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
             self.current_piece.rotate_right()
-        elif c == ' ': # hard drop
+        elif c == self.controls[KEY_HARD_DROP]:
             self.current_piece.hard_drop()
         self.ui.update_screen()
 

@@ -36,6 +36,7 @@ class UI:
     def update_screen(self): raise NotImplementedError
     def main_loop(self, menu, tps=10): raise NotImplementedError
     def menu(self, options, starting_option=0): raise NotImplementedError
+    def get_key(self): raise NotImplemented
 
 class TerminalUI(UI):
     fg_colour_codes = [f"\x1b[3{x}m" for x in range(8)] + [f"\x1b[9{x}m" for x in range(8)] + ["\x1b[0m"]
@@ -125,6 +126,8 @@ class TerminalUI(UI):
         menu = TerminalMenu(options, starting_option)
         self.main_loop(menu, tps=1)
         return menu.current
+    def get_key(self):
+        return os.read(0, 100).decode("utf8")
 
 class TerminalMenu:
     def __init__(self, options, current):
