@@ -13,6 +13,7 @@ default_controls = {
     game.KEY_ROTATE: "\x1b[A",
     game.KEY_CLOCKWISE: "x",
     game.KEY_ANTICLOCKWISE: "z",
+    game.KEY_180: "a",
     game.KEY_HOLD: "c",
 }
 controls = default_controls.copy()
@@ -37,7 +38,7 @@ try:
         elif option == 1:
             option = 0
             while True:
-                options = ("Close", "Defaults", "Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Hold")
+                options = ("Close", "Defaults", "Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
                 option = main_ui.menu(options, option)
                 if option == 0:
                     break
@@ -59,6 +60,8 @@ try:
                 elif option == 8:
                     key = game.KEY_ANTICLOCKWISE
                 elif option == 9:
+                    key = game.KEY_180
+                elif option == 10:
                     key = game.KEY_HOLD
                 main_ui.draw_text(f"Press key for {options[option].lower()}", 25, option)
                 main_ui.update_screen()

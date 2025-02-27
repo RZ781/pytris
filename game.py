@@ -12,7 +12,8 @@ KEY_HARD_DROP = 3
 KEY_ROTATE = 4
 KEY_CLOCKWISE = 5
 KEY_ANTICLOCKWISE = 6
-KEY_HOLD = 7
+KEY_180 = 7
+KEY_HOLD = 8
 
 class Piece:
     def __init__(self, shape, colour, x, y, game=None, base=None):
@@ -125,6 +126,15 @@ class Piece:
         self.rotate(shape)
         self.draw()
 
+    def rotate_180(self):
+        shape = copy.deepcopy(self.shape)
+        for row in shape:
+            row.reverse()
+        shape.reverse()
+        self.draw(colour=ui.COLOUR_DEFAULT)
+        self.rotate(shape)
+        self.draw()
+
     def rotate(self, new_shape):
         old_shape = self.shape
         old_x = self.x
@@ -223,6 +233,8 @@ class Game(ui.Menu):
             self.current_piece.right()
         elif c == self.controls[KEY_ANTICLOCKWISE]:
             self.current_piece.rotate_left()
+        elif c == self.controls[KEY_180]:
+            self.current_piece.rotate_180()
         elif c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
             self.current_piece.rotate_right()
         elif c == self.controls[KEY_HARD_DROP]:
