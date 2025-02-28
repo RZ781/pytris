@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-import game, ui
+import game, ui, config
 
 main_ui = ui.TerminalUI()
 bag_type = 0
@@ -16,7 +16,12 @@ default_controls = {
     game.KEY_180: "a",
     game.KEY_HOLD: "c",
 }
-controls = default_controls.copy()
+controls = config.load("controls")
+if controls:
+    # json casts all keys to strings, so they must be converted back
+    controls = {int(a): b for a, b in controls.items()}
+else:
+    controls = default_controls.copy()
 
 try:
     main_ui.init()
@@ -66,6 +71,7 @@ try:
                 main_ui.draw_text(f"Press key for {options[option].lower()}", 25, option)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
+            config.save("controls", controls)
         elif option == 2:
             bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         else:
