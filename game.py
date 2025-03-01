@@ -42,7 +42,7 @@ class Piece:
             x = row.index(1)
             count = sum(row[x:])
             tx = self.x + x + 1
-            ty = self.y + y + 6
+            ty = self.y + y + 3
             for dx in range(count):
                 self.game.ui.set_pixel(colour, tx+dx, ty)
 
@@ -52,11 +52,11 @@ class Piece:
             for x, c in enumerate(row):
                 x += self.x
                 if c:
-                    if not 0 <= y < len(self.game.board):
+                    if y >= len(self.game.board):
                         return True
                     if not 0 <= x < len(self.game.board[y]):
                         return True
-                    if self.game.board[y][x] != ui.COLOUR_DEFAULT:
+                    if y >= 0 and  self.game.board[y][x] != ui.COLOUR_DEFAULT:
                         return True
         return False
 
@@ -81,10 +81,13 @@ class Piece:
     def snap(self):
         for y, row in enumerate(self.shape):
             y += self.y
+            if y < 0:
+                return False
             for x, c in enumerate(row):
                 x += self.x
                 if c:
                     self.game.board[y][x] = self.colour
+        return True
 
     def left(self):
         self.draw(colour=ui.COLOUR_DEFAULT)
@@ -152,7 +155,6 @@ class Piece:
 
 class Game(ui.Menu):
     def __init__(self, randomiser, controls):
-        self.colour_buffer = []
         self.board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
         self.hold_piece = None
         self.ground_ticks = SNAP_TIME * TPS
@@ -167,10 +169,16 @@ class Game(ui.Menu):
         return piece
 
     def snap_piece(self):
-        self.current_piece.snap()
+        success = self.current_piece.snap()
+        if not success:
+            self.ui.draw_text("You died", 8, 10)
+            self.ui.update_screen()
+            time.sleep(2)
+            raise ui.ExitException
         self.ground_ticks = SNAP_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.current_piece = self.new_piece()
+        # clear lines
         full = []
         for i, line in enumerate(self.board):
             if all([x != ui.COLOUR_DEFAULT for x in line]):
@@ -182,22 +190,15 @@ class Game(ui.Menu):
         for i in full:
             self.board.insert(0, [ui.COLOUR_DEFAULT]*10)
         self.redraw()
-        if self.current_piece.intersect():
-            self.ui.draw_text("You died", 7, 14)
-            self.ui.update_screen()
-            time.sleep(2)
-            raise ui.ExitException
 
     def init(self, main_ui):
         self.ui = main_ui
-        self.ui.draw_text("arrows - move", 0, 0)
-        self.ui.draw_text("up/z/x - rotate", 0, 1)
-        self.ui.draw_text("down   - soft drop", 0, 2)
-        self.ui.draw_text("space  - hard drop", 0, 3)
-        self.ui.draw_text("c      - hold", 0, 4)
         for x in range(12):
-            for y in range(22):
-                self.ui.set_pixel(ui.COLOUR_WHITE, x, y+5)
+            for y in range(3):
+                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x, y)
+        for x in range(12):
+            for y in range(3,24):
+                self.ui.set_pixel(ui.COLOUR_WHITE, x, y)
         self.ui.update_screen()
         self.redraw()
 
@@ -242,8 +243,11 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def redraw(self):
+        for y in range(1, 3):
+            for x in range(1, 11):
+                self.ui.set_pixel(ui.COLOUR_DEFAULT, x, y)
         for y, row in enumerate(self.board):
-            ty = y + 6
+            ty = y + 3
             for x, c in enumerate(row):
                 tx = x + 1
                 self.ui.set_pixel(c, tx, ty)
@@ -277,11 +281,11 @@ class BagRandomiser(Randomiser):
             random.shuffle(self.bag)
         return self.bag.pop()
 
-L = Piece([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, 0)
-J = Piece([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, 0)
-O = Piece([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, 0)
-T = Piece([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, 0)
-S = Piece([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, 3, 0)
-Z = Piece([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, 0)
-I = Piece([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, 0)
+L = Piece([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2)
+J = Piece([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2)
+O = Piece([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2)
+T = Piece([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2)
+S = Piece([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, 3, -2)
+Z = Piece([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2)
+I = Piece([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2)
 pieces = [L, J, O, T, S, Z, I]
