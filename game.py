@@ -3,7 +3,7 @@ import ui, random
 
 TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
-SNAP_TIME = 1 # seconds
+LOCK_TIME = 1 # seconds
 
 KEY_LEFT = 0
 KEY_RIGHT = 1
@@ -76,9 +76,9 @@ class Piece:
     def hard_drop(self):
         while not self.on_floor():
             self.y += 1
-        self.game.snap_piece()
+        self.game.lock_piece()
 
-    def snap(self):
+    def lock(self):
         for y, row in enumerate(self.shape):
             y += self.y
             if y < 0:
@@ -157,7 +157,7 @@ class Game(ui.Menu):
     def __init__(self, randomiser, controls):
         self.board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
         self.hold_piece = None
-        self.ground_ticks = SNAP_TIME * TPS
+        self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.randomiser = randomiser
         self.current_piece = self.new_piece()
@@ -168,14 +168,14 @@ class Game(ui.Menu):
         piece.game = self
         return piece
 
-    def snap_piece(self):
-        success = self.current_piece.snap()
+    def lock_piece(self):
+        success = self.current_piece.lock()
         if not success:
             self.ui.draw_text("You died", 8, 10)
             self.ui.update_screen()
             time.sleep(2)
             raise ui.ExitException
-        self.ground_ticks = SNAP_TIME * TPS
+        self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.current_piece = self.new_piece()
         # clear lines
@@ -206,7 +206,7 @@ class Game(ui.Menu):
         if self.current_piece.on_floor():
             self.ground_ticks -= 1
             if self.ground_ticks <= 0:
-                self.snap_piece()
+                self.lock_piece()
                 return
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
@@ -218,7 +218,7 @@ class Game(ui.Menu):
         if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.down()
         elif c == self.controls[KEY_HOLD]:
-            self.ground_ticks = SNAP_TIME * TPS
+            self.ground_ticks = LOCK_TIME * TPS
             self.fall_ticks = TPS / FALL_SPEED
             self.current_piece.draw(colour=ui.COLOUR_DEFAULT)
             if self.hold_piece:
