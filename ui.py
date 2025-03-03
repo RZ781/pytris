@@ -108,7 +108,6 @@ class TerminalUI(UI):
     def main_loop(self, menu, tps=10):
         try:
             menu.init(self)
-            # set up terminal options
             time_left = 1/tps
             while True:
                 start_time = time.perf_counter()
@@ -119,7 +118,7 @@ class TerminalUI(UI):
                     menu.key(os.read(0, 100).decode("utf8"))
                 while time_left < 0:
                     time_left += 1/tps
-                menu.tick()
+                    menu.tick()
         except ExitException:
             return
     def menu(self, options, starting_option=0):

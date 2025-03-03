@@ -3,7 +3,8 @@ import ui, random
 
 TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
-LOCK_TIME = 1 # seconds
+LOCK_TIME = 0.5 # seconds
+LOCK_COUNT = 15
 
 KEY_LEFT = 0
 KEY_RIGHT = 1
@@ -90,18 +91,24 @@ class Piece:
         return True
 
     def left(self):
+        success = True
         self.draw(colour=ui.COLOUR_DEFAULT)
         self.x -= 1
         if self.intersect():
             self.x += 1
+            success = False
         self.draw()
+        return success
 
     def right(self):
+        success = True
         self.draw(colour=ui.COLOUR_DEFAULT)
         self.x += 1
         if self.intersect():
             self.x -= 1
+            success = False
         self.draw()
+        return success
 
     def reset(self):
         self.x = self.base.x
@@ -117,8 +124,9 @@ class Piece:
             for x, c in enumerate(row):
                 shape[x][-y-1] = c
         self.draw(colour=ui.COLOUR_DEFAULT)
-        self.rotate(shape)
+        success = self.rotate(shape)
         self.draw()
+        return success
 
     def rotate_left(self):
         shape = copy.deepcopy(self.shape)
@@ -126,8 +134,9 @@ class Piece:
             for x, c in enumerate(row):
                 shape[-x-1][y] = c
         self.draw(colour=ui.COLOUR_DEFAULT)
-        self.rotate(shape)
+        success = self.rotate(shape)
         self.draw()
+        return success
 
     def rotate_180(self):
         shape = copy.deepcopy(self.shape)
@@ -135,8 +144,9 @@ class Piece:
             row.reverse()
         shape.reverse()
         self.draw(colour=ui.COLOUR_DEFAULT)
-        self.rotate(shape)
+        success = self.rotate(shape)
         self.draw()
+        return success
 
     def rotate(self, new_shape):
         old_shape = self.shape
@@ -148,10 +158,11 @@ class Piece:
                 self.x = old_x + dx
                 self.y = old_y + dy
                 if not self.intersect():
-                    return
+                    return True
         self.x = old_x
         self.y = old_y
         self.shape = old_shape
+        return False
 
 class Game(ui.Menu):
     def __init__(self, randomiser, controls):
@@ -162,6 +173,7 @@ class Game(ui.Menu):
         self.randomiser = randomiser
         self.current_piece = self.new_piece()
         self.controls = controls
+        self.lock_count = LOCK_COUNT
 
     def new_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -177,6 +189,7 @@ class Game(ui.Menu):
             raise ui.ExitException
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
+        self.lock_count = LOCK_COUNT
         self.current_piece = self.new_piece()
         # clear lines
         full = []
@@ -191,6 +204,11 @@ class Game(ui.Menu):
             self.board.insert(0, [ui.COLOUR_DEFAULT]*10)
         self.redraw()
 
+    def lock_reset(self):
+        if self.current_piece.on_floor() and self.lock_count:
+            self.lock_count -= 1
+            self.ground_ticks = LOCK_TIME * TPS
+
     def init(self, main_ui):
         self.ui = main_ui
         for x in range(12):
@@ -204,10 +222,10 @@ class Game(ui.Menu):
 
     def tick(self):
         if self.current_piece.on_floor():
-            self.ground_ticks -= 1
             if self.ground_ticks <= 0:
                 self.lock_piece()
                 return
+            self.ground_ticks -= 1
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
             self.fall_ticks = TPS / FALL_SPEED
@@ -220,6 +238,7 @@ class Game(ui.Menu):
         elif c == self.controls[KEY_HOLD]:
             self.ground_ticks = LOCK_TIME * TPS
             self.fall_ticks = TPS / FALL_SPEED
+            self.lock_count = LOCK_COUNT
             self.current_piece.draw(colour=ui.COLOUR_DEFAULT)
             if self.hold_piece:
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
@@ -229,15 +248,20 @@ class Game(ui.Menu):
             self.current_piece.reset()
             self.current_piece.draw()
         elif c == self.controls[KEY_LEFT]:
-            self.current_piece.left()
+            if self.current_piece.left():
+                self.lock_reset()
         elif c == self.controls[KEY_RIGHT]:
-            self.current_piece.right()
+            if self.current_piece.right():
+                self.lock_reset()
         elif c == self.controls[KEY_ANTICLOCKWISE]:
-            self.current_piece.rotate_left()
-        elif c == self.controls[KEY_180]:
-            self.current_piece.rotate_180()
+            if self.current_piece.rotate_left():
+                self.lock_reset()
         elif c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
-            self.current_piece.rotate_right()
+            if self.current_piece.rotate_right():
+                self.lock_reset()
+        elif c == self.controls[KEY_180]:
+            if self.current_piece.rotate_180():
+                self.lock_reset()
         elif c == self.controls[KEY_HARD_DROP]:
             self.current_piece.hard_drop()
         self.ui.update_screen()
