@@ -174,6 +174,7 @@ class Game(ui.Menu):
         self.current_piece = self.new_piece()
         self.controls = controls
         self.lock_count = LOCK_COUNT
+        self.death_ticks = None
 
     def new_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -185,8 +186,8 @@ class Game(ui.Menu):
         if not success:
             self.ui.draw_text("You died", 8, 10)
             self.ui.update_screen()
-            time.sleep(2)
-            raise ui.ExitException
+            self.death_ticks = TPS * 2
+            return
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.lock_count = LOCK_COUNT
@@ -221,6 +222,11 @@ class Game(ui.Menu):
         self.redraw()
 
     def tick(self):
+        if self.death_ticks is not None:
+            self.death_ticks -= 1
+            if self.death_ticks == 0:
+                raise ui.ExitException
+            return
         if self.current_piece.on_floor():
             if self.ground_ticks <= 0:
                 self.lock_piece()
@@ -233,6 +239,8 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def key(self, c):
+        if self.death_ticks is not None:
+            return
         if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.down()
         elif c == self.controls[KEY_HOLD]:
