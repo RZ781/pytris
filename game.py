@@ -5,6 +5,10 @@ TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
 LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
+HOLD_X = 1
+HOLD_Y = 4
+BOARD_X = 6
+BOARD_Y = 1
 
 KEY_LEFT = 0
 KEY_RIGHT = 1
@@ -32,7 +36,7 @@ class Piece:
             shadow.y += 1
         return shadow
 
-    def draw(self, colour=None, shadow=True):
+    def draw(self, board_x=BOARD_X, board_y=BOARD_Y+2, colour=None, shadow=True):
         if shadow:
             self.get_shadow().draw(colour=colour, shadow=False)
         if colour is None:
@@ -42,8 +46,8 @@ class Piece:
                 continue
             x = row.index(1)
             count = sum(row[x:])
-            tx = self.x + x + 1
-            ty = self.y + y + 3
+            tx = self.x + x + board_x
+            ty = self.y + y + board_y
             for dx in range(count):
                 self.game.ui.set_pixel(colour, tx+dx, ty)
 
@@ -110,10 +114,16 @@ class Piece:
         self.draw()
         return success
 
-    def reset(self):
-        self.x = self.base.x
-        self.y = self.base.y
+    def reset(self, hold=False):
         self.shape = copy.deepcopy(self.base.shape)
+        if hold:
+            if len(self.shape) == 4:
+                self.x = self.y = 0
+            else:
+                self.x = self.y = 1
+        else:
+            self.x = self.base.x
+            self.y = self.base.y
 
     def copy(self):
         return Piece(copy.deepcopy(self.shape), self.colour, self.x, self.y, game=self.game, base=self)
@@ -184,7 +194,7 @@ class Game(ui.Menu):
     def lock_piece(self):
         success = self.current_piece.lock()
         if not success:
-            self.ui.draw_text("You died", 8, 10)
+            self.ui.draw_text("You died", BOARD_X*2+6, BOARD_Y+9)
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
@@ -214,10 +224,17 @@ class Game(ui.Menu):
         self.ui = main_ui
         for x in range(12):
             for y in range(3):
-                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x, y)
+                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x+BOARD_X-1, y+BOARD_Y-1)
         for x in range(12):
-            for y in range(3,24):
-                self.ui.set_pixel(ui.COLOUR_WHITE, x, y)
+            for y in range(21):
+                self.ui.set_pixel(ui.COLOUR_WHITE, x+BOARD_X-1, y+BOARD_Y+2)
+        for x in range(5):
+            for y in range(6):
+                if x in (0, 5) or y in (0, 5):
+                    colour = ui.COLOUR_WHITE
+                else:
+                    colour = ui.COLOUR_DEFAULT
+                self.ui.set_pixel(colour, x+HOLD_X-1, y+HOLD_Y-1)
         self.ui.update_screen()
         self.redraw()
 
@@ -249,12 +266,15 @@ class Game(ui.Menu):
             self.lock_count = LOCK_COUNT
             self.current_piece.draw(colour=ui.COLOUR_DEFAULT)
             if self.hold_piece:
+                self.hold_piece.draw(colour=ui.COLOUR_DEFAULT, board_x=HOLD_X, board_y=HOLD_Y, shadow=False)
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
             else:
                 self.hold_piece = self.current_piece
                 self.current_piece = self.new_piece()
             self.current_piece.reset()
             self.current_piece.draw()
+            self.hold_piece.reset(hold=True)
+            self.hold_piece.draw(board_x=HOLD_X, board_y=HOLD_Y, shadow=False)
         elif c == self.controls[KEY_LEFT]:
             if self.current_piece.left():
                 self.lock_reset()
@@ -275,13 +295,13 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def redraw(self):
-        for y in range(1, 3):
-            for x in range(1, 11):
-                self.ui.set_pixel(ui.COLOUR_DEFAULT, x, y)
+        for y in range(2):
+            for x in range(10):
+                self.ui.set_pixel(ui.COLOUR_DEFAULT, x+BOARD_X, y+BOARD_Y)
         for y, row in enumerate(self.board):
-            ty = y + 3
+            ty = y + BOARD_Y + 2
             for x, c in enumerate(row):
-                tx = x + 1
+                tx = x + BOARD_X
                 self.ui.set_pixel(c, tx, ty)
         self.current_piece.draw()
         self.ui.update_screen()

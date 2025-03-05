@@ -54,9 +54,6 @@ class TerminalUI(UI):
         custom_options[3] &= ~termios.ECHO
         custom_options[3] &= ~termios.ICANON
         termios.tcsetattr(0, termios.TCSANOW, custom_options)
-        # clear screen
-        self.clear()
-        self.update_screen()
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
     def quit(self):
@@ -107,6 +104,8 @@ class TerminalUI(UI):
         self.buffer = ""
     def main_loop(self, menu, tps=10):
         try:
+            self.clear()
+            self.update_screen()
             menu.init(self)
             time_left = 1/tps
             while True:
