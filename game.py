@@ -194,7 +194,7 @@ class Game(ui.Menu):
     def lock_piece(self):
         success = self.current_piece.lock()
         if not success:
-            self.ui.draw_text("You died", BOARD_X*2+6, BOARD_Y+9)
+            self.ui.draw_text("You died", BOARD_X+3, BOARD_Y+9)
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return

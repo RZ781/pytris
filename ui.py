@@ -87,7 +87,7 @@ class TerminalUI(UI):
                 self.buffer += TerminalUI.bg_colour_codes[colour]
                 self.bg_colour = colour
     def goto(self, x, y):
-        self.buffer += f"\x1b[{y+1};{x+1}H"
+        self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
     def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT):
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
@@ -95,7 +95,7 @@ class TerminalUI(UI):
         self.buffer += text
     def set_pixel(self, colour, x, y):
         self.set_bg_colour(colour)
-        self.goto(x*2, y) # double x so pixels are approximately square
+        self.goto(x, y)
         self.buffer += "  "
     def update_screen(self):
         self.goto(0, 0)
@@ -136,7 +136,7 @@ class TerminalMenu:
         self.ui = ui
         ui.clear()
         for i, option in enumerate(self.options):
-            ui.draw_text(option, 2, i)
+            ui.draw_text(option, 1, i)
         ui.draw_text(">", 0, self.current)
         ui.update_screen()
     def key(self, c):
