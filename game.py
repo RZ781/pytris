@@ -5,10 +5,8 @@ TPS = 10 # ticks per second
 FALL_SPEED = 1.5 # blocks per second
 LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
-HOLD_X = 1
-HOLD_Y = 4
-BOARD_X = 6
-BOARD_Y = 1
+BOARD_WIDTH = 12
+BOARD_HEIGHT = 22
 
 KEY_LEFT = 0
 KEY_RIGHT = 1
@@ -36,9 +34,9 @@ class Piece:
             shadow.y += 1
         return shadow
 
-    def draw(self, board_x=BOARD_X, board_y=BOARD_Y+2, colour=None, shadow=True):
+    def draw(self, board_x, board_y, colour=None, shadow=True):
         if shadow:
-            self.get_shadow().draw(colour=colour, shadow=False)
+            self.get_shadow().draw(board_x, board_y, colour=colour, shadow=False)
         if colour is None:
             colour = self.colour
         for y, row in enumerate(self.shape):
@@ -71,12 +69,14 @@ class Piece:
         self.y -= 1
         return x
 
-    def down(self):
-        if self.on_floor():
-            return
-        self.draw(colour=ui.COLOUR_DEFAULT)
-        self.y += 1
-        self.draw()
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+        if self.intersect():
+            self.x -= dx
+            self.y -= dy
+            return False
+        return True
 
     def hard_drop(self):
         while not self.on_floor():
@@ -93,26 +93,6 @@ class Piece:
                 if c:
                     self.game.board[y][x] = self.colour
         return True
-
-    def left(self):
-        success = True
-        self.draw(colour=ui.COLOUR_DEFAULT)
-        self.x -= 1
-        if self.intersect():
-            self.x += 1
-            success = False
-        self.draw()
-        return success
-
-    def right(self):
-        success = True
-        self.draw(colour=ui.COLOUR_DEFAULT)
-        self.x += 1
-        if self.intersect():
-            self.x -= 1
-            success = False
-        self.draw()
-        return success
 
     def reset(self, hold=False):
         self.shape = copy.deepcopy(self.base.shape)
@@ -133,9 +113,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[x][-y-1] = c
-        self.draw(colour=ui.COLOUR_DEFAULT)
         success = self.rotate(shape)
-        self.draw()
         return success
 
     def rotate_left(self):
@@ -143,9 +121,7 @@ class Piece:
         for y, row in enumerate(self.shape):
             for x, c in enumerate(row):
                 shape[-x-1][y] = c
-        self.draw(colour=ui.COLOUR_DEFAULT)
         success = self.rotate(shape)
-        self.draw()
         return success
 
     def rotate_180(self):
@@ -153,9 +129,7 @@ class Piece:
         for row in shape:
             row.reverse()
         shape.reverse()
-        self.draw(colour=ui.COLOUR_DEFAULT)
         success = self.rotate(shape)
-        self.draw()
         return success
 
     def rotate(self, new_shape):
@@ -194,7 +168,7 @@ class Game(ui.Menu):
     def lock_piece(self):
         success = self.current_piece.lock()
         if not success:
-            self.ui.draw_text("You died", BOARD_X+3, BOARD_Y+9)
+            self.ui.draw_text("You died", self.board_x+3, self.board_y+7)
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
@@ -222,20 +196,23 @@ class Game(ui.Menu):
 
     def init(self, main_ui):
         self.ui = main_ui
+        self.board_x = (self.ui.width - BOARD_WIDTH) // 2
+        self.board_y = (self.ui.height - BOARD_HEIGHT) // 2
+        self.hold_x = self.board_x - 5
+        self.hold_y = self.board_y + 3
         for x in range(12):
             for y in range(3):
-                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x+BOARD_X-1, y+BOARD_Y-1)
+                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x+self.board_x-1, y+self.board_y-3)
         for x in range(12):
             for y in range(21):
-                self.ui.set_pixel(ui.COLOUR_WHITE, x+BOARD_X-1, y+BOARD_Y+2)
+                self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
             for y in range(6):
                 if x in (0, 5) or y in (0, 5):
                     colour = ui.COLOUR_WHITE
                 else:
                     colour = ui.COLOUR_DEFAULT
-                self.ui.set_pixel(colour, x+HOLD_X-1, y+HOLD_Y-1)
-        self.ui.update_screen()
+                self.ui.set_pixel(colour, x+self.hold_x-1, y+self.hold_y-1)
         self.redraw()
 
     def tick(self):
@@ -252,34 +229,35 @@ class Game(ui.Menu):
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
             self.fall_ticks = TPS / FALL_SPEED
-            self.current_piece.down()
-        self.ui.update_screen()
+            self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_DEFAULT)
+            self.current_piece.move(0, 1)
+            self.current_piece.draw(self.board_x, self.board_y)
+            self.ui.update_screen()
 
     def key(self, c):
         if self.death_ticks is not None:
             return
+        self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_DEFAULT)
         if c == self.controls[KEY_SOFT_DROP]:
-            self.current_piece.down()
+            self.current_piece.move(0, 1)
         elif c == self.controls[KEY_HOLD]:
             self.ground_ticks = LOCK_TIME * TPS
             self.fall_ticks = TPS / FALL_SPEED
             self.lock_count = LOCK_COUNT
-            self.current_piece.draw(colour=ui.COLOUR_DEFAULT)
             if self.hold_piece:
-                self.hold_piece.draw(colour=ui.COLOUR_DEFAULT, board_x=HOLD_X, board_y=HOLD_Y, shadow=False)
+                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_DEFAULT, shadow=False)
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
             else:
                 self.hold_piece = self.current_piece
                 self.current_piece = self.new_piece()
             self.current_piece.reset()
-            self.current_piece.draw()
             self.hold_piece.reset(hold=True)
-            self.hold_piece.draw(board_x=HOLD_X, board_y=HOLD_Y, shadow=False)
+            self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
         elif c == self.controls[KEY_LEFT]:
-            if self.current_piece.left():
+            if self.current_piece.move(-1, 0):
                 self.lock_reset()
         elif c == self.controls[KEY_RIGHT]:
-            if self.current_piece.right():
+            if self.current_piece.move(1, 0):
                 self.lock_reset()
         elif c == self.controls[KEY_ANTICLOCKWISE]:
             if self.current_piece.rotate_left():
@@ -292,18 +270,19 @@ class Game(ui.Menu):
                 self.lock_reset()
         elif c == self.controls[KEY_HARD_DROP]:
             self.current_piece.hard_drop()
+        self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
     def redraw(self):
         for y in range(2):
             for x in range(10):
-                self.ui.set_pixel(ui.COLOUR_DEFAULT, x+BOARD_X, y+BOARD_Y)
+                self.ui.set_pixel(ui.COLOUR_DEFAULT, x+self.board_x, y+self.board_y-2)
         for y, row in enumerate(self.board):
-            ty = y + BOARD_Y + 2
+            ty = y + self.board_y
             for x, c in enumerate(row):
-                tx = x + BOARD_X
+                tx = x + self.board_x
                 self.ui.set_pixel(c, tx, ty)
-        self.current_piece.draw()
+        self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
 class Randomiser:

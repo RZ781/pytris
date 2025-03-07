@@ -1,4 +1,4 @@
-import sys, select, termios, time, os
+import sys, select, termios, time, os, shutil
 
 COLOUR_BLACK    = 0
 COLOUR_RED      = 1
@@ -36,7 +36,7 @@ class UI:
     def update_screen(self): raise NotImplementedError
     def main_loop(self, menu, tps=10): raise NotImplementedError
     def menu(self, options, starting_option=0): raise NotImplementedError
-    def get_key(self): raise NotImplemented
+    def get_key(self): raise NotImplementedError
 
 class TerminalUI(UI):
     fg_colour_codes = [f"\x1b[3{x}m" for x in range(8)] + [f"\x1b[9{x}m" for x in range(8)] + ["\x1b[0m"]
@@ -47,6 +47,9 @@ class TerminalUI(UI):
         self.bg_colour = COLOUR_DEFAULT
         self.buffer = ""
         self.inital_options = None
+        terminal_size = shutil.get_terminal_size()
+        self.width = terminal_size.columns // 2
+        self.height = terminal_size.lines
     def init(self):
         # update terminal options
         self.initial_options = termios.tcgetattr(0)
