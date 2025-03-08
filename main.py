@@ -22,12 +22,18 @@ if controls:
     controls = {int(a): b for a, b in controls.items()}
 else:
     controls = default_controls.copy()
+colour_mode = config.load("colours")
+if colour_mode:
+    mode = colour_mode["mode"]
+    modes = main_ui.get_colour_modes()
+    if mode in modes:
+        main_ui.set_colour_mode(modes.index(mode))
 
 try:
     main_ui.init()
     playing = True
     while playing:
-        option = main_ui.menu(("Play", "Controls", "Bag Type", "Quit"))
+        option = main_ui.menu(("Play", "Controls", "Bag Type", "Colours", "Quit"))
         if option == 0:
             if bag_type == 0:
                 randomiser = game.BagRandomiser(1, 0)
@@ -74,6 +80,11 @@ try:
             config.save("controls", controls)
         elif option == 2:
             bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
+        elif option == 3:
+            modes = main_ui.get_colour_modes()
+            mode = main_ui.menu(modes)
+            main_ui.set_colour_mode(mode)
+            config.save("colours", {"mode": modes[mode]})
         else:
             playing = False
 except KeyboardInterrupt: # ctrl-c

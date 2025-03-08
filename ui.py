@@ -35,19 +35,32 @@ class UI:
     def main_loop(self, menu, tps=10): raise NotImplementedError
     def menu(self, options, starting_option=0): raise NotImplementedError
     def get_key(self): raise NotImplementedError
+    def get_colour_modes(self): raise NotImplementedError
+    def set_colour_mode(self, mode): raise NotImplementedError
 
 class TerminalUI(UI):
-    fg_colour_codes = [f"\x1b[3{x}m" for x in range(7)] + [""] + [f"\x1b[9{x}m" for x in range(8)]
-    bg_colour_codes = [""] + [f"\x1b[4{x}m" for x in range(1, 8)] + [f"\x1b[10{x}m" for x in range(8)]
+    modes = ["4 bit", "8 bit"]
+    colour_8_bit = (232, 160, 40, 166, 21, 129, 45, 255, 243, 196, 118, 226, 27, 165, 51, 255)
+    fg_colour_codes = [
+        [f"\x1b[3{x}m" for x in range(7)] + [""] + [f"\x1b[9{x}m" for x in range(8)], # 4 bit
+        [f"\x1b[38;5;{x}m" for x in colour_8_bit], # 8 bit
+    ]
+    bg_colour_codes = [
+        [""] + [f"\x1b[4{x}m" for x in range(1, 8)] + [f"\x1b[10{x}m" for x in range(8)], # 4 bit
+        [f"\x1b[48;5;{x}m" for x in colour_8_bit], # 8 bit
+    ]
     reset_code = "\x1b[0m"
+
     def __init__(self):
         self.fg_colour = COLOUR_WHITE
         self.bg_colour = COLOUR_BLACK
+        self.mode = 0
         self.buffer = ""
         self.inital_options = None
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
+
     def init(self):
         # update terminal options
         self.initial_options = termios.tcgetattr(0)
@@ -55,8 +68,10 @@ class TerminalUI(UI):
         custom_options[3] &= ~termios.ECHO
         custom_options[3] &= ~termios.ICANON
         termios.tcsetattr(0, termios.TCSANOW, custom_options)
+
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
+
     def quit(self):
         # reset terminal options
         termios.tcsetattr(0, termios.TCSANOW, self.initial_options)
@@ -65,6 +80,7 @@ class TerminalUI(UI):
         self.set_bg_colour(COLOUR_BLACK)
         self.goto(0, 0)
         self.update_screen()
+
     def set_fg_colour(self, colour):
         if colour != self.fg_colour:
             if colour == COLOUR_WHITE:
@@ -75,8 +91,9 @@ class TerminalUI(UI):
                 self.bg_colour = COLOUR_BLACK
                 self.set_bg_colour(old_bg_colour)
             else:
-                self.buffer += TerminalUI.fg_colour_codes[colour]
+                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour]
                 self.fg_colour = colour
+
     def set_bg_colour(self, colour):
         if colour != self.bg_colour:
             if colour == COLOUR_BLACK:
@@ -87,24 +104,29 @@ class TerminalUI(UI):
                 self.bg_colour = COLOUR_BLACK
                 self.set_fg_colour(old_fg_colour)
             else:
-                self.buffer += TerminalUI.bg_colour_codes[colour]
+                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
                 self.bg_colour = colour
+
     def goto(self, x, y):
         self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
+
     def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK):
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
         self.goto(x, y)
         self.buffer += text
+
     def set_pixel(self, colour, x, y):
         self.set_bg_colour(colour)
         self.goto(x, y)
         self.buffer += "  "
+
     def update_screen(self):
         self.goto(0, 0)
         sys.stdout.write(self.buffer)
         sys.stdout.flush()
         self.buffer = ""
+
     def main_loop(self, menu, tps=10):
         try:
             self.clear()
@@ -123,12 +145,20 @@ class TerminalUI(UI):
                     menu.tick()
         except ExitException:
             return
+
     def menu(self, options, starting_option=0):
         menu = TerminalMenu(options, starting_option)
         self.main_loop(menu, tps=1)
         return menu.current
+
     def get_key(self):
         return os.read(0, 100).decode("utf8")
+
+    def get_colour_modes(self):
+        return TerminalUI.modes
+
+    def set_colour_mode(self, mode):
+        self.mode = mode
 
 class TerminalMenu:
     def __init__(self, options, current):
