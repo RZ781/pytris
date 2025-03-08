@@ -59,7 +59,7 @@ class Piece:
                         return True
                     if not 0 <= x < len(self.game.board[y]):
                         return True
-                    if y >= 0 and  self.game.board[y][x] != ui.COLOUR_DEFAULT:
+                    if y >= 0 and self.game.board[y][x] != ui.COLOUR_BLACK:
                         return True
         return False
 
@@ -150,7 +150,7 @@ class Piece:
 
 class Game(ui.Menu):
     def __init__(self, randomiser, controls):
-        self.board = [[ui.COLOUR_DEFAULT]*10 for i in range(20)]
+        self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
         self.hold_piece = None
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
@@ -179,14 +179,14 @@ class Game(ui.Menu):
         # clear lines
         full = []
         for i, line in enumerate(self.board):
-            if all([x != ui.COLOUR_DEFAULT for x in line]):
+            if all([x != ui.COLOUR_BLACK for x in line]):
                 full.append(i)
         offset = 0
         for i in full:
             del self.board[i-offset]
             offset += 1
         for i in full:
-            self.board.insert(0, [ui.COLOUR_DEFAULT]*10)
+            self.board.insert(0, [ui.COLOUR_BLACK]*10)
         self.redraw()
 
     def lock_reset(self):
@@ -211,7 +211,7 @@ class Game(ui.Menu):
                 if x in (0, 5) or y in (0, 5):
                     colour = ui.COLOUR_WHITE
                 else:
-                    colour = ui.COLOUR_DEFAULT
+                    colour = ui.COLOUR_BLACK
                 self.ui.set_pixel(colour, x+self.hold_x-1, y+self.hold_y-1)
         self.redraw()
 
@@ -229,7 +229,7 @@ class Game(ui.Menu):
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
             self.fall_ticks = TPS / FALL_SPEED
-            self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_DEFAULT)
+            self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
             self.current_piece.move(0, 1)
             self.current_piece.draw(self.board_x, self.board_y)
             self.ui.update_screen()
@@ -237,7 +237,7 @@ class Game(ui.Menu):
     def key(self, c):
         if self.death_ticks is not None:
             return
-        self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_DEFAULT)
+        self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
         if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.move(0, 1)
         elif c == self.controls[KEY_HOLD]:
@@ -245,7 +245,7 @@ class Game(ui.Menu):
             self.fall_ticks = TPS / FALL_SPEED
             self.lock_count = LOCK_COUNT
             if self.hold_piece:
-                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_DEFAULT, shadow=False)
+                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_BLACK, shadow=False)
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
             else:
                 self.hold_piece = self.current_piece
@@ -276,7 +276,7 @@ class Game(ui.Menu):
     def redraw(self):
         for y in range(2):
             for x in range(10):
-                self.ui.set_pixel(ui.COLOUR_DEFAULT, x+self.board_x, y+self.board_y-2)
+                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.board_x, y+self.board_y-2)
         for y, row in enumerate(self.board):
             ty = y + self.board_y
             for x, c in enumerate(row):

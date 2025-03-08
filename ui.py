@@ -18,8 +18,6 @@ COLOUR_BRIGHT_MAGENTA  = 13
 COLOUR_BRIGHT_CYAN     = 14
 COLOUR_BRIGHT_WHITE    = 15
 
-COLOUR_DEFAULT = 16
-
 class ExitException(Exception):
     pass
 
@@ -31,7 +29,7 @@ class Menu:
 class UI:
     def init(self): pass
     def quit(self): pass
-    def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT): raise NotImplementedError
+    def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK): raise NotImplementedError
     def set_pixel(self, colour, x, y): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
     def main_loop(self, menu, tps=10): raise NotImplementedError
@@ -39,12 +37,12 @@ class UI:
     def get_key(self): raise NotImplementedError
 
 class TerminalUI(UI):
-    fg_colour_codes = [f"\x1b[3{x}m" for x in range(8)] + [f"\x1b[9{x}m" for x in range(8)] + ["\x1b[0m"]
-    bg_colour_codes = [f"\x1b[4{x}m" for x in range(8)] + [f"\x1b[10{x}m" for x in range(8)] + ["\x1b[0m"]
+    fg_colour_codes = [f"\x1b[3{x}m" for x in range(7)] + [""] + [f"\x1b[9{x}m" for x in range(8)]
+    bg_colour_codes = [""] + [f"\x1b[4{x}m" for x in range(1, 8)] + [f"\x1b[10{x}m" for x in range(8)]
     reset_code = "\x1b[0m"
     def __init__(self):
-        self.fg_colour = COLOUR_DEFAULT
-        self.bg_colour = COLOUR_DEFAULT
+        self.fg_colour = COLOUR_WHITE
+        self.bg_colour = COLOUR_BLACK
         self.buffer = ""
         self.inital_options = None
         terminal_size = shutil.get_terminal_size()
@@ -69,29 +67,31 @@ class TerminalUI(UI):
         self.update_screen()
     def set_fg_colour(self, colour):
         if colour != self.fg_colour:
-            if colour == COLOUR_DEFAULT:
+            if colour == COLOUR_WHITE:
                 self.buffer += TerminalUI.reset_code
                 # set background colour again if resetting terminal for foreground
                 old_bg_colour = self.bg_colour
-                self.fg_colour = self.bg_colour = COLOUR_DEFAULT
+                self.fg_colour = COLOUR_WHITE
+                self.bg_colour = COLOUR_BLACK
                 self.set_bg_colour(old_bg_colour)
             else:
                 self.buffer += TerminalUI.fg_colour_codes[colour]
                 self.fg_colour = colour
     def set_bg_colour(self, colour):
         if colour != self.bg_colour:
-            if colour == COLOUR_DEFAULT:
+            if colour == COLOUR_BLACK:
                 self.buffer += TerminalUI.reset_code
                 # set foreground colour again if resetting terminal for background
                 old_fg_colour = self.fg_colour
-                self.fg_colour = self.bg_colour = COLOUR_DEFAULT
+                self.fg_colour = COLOUR_WHITE
+                self.bg_colour = COLOUR_BLACK
                 self.set_fg_colour(old_fg_colour)
             else:
                 self.buffer += TerminalUI.bg_colour_codes[colour]
                 self.bg_colour = colour
     def goto(self, x, y):
         self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
-    def draw_text(self, text, x, y, fg_colour=COLOUR_DEFAULT, bg_colour=COLOUR_DEFAULT):
+    def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK):
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
         self.goto(x, y)
