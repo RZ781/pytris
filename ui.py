@@ -18,6 +18,25 @@ COLOUR_BRIGHT_MAGENTA  = 13
 COLOUR_BRIGHT_CYAN     = 14
 COLOUR_BRIGHT_WHITE    = 15
 
+COLOURS = (
+    (0, 0, 0),
+    (188, 46, 61),
+    (8, 148, 24),
+    (202, 99, 41),
+    (55, 67, 190),
+    (155, 55, 134),
+    (89, 154, 209),
+    (255, 255, 255),
+    (128, 128, 128),
+    (237, 28, 36),
+    (117, 174, 54),
+    (253, 255, 12),
+    (4, 42, 255),
+    (196, 6, 255),
+    (8, 254, 255),
+    (255, 255, 255),
+)
+
 class ExitException(Exception):
     pass
 
@@ -39,22 +58,24 @@ class UI:
     def set_colour_mode(self, mode): raise NotImplementedError
 
 class TerminalUI(UI):
-    modes = ["4 bit", "8 bit"]
-    colour_8_bit = (232, 160, 40, 166, 21, 129, 45, 255, 243, 196, 118, 226, 27, 165, 51, 255)
+    MODES = ["4 bit", "8 bit", "24 bit"]
+    COLOURS_8_BIT = (232, 160, 40, 166, 21, 129, 45, 255, 243, 196, 118, 226, 27, 165, 51, 255)
     fg_colour_codes = [
         [f"\x1b[3{x}m" for x in range(7)] + [""] + [f"\x1b[9{x}m" for x in range(8)], # 4 bit
-        [f"\x1b[38;5;{x}m" for x in colour_8_bit], # 8 bit
+        [f"\x1b[38;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
+        [f"\x1b[38;2;{r};{g};{b}m" for r, g, b in COLOURS], # 24 bit
     ]
     bg_colour_codes = [
         [""] + [f"\x1b[4{x}m" for x in range(1, 8)] + [f"\x1b[10{x}m" for x in range(8)], # 4 bit
-        [f"\x1b[48;5;{x}m" for x in colour_8_bit], # 8 bit
+        [f"\x1b[48;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
+        [f"\x1b[48;2;{r};{g};{b}m" for r, g, b in COLOURS], # 24 bit
     ]
     reset_code = "\x1b[0m"
 
     def __init__(self):
         self.fg_colour = COLOUR_WHITE
         self.bg_colour = COLOUR_BLACK
-        self.mode = 0
+        self.mode = 1
         self.buffer = ""
         self.inital_options = None
         terminal_size = shutil.get_terminal_size()
@@ -155,7 +176,7 @@ class TerminalUI(UI):
         return os.read(0, 100).decode("utf8")
 
     def get_colour_modes(self):
-        return TerminalUI.modes
+        return TerminalUI.MODES
 
     def set_colour_mode(self, mode):
         self.mode = mode
