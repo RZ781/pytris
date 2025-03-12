@@ -155,14 +155,21 @@ class Game(ui.Menu):
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.randomiser = randomiser
-        self.current_piece = self.new_piece()
         self.controls = controls
         self.lock_count = LOCK_COUNT
         self.death_ticks = None
+        self.next_pieces = [self.create_piece() for i in range(3)]
+        self.current_piece = self.next_piece()
 
-    def new_piece(self):
+    def create_piece(self):
         piece = self.randomiser.next_piece().copy()
         piece.game = self
+        return piece
+
+    def next_piece(self):
+        self.next_pieces.append(self.create_piece())
+        piece = self.next_pieces.pop(0)
+        piece.reset()
         return piece
 
     def lock_piece(self):
@@ -175,7 +182,7 @@ class Game(ui.Menu):
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / FALL_SPEED
         self.lock_count = LOCK_COUNT
-        self.current_piece = self.new_piece()
+        self.current_piece = self.next_piece()
         # clear lines
         full = []
         for i, line in enumerate(self.board):
@@ -199,20 +206,26 @@ class Game(ui.Menu):
         self.board_x = (self.ui.width - BOARD_WIDTH) // 2
         self.board_y = (self.ui.height - BOARD_HEIGHT) // 2
         self.hold_x = self.board_x - 5
-        self.hold_y = self.board_y + 3
+        self.hold_y = self.board_y + 2
+        self.next_x = self.board_x + 11
+        self.next_y = self.board_y + 2
         for x in range(12):
             for y in range(3):
+                # draw the gray border 3 above the main board
                 self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x+self.board_x-1, y+self.board_y-3)
         for x in range(12):
             for y in range(21):
-                self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
+                if x in (0, 11) or y in (0, 20):
+                    # draw main border
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
             for y in range(6):
-                if x in (0, 5) or y in (0, 5):
-                    colour = ui.COLOUR_WHITE
-                else:
-                    colour = ui.COLOUR_BLACK
-                self.ui.set_pixel(colour, x+self.hold_x-1, y+self.hold_y-1)
+                if x == 0 or y in (0, 5):
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.hold_x-1, y+self.hold_y-1)
+        for x in range(5):
+            for y in range(14):
+                if x == 4 or y in (0, 13):
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.next_x, y+self.next_y-1)
         self.redraw()
 
     def tick(self):
@@ -249,7 +262,7 @@ class Game(ui.Menu):
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
             else:
                 self.hold_piece = self.current_piece
-                self.current_piece = self.new_piece()
+                self.current_piece = self.next_piece()
             self.current_piece.reset()
             self.hold_piece.reset(hold=True)
             self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
@@ -283,6 +296,13 @@ class Game(ui.Menu):
                 tx = x + self.board_x
                 self.ui.set_pixel(c, tx, ty)
         self.current_piece.draw(self.board_x, self.board_y)
+        for y in range(12):
+            for x in range(4):
+                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.next_x, y+self.next_y)
+        for i, piece in enumerate(self.next_pieces):
+            piece.reset(hold=True)
+            piece.y += i * 4
+            piece.draw(self.next_x, self.next_y, shadow=False)
         self.ui.update_screen()
 
 class Randomiser:
