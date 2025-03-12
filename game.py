@@ -258,14 +258,13 @@ class Game(ui.Menu):
             self.fall_ticks = TPS / FALL_SPEED
             self.lock_count = LOCK_COUNT
             if self.hold_piece:
-                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_BLACK, shadow=False)
                 self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
             else:
                 self.hold_piece = self.current_piece
                 self.current_piece = self.next_piece()
             self.current_piece.reset()
             self.hold_piece.reset(hold=True)
-            self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
+            self.redraw()
         elif c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
@@ -303,6 +302,11 @@ class Game(ui.Menu):
             piece.reset(hold=True)
             piece.y += i * 4
             piece.draw(self.next_x, self.next_y, shadow=False)
+        for y in range(4):
+            for x in range(4):
+                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.hold_x, y+self.hold_y)
+        if self.hold_piece:
+            self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
         self.ui.update_screen()
 
 class Randomiser:
