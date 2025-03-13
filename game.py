@@ -160,6 +160,9 @@ class Game(ui.Menu):
         self.death_ticks = None
         self.next_pieces = [self.create_piece() for i in range(3)]
         self.current_piece = self.next_piece()
+        self.level = 1
+        self.lines = 0
+        self.score = 0
 
     def create_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -194,6 +197,11 @@ class Game(ui.Menu):
             offset += 1
         for i in full:
             self.board.insert(0, [ui.COLOUR_BLACK]*10)
+        # add score
+        multiplier = (0, 100, 300, 500, 800)[len(full)]
+        self.score += multiplier * self.level
+        self.lines += len(full)
+        self.level = self.lines // 10 + 1
         self.redraw()
 
     def lock_reset(self):
@@ -209,6 +217,8 @@ class Game(ui.Menu):
         self.hold_y = self.board_y + 2
         self.next_x = self.board_x + 11
         self.next_y = self.board_y + 2
+        self.counter_x = self.board_x - 8
+        self.counter_y = self.board_y + 15
         for x in range(12):
             for y in range(3):
                 # draw the gray border 3 above the main board
@@ -307,6 +317,9 @@ class Game(ui.Menu):
                 self.ui.set_pixel(ui.COLOUR_BLACK, x+self.hold_x, y+self.hold_y)
         if self.hold_piece:
             self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
+        self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
+        self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
+        self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
         self.ui.update_screen()
 
 class Randomiser:
