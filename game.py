@@ -163,6 +163,7 @@ class Game(ui.Menu):
         self.level = 1
         self.lines = 0
         self.score = 0
+        self.held = False
 
     def create_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -203,6 +204,7 @@ class Game(ui.Menu):
         self.lines += len(full)
         self.level = self.lines // 10 + 1
         self.redraw()
+        self.held = False
 
     def lock_reset(self):
         if self.current_piece.on_floor() and self.lock_count:
@@ -264,17 +266,19 @@ class Game(ui.Menu):
         if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.move(0, 1)
         elif c == self.controls[KEY_HOLD]:
-            self.ground_ticks = LOCK_TIME * TPS
-            self.fall_ticks = TPS / FALL_SPEED
-            self.lock_count = LOCK_COUNT
-            if self.hold_piece:
-                self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
-            else:
-                self.hold_piece = self.current_piece
-                self.current_piece = self.next_piece()
-            self.current_piece.reset()
-            self.hold_piece.reset(hold=True)
-            self.redraw()
+            if not self.held:
+                self.held = True
+                self.ground_ticks = LOCK_TIME * TPS
+                self.fall_ticks = TPS / FALL_SPEED
+                self.lock_count = LOCK_COUNT
+                if self.hold_piece:
+                    self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
+                else:
+                    self.hold_piece = self.current_piece
+                    self.current_piece = self.next_piece()
+                self.current_piece.reset()
+                self.hold_piece.reset(hold=True)
+                self.redraw()
         elif c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
