@@ -1,8 +1,7 @@
 import random, sys, copy, time
 import ui, random
 
-TPS = 10 # ticks per second
-FALL_SPEED = 1.5 # blocks per second
+TPS = 60 # ticks per second
 LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
 BOARD_WIDTH = 12
@@ -152,8 +151,9 @@ class Game(ui.Menu):
     def __init__(self, randomiser, controls):
         self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
         self.hold_piece = None
+        self.fall_speed = 1.2
         self.ground_ticks = LOCK_TIME * TPS
-        self.fall_ticks = TPS / FALL_SPEED
+        self.fall_ticks = TPS / self.fall_speed
         self.randomiser = randomiser
         self.controls = controls
         self.lock_count = LOCK_COUNT
@@ -183,10 +183,6 @@ class Game(ui.Menu):
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
-        self.ground_ticks = LOCK_TIME * TPS
-        self.fall_ticks = TPS / FALL_SPEED
-        self.lock_count = LOCK_COUNT
-        self.current_piece = self.next_piece()
         # clear lines
         full = []
         for i, line in enumerate(self.board):
@@ -203,8 +199,14 @@ class Game(ui.Menu):
         self.score += multiplier * self.level
         self.lines += len(full)
         self.level = self.lines // 10 + 1
-        self.redraw()
+        self.fall_speed = 1.2 + self.level * 0.5
+        # reset state
+        self.ground_ticks = LOCK_TIME * TPS
+        self.fall_ticks = TPS / self.fall_speed
+        self.lock_count = LOCK_COUNT
+        self.current_piece = self.next_piece()
         self.held = False
+        self.redraw()
 
     def lock_reset(self):
         if self.current_piece.on_floor() and self.lock_count:
@@ -253,7 +255,7 @@ class Game(ui.Menu):
             self.ground_ticks -= 1
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
-            self.fall_ticks = TPS / FALL_SPEED
+            self.fall_ticks = TPS / self.fall_speed
             self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
             self.current_piece.move(0, 1)
             self.current_piece.draw(self.board_x, self.board_y)
@@ -269,7 +271,7 @@ class Game(ui.Menu):
             if not self.held:
                 self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
-                self.fall_ticks = TPS / FALL_SPEED
+                self.fall_ticks = TPS / self.fall_speed
                 self.lock_count = LOCK_COUNT
                 if self.hold_piece:
                     self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
