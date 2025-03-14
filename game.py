@@ -267,7 +267,7 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
         if c == self.controls[KEY_SOFT_DROP]:
             self.current_piece.move(0, 1)
-        elif c == self.controls[KEY_HOLD]:
+        if c == self.controls[KEY_HOLD]:
             if not self.held:
                 self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
@@ -281,22 +281,22 @@ class Game(ui.Menu):
                 self.current_piece.reset()
                 self.hold_piece.reset(hold=True)
                 self.redraw()
-        elif c == self.controls[KEY_LEFT]:
+        if c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
-        elif c == self.controls[KEY_RIGHT]:
+        if c == self.controls[KEY_RIGHT]:
             if self.current_piece.move(1, 0):
                 self.lock_reset()
-        elif c == self.controls[KEY_ANTICLOCKWISE]:
+        if c == self.controls[KEY_ANTICLOCKWISE]:
             if self.current_piece.rotate_left():
                 self.lock_reset()
-        elif c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
+        if c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
             if self.current_piece.rotate_right():
                 self.lock_reset()
-        elif c == self.controls[KEY_180]:
+        if c == self.controls[KEY_180]:
             if self.current_piece.rotate_180():
                 self.lock_reset()
-        elif c == self.controls[KEY_HARD_DROP]:
+        if c == self.controls[KEY_HARD_DROP]:
             self.current_piece.hard_drop()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()

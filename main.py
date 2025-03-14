@@ -2,6 +2,21 @@
 import sys
 import game, ui, config
 
+KEYS = {
+    "\x1b[A": "Up",
+    "\x1b[B": "Down",
+    "\x1b[C": "Right",
+    "\x1b[D": "Left",
+    " ": "Space",
+    "\t": "Tab",
+    "\n": "Return"
+}
+
+def key_name(key):
+    if key in KEYS:
+        return KEYS[key]
+    return key
+
 main_ui = ui.TerminalUI()
 bag_type = 0
 
@@ -50,7 +65,8 @@ try:
             option = 0
             while True:
                 options = ("Close", "Defaults", "Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
-                option = main_ui.menu(options, option)
+                values = [None, None] + [key_name(controls[i]) for i in range(9)]
+                option = main_ui.menu(options, values=values, starting_option=option)
                 if option == 0:
                     break
                 elif option == 1:
