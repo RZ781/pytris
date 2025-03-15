@@ -322,7 +322,10 @@ class Game(ui.Menu):
             for x in range(4):
                 self.ui.set_pixel(ui.COLOUR_BLACK, x+self.hold_x, y+self.hold_y)
         if self.hold_piece:
-            self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
+            if self.held:
+                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_BRIGHT_BLACK, shadow=False)
+            else:
+                self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
         self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
         self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
