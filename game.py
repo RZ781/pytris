@@ -6,6 +6,7 @@ LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
 BOARD_WIDTH = 12
 BOARD_HEIGHT = 22
+MISCLICK_PROTECT_TIME = 0.15 # seconds
 
 KEY_LEFT = 0
 KEY_RIGHT = 1
@@ -152,8 +153,8 @@ class Game(ui.Menu):
         self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
         self.hold_piece = None
         self.fall_speed = 1.2
-        self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / self.fall_speed
+        self.ground_ticks = LOCK_TIME * TPS
         self.randomiser = randomiser
         self.controls = controls
         self.lock_count = LOCK_COUNT
@@ -164,6 +165,7 @@ class Game(ui.Menu):
         self.lines = 0
         self.score = 0
         self.held = False
+        self.no_hard_drop_ticks = 0
 
     def create_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -243,6 +245,8 @@ class Game(ui.Menu):
         self.redraw()
 
     def tick(self):
+        if self.no_hard_drop_ticks > 0:
+            self.no_hard_drop_ticks -= 1
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
@@ -297,7 +301,9 @@ class Game(ui.Menu):
             if self.current_piece.rotate_180():
                 self.lock_reset()
         if c == self.controls[KEY_HARD_DROP]:
-            self.current_piece.hard_drop()
+            if self.no_hard_drop_ticks <= 0:
+                self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
+                self.current_piece.hard_drop()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
