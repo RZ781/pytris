@@ -52,7 +52,7 @@ class UI:
     def set_pixel(self, colour, x, y): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
     def main_loop(self, menu, tps=10): raise NotImplementedError
-    def menu(self, options, values=(), starting_option=0): raise NotImplementedError
+    def menu(self, options, starting_option=0): raise NotImplementedError
     def get_key(self): raise NotImplementedError
     def get_colour_modes(self): raise NotImplementedError
     def set_colour_mode(self, mode): raise NotImplementedError
@@ -167,8 +167,8 @@ class TerminalUI(UI):
         except ExitException:
             return
 
-    def menu(self, options, values=(), starting_option=0):
-        menu = TerminalMenu(options, values, starting_option)
+    def menu(self, options, starting_option=0):
+        menu = TerminalMenu(options, starting_option)
         self.main_loop(menu, tps=1)
         return menu.current
 
@@ -182,20 +182,31 @@ class TerminalUI(UI):
         self.mode = mode
 
 class TerminalMenu:
-    def __init__(self, options, values, current):
-        self.options = options
-        self.values = values
+    def __init__(self, options, current):
+        self.columns = []
+        self.n_options = len(options)
+        length = max(len(option) for option in options)
+        for i in range(length):
+            column = []
+            for option in options:
+                if isinstance(option, str) and i == 0:
+                    column.append(option)
+                elif isinstance(option, tuple) and i < len(option):
+                    column.append(option[i])
+                else:
+                    column.append("")
+            self.columns.append(column)
         self.current = current
         self.ui = None
     def init(self, ui):
         self.ui = ui
         ui.clear()
-        for i, option in enumerate(self.options):
-            ui.draw_text(option, 1, i)
-        start_x = max([len(x) for x in self.options]) + 8
-        for i, value in enumerate(self.values):
-            if value:
-                ui.draw_text(value, start_x//2, i)
+        start_x = 1
+        for column in self.columns:
+            for i, option in enumerate(column):
+                ui.draw_text(option, start_x, i)
+            max_length = max(len(option) for option in column)
+            start_x += max_length // 2 + 4
         ui.draw_text(">", 0, self.current)
         ui.update_screen()
     def key(self, c):
@@ -206,7 +217,7 @@ class TerminalMenu:
             self.current += 1
         elif c == '\n':
             raise ExitException
-        self.current %= len(self.options)
+        self.current %= self.n_options
         self.ui.draw_text(">", 0, self.current)
         self.ui.update_screen()
     def tick(self):

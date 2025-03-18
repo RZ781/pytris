@@ -11,6 +11,7 @@ KEYS = {
     "\t": "Tab",
     "\n": "Return"
 }
+CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
 
 def key_name(key):
     if key in KEYS:
@@ -64,33 +65,16 @@ try:
         elif option == 1:
             option = 0
             while True:
-                options = ("Close", "Defaults", "Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
-                values = [None, None] + [key_name(controls[i]) for i in range(9)]
-                option = main_ui.menu(options, values=values, starting_option=option)
+                options = ("Close", "Defaults") + tuple((x, key_name(controls[i])) for i, x in enumerate(CONTROL_NAMES))
+                option = main_ui.menu(options, starting_option=option)
                 if option == 0:
                     break
                 elif option == 1:
                     controls = default_controls.copy()
                     continue
-                elif option == 2:
-                    key = game.KEY_LEFT
-                elif option == 3:
-                    key = game.KEY_RIGHT
-                elif option == 4:
-                    key = game.KEY_SOFT_DROP
-                elif option == 5:
-                    key = game.KEY_HARD_DROP
-                elif option == 6:
-                    key = game.KEY_ROTATE
-                elif option == 7:
-                    key = game.KEY_CLOCKWISE
-                elif option == 8:
-                    key = game.KEY_ANTICLOCKWISE
-                elif option == 9:
-                    key = game.KEY_180
-                elif option == 10:
-                    key = game.KEY_HOLD
-                main_ui.draw_text(f"Press key for {options[option].lower()}", 25, option)
+                else:
+                    key = option - 2
+                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key].lower()}", 25, option)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
             config.save("controls", controls)
