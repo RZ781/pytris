@@ -44,6 +44,7 @@ class Menu:
     def init(self, ui): raise NotImplementedError
     def tick(self): raise NotImplementedError
     def key(self, c): raise NotImplementedError
+    def resize(self, width, height): raise NotImplementedError
 
 class UI:
     def init(self): pass
@@ -157,6 +158,13 @@ class TerminalUI(UI):
             while True:
                 start_time = time.perf_counter()
                 r, _, _ = select.select([0], [], [], time_left)
+                terminal_size = shutil.get_terminal_size()
+                width = terminal_size.columns // 2
+                height = terminal_size.lines
+                if width != self.width or height != self.height:
+                    self.width = width
+                    self.height = height
+                    menu.resize(width, height)
                 end_time = time.perf_counter()
                 time_left -= end_time - start_time
                 if r:

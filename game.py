@@ -217,14 +217,18 @@ class Game(ui.Menu):
 
     def init(self, main_ui):
         self.ui = main_ui
-        self.board_x = (self.ui.width - BOARD_WIDTH) // 2
-        self.board_y = (self.ui.height - BOARD_HEIGHT) // 2
+        self.resize(main_ui.width, main_ui.height)
+
+    def resize(self, width, height):
+        self.board_x = (width - BOARD_WIDTH) // 2
+        self.board_y = (height - BOARD_HEIGHT) // 2
         self.hold_x = self.board_x - 5
         self.hold_y = self.board_y + 2
         self.next_x = self.board_x + 11
         self.next_y = self.board_y + 2
         self.counter_x = self.board_x - 8
         self.counter_y = self.board_y + 15
+        self.ui.clear()
         for x in range(12):
             for y in range(3):
                 # draw the gray border 3 above the main board
