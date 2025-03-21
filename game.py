@@ -18,6 +18,10 @@ KEY_ANTICLOCKWISE = 6
 KEY_180 = 7
 KEY_HOLD = 8
 
+OBJECTIVE_NONE = 0
+OBJECTIVE_40_LINES = 1
+OBJECTIVE_2_MINS = 2
+
 class Piece:
     def __init__(self, shape, colour, x, y, game=None, base=None):
         self.shape = shape
@@ -149,7 +153,8 @@ class Piece:
         return False
 
 class Game(ui.Menu):
-    def __init__(self, randomiser, controls):
+    def __init__(self, objective, randomiser, controls):
+        self.objective = objective
         self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
         self.hold_piece = None
         self.fall_speed = 1.2
@@ -166,6 +171,7 @@ class Game(ui.Menu):
         self.score = 0
         self.held = False
         self.no_hard_drop_ticks = 0
+        self.ticks = 0
 
     def create_piece(self):
         piece = self.randomiser.next_piece().copy()
@@ -249,13 +255,32 @@ class Game(ui.Menu):
         self.redraw()
 
     def tick(self):
-        if self.no_hard_drop_ticks > 0:
-            self.no_hard_drop_ticks -= 1
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
                 raise ui.ExitException
             return
+        self.ticks += 1
+        if self.objective == OBJECTIVE_2_MINS:
+            if self.ticks >= 20 * TPS:
+                text = f"Score: {self.score}"
+                self.ui.draw_text(text, self.board_x+5-len(text)//4, self.board_y+7)
+                self.ui.update_screen()
+                self.death_ticks = 3 * TPS
+                return
+        elif self.objective == OBJECTIVE_40_LINES:
+            if self.lines >= 1:
+                seconds = self.ticks // TPS
+                ms = int((self.ticks % TPS) / TPS * 1000)
+                minutes = seconds // TPS
+                seconds %= TPS
+                text = f"Time: {minutes}:{seconds:02}.{ms:02}"
+                self.ui.draw_text(text, self.board_x+5-len(text)//4, self.board_y+7)
+                self.ui.update_screen()
+                self.death_ticks = 3 * TPS
+                return
+        if self.no_hard_drop_ticks > 0:
+            self.no_hard_drop_ticks -= 1
         if self.current_piece.on_floor():
             if self.ground_ticks <= 0:
                 self.lock_piece()

@@ -1,0 +1,3 @@
+fix bug where shadow overlaps ending text
+fix ending text for 40 lines and blitz
+fix misclick protection
