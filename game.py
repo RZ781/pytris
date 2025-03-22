@@ -214,6 +214,7 @@ class Game(ui.Menu):
         self.lock_count = LOCK_COUNT
         self.current_piece = self.next_piece()
         self.held = False
+        self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
         self.redraw()
 
     def lock_reset(self):
@@ -331,7 +332,6 @@ class Game(ui.Menu):
                 self.lock_reset()
         if c == self.controls[KEY_HARD_DROP]:
             if self.no_hard_drop_ticks <= 0:
-                self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
                 self.current_piece.hard_drop()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
