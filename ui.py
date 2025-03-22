@@ -149,7 +149,7 @@ class TerminalUI(UI):
         sys.stdout.flush()
         self.buffer = ""
 
-    def main_loop(self, menu, tps=10):
+    def main_loop(self, menu, tps=60):
         try:
             self.clear()
             self.update_screen()
@@ -177,7 +177,7 @@ class TerminalUI(UI):
 
     def menu(self, options, starting_option=0):
         menu = TerminalMenu(options, starting_option)
-        self.main_loop(menu, tps=1)
+        self.main_loop(menu)
         return menu.current
 
     def get_key(self):
@@ -208,17 +208,23 @@ class TerminalMenu:
         self.ui = None
     def init(self, ui):
         self.ui = ui
-        ui.clear()
-        start_x = 1
+        self.resize(ui.width, ui.height)
+    def resize(self, width, height):
+        self.ui.clear()
+        text_width = max(max(len(x)//2 + 4 for x in column) for column in self.columns)
+        self.menu_x = (width - text_width) // 2
+        self.menu_y = height // 5
+        column_x = self.menu_x + 1
         for column in self.columns:
             for i, option in enumerate(column):
-                ui.draw_text(option, start_x, i)
+                self.ui.draw_text(option, column_x, self.menu_y+i)
             max_length = max(len(option) for option in column)
-            start_x += max_length // 2 + 4
-        ui.draw_text(">", 0, self.current)
-        ui.update_screen()
+            column_x += max_length // 2 + 4
+        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
+        self.ui.update_screen()
     def key(self, c):
-        self.ui.draw_text(" ", 0, self.current)
+        self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
+        self.ui.update_screen()
         if c == '\x1b[A' or c == 'k':
             self.current -= 1
         elif c == '\x1b[B' or c == 'j':
@@ -226,7 +232,7 @@ class TerminalMenu:
         elif c == '\n':
             raise ExitException
         self.current %= self.n_options
-        self.ui.draw_text(">", 0, self.current)
+        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
     def tick(self):
         pass
