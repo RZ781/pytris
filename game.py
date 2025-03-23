@@ -22,28 +22,42 @@ OBJECTIVE_NONE = 0
 OBJECTIVE_40_LINES = 1
 OBJECTIVE_2_MINS = 2
 
-class Piece:
-    def __init__(self, shape, colour, x, y, game=None, base=None):
-        self.shape = shape
-        self.x = x
-        self.y = y
+class PieceType:
+    def __init__(self, shape, colour, spawn_x, spawn_y):
+        shapes = []
+        for i in range(4):
+            shapes.append(shape)
+            new_shape = copy.deepcopy(shape)
+            for y, row in enumerate(shape):
+                for x, c in enumerate(row):
+                    new_shape[x][-y-1] = c
+            shape = new_shape
+        self.shapes = shapes
         self.colour = colour
+        self.spawn_x = spawn_x
+        self.spawn_y = spawn_y
+
+class Piece:
+    def __init__(self, base, game):
+        self.x = base.spawn_x
+        self.y = base.spawn_y
+        self.rotation = 0
         self.base = base
         self.game = game
 
-    def get_shadow(self): # create shadow/ghost piece
-        shadow = self.copy()
-        shadow.colour = ui.COLOUR_BRIGHT_BLACK
-        while not shadow.on_floor():
-            shadow.y += 1
-        return shadow
-
     def draw(self, board_x, board_y, colour=None, shadow=True):
         if shadow:
-            self.get_shadow().draw(board_x, board_y, colour=colour, shadow=False)
+            old_y = self.y
+            while not self.on_floor():
+                self.y += 1
+            shadow_colour = colour
+            if shadow_colour is None:
+                shadow_colour = ui.COLOUR_BRIGHT_BLACK
+            self.draw(board_x, board_y, colour=shadow_colour, shadow=False)
+            self.y = old_y
         if colour is None:
-            colour = self.colour
-        for y, row in enumerate(self.shape):
+            colour = self.base.colour
+        for y, row in enumerate(self.base.shapes[self.rotation]):
             if 1 not in row:
                 continue
             x = row.index(1)
@@ -54,7 +68,7 @@ class Piece:
                 self.game.ui.set_pixel(colour, tx+dx, ty)
 
     def intersect(self):
-        for y, row in enumerate(self.shape):
+        for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
             for x, c in enumerate(row):
                 x += self.x
@@ -88,59 +102,33 @@ class Piece:
         self.game.lock_piece()
 
     def lock(self):
-        for y, row in enumerate(self.shape):
+        for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
             if y < 0:
                 return False
             for x, c in enumerate(row):
                 x += self.x
                 if c:
-                    self.game.board[y][x] = self.colour
+                    self.game.board[y][x] = self.base.colour
         return True
 
     def reset(self, hold=False):
-        self.shape = copy.deepcopy(self.base.shape)
+        self.rotation = 0
         if hold:
-            if len(self.shape) == 4:
+            if len(self.base.shapes[0]) == 4:
                 self.x = self.y = 0
             else:
                 self.x = self.y = 1
         else:
-            self.x = self.base.x
-            self.y = self.base.y
+            self.x = self.base.spawn_x
+            self.y = self.base.spawn_y
 
-    def copy(self):
-        return Piece(copy.deepcopy(self.shape), self.colour, self.x, self.y, game=self.game, base=self)
-
-    def rotate_right(self):
-        shape = copy.deepcopy(self.shape)
-        for y, row in enumerate(self.shape):
-            for x, c in enumerate(row):
-                shape[x][-y-1] = c
-        success = self.rotate(shape)
-        return success
-
-    def rotate_left(self):
-        shape = copy.deepcopy(self.shape)
-        for y, row in enumerate(self.shape):
-            for x, c in enumerate(row):
-                shape[-x-1][y] = c
-        success = self.rotate(shape)
-        return success
-
-    def rotate_180(self):
-        shape = copy.deepcopy(self.shape)
-        for row in shape:
-            row.reverse()
-        shape.reverse()
-        success = self.rotate(shape)
-        return success
-
-    def rotate(self, new_shape):
-        old_shape = self.shape
+    def rotate(self, rotation_change):
+        old_rotation = self.rotation
         old_x = self.x
         old_y = self.y
-        self.shape = new_shape
+        self.rotation += rotation_change
+        self.rotation %= 4
         for dy in (0, 1, 2, -1):
             for dx in (0, 1, -1, 2, -2):
                 self.x = old_x + dx
@@ -149,7 +137,7 @@ class Piece:
                     return True
         self.x = old_x
         self.y = old_y
-        self.shape = old_shape
+        self.rotation = old_rotation
         return False
 
 class Game(ui.Menu):
@@ -174,9 +162,7 @@ class Game(ui.Menu):
         self.ticks = 0
 
     def create_piece(self):
-        piece = self.randomiser.next_piece().copy()
-        piece.game = self
-        return piece
+        return Piece(pieces[self.randomiser.next_piece()], self)
 
     def next_piece(self):
         self.next_pieces.append(self.create_piece())
@@ -322,13 +308,13 @@ class Game(ui.Menu):
             if self.current_piece.move(1, 0):
                 self.lock_reset()
         if c == self.controls[KEY_ANTICLOCKWISE]:
-            if self.current_piece.rotate_left():
+            if self.current_piece.rotate(-1):
                 self.lock_reset()
         if c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
-            if self.current_piece.rotate_right():
+            if self.current_piece.rotate(1):
                 self.lock_reset()
         if c == self.controls[KEY_180]:
-            if self.current_piece.rotate_180():
+            if self.current_piece.rotate(2):
                 self.lock_reset()
         if c == self.controls[KEY_HARD_DROP]:
             if self.no_hard_drop_ticks <= 0:
@@ -377,7 +363,7 @@ class ClassicRandomiser(Randomiser):
         while i == self.previous:
             i = random.randint(0, 6)
         self.previous = i
-        return pieces[i]
+        return i
 
 class BagRandomiser(Randomiser):
     def __init__(self, n_7_pieces, n_extras):
@@ -386,18 +372,17 @@ class BagRandomiser(Randomiser):
         self.bag = []
     def next_piece(self):
         if not self.bag:
-            for i in range(self.n_7_pieces):
-                self.bag += pieces
+            self.bag = list(range(7)) * self.n_7_pieces
             for i in range(self.n_extras):
-                self.bag.append(random.choice(pieces))
+                self.bag.append(random.randint(0, 6))
             random.shuffle(self.bag)
         return self.bag.pop()
 
-L = Piece([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2)
-J = Piece([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2)
-O = Piece([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2)
-T = Piece([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2)
-S = Piece([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN, 3, -2)
-Z = Piece([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2)
-I = Piece([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2)
+L = PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2)
+J = PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2)
+O = PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2)
+T = PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2)
+S = PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN, 3, -2)
+Z = PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2)
+I = PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2)
 pieces = [L, J, O, T, S, Z, I]
