@@ -249,14 +249,14 @@ class Game(ui.Menu):
             return
         self.ticks += 1
         if self.objective == OBJECTIVE_2_MINS:
-            if self.ticks >= 20 * TPS:
+            if self.ticks >= 120 * TPS:
                 text = f"Score: {self.score}"
                 self.ui.draw_text(text, self.board_x+5-len(text)//4, self.board_y+7)
                 self.ui.update_screen()
                 self.death_ticks = 3 * TPS
                 return
         elif self.objective == OBJECTIVE_40_LINES:
-            if self.lines >= 1:
+            if self.lines >= 40:
                 seconds = self.ticks // TPS
                 ms = int((self.ticks % TPS) / TPS * 1000)
                 minutes = seconds // TPS
@@ -378,11 +378,20 @@ class BagRandomiser(Randomiser):
             random.shuffle(self.bag)
         return self.bag.pop()
 
-L = PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2)
-J = PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2)
-O = PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2)
-T = PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2)
-S = PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN, 3, -2)
-Z = PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2)
-I = PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2)
-pieces = [L, J, O, T, S, Z, I]
+PIECE_L = 0
+PIECE_J = 1
+PIECE_O = 2
+PIECE_T = 3
+PIECE_S = 4
+PIECE_Z = 5
+PIECE_I = 6
+
+pieces = [
+    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2),
+    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2),
+    PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2),
+    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2),
+    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN, 3, -2),
+    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2),
+    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2),
+]
