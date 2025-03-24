@@ -62,9 +62,27 @@ try:
                 randomiser = game.BagRandomiser(1, 2)
             else:
                 randomiser = game.ClassicRandomiser()
-            main_ui.main_loop(game.Game(objective, randomiser, controls), tps=game.TPS)
+            if objective == 0:
+                objective_type = game.OBJECTIVE_NONE
+                objective_count = 0
+            elif objective == 1:
+                objective_type = game.OBJECTIVE_LINES
+                objective_count = 20
+            elif objective == 2:
+                objective_type = game.OBJECTIVE_LINES
+                objective_count = 40
+            elif objective == 3:
+                objective_type = game.OBJECTIVE_LINES
+                objective_count = 100
+            elif objective == 4:
+                objective_type = game.OBJECTIVE_TIME
+                objective_count = 60
+            elif objective == 5:
+                objective_type = game.OBJECTIVE_TIME
+                objective_count = 120
+            main_ui.main_loop(game.Game(objective_type, objective_count, randomiser, controls), tps=game.TPS)
         elif option == 1:
-            objective = main_ui.menu(("None", "40 lines", "2 minutes"), starting_option=objective)
+            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 2:
             option = 0
             while True:
