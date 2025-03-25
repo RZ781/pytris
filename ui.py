@@ -59,17 +59,19 @@ class UI:
     def set_colour_mode(self, mode): raise NotImplementedError
 
 class TerminalUI(UI):
-    MODES = ["4 bit", "8 bit", "24 bit"]
+    MODES = ["4 bit", "8 bit", "24 bit", "Monochrome"]
     COLOURS_8_BIT = (232, 160, 40, 166, 21, 129, 45, 255, 243, 196, 118, 226, 27, 165, 51, 255)
     fg_colour_codes = [
         [f"\x1b[3{x}m" for x in range(7)] + [""] + [f"\x1b[9{x}m" for x in range(8)], # 4 bit
         [f"\x1b[38;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
         [f"\x1b[38;2;{r};{g};{b}m" for r, g, b in COLOURS], # 24 bit
+        [""]*7 + ["\x1b[0m"] + [""]*8, # monochrome
     ]
     bg_colour_codes = [
         [""] + [f"\x1b[4{x}m" for x in range(1, 8)] + [f"\x1b[10{x}m" for x in range(8)], # 4 bit
         [f"\x1b[48;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
         [f"\x1b[48;2;{r};{g};{b}m" for r, g, b in COLOURS], # 24 bit
+        ["\x1b[0m"] + ["\x1b[7m"]*15, # monochrome
     ]
     reset_code = "\x1b[0m"
 
