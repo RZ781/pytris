@@ -124,17 +124,32 @@ class Piece:
             self.y = self.base.spawn_y
 
     def rotate(self, rotation_change):
+        # O pieces don't rotate
+        if self.base is pieces[PIECE_O]:
+            return True
+        # handle 180 rotations
         old_rotation = self.rotation
-        old_x = self.x
-        old_y = self.y
         self.rotation += rotation_change
         self.rotation %= 4
-        for dy in (0, 1, 2, -1):
-            for dx in (0, 1, -1, 2, -2):
-                self.x = old_x + dx
-                self.y = old_y + dy
-                if not self.intersect():
-                    return True
+        if rotation_change % 4 == 2:
+            if not self.intersect():
+                return True
+            self.rotation = old_rotation
+            return False
+        # check kick table
+        old_x = self.x
+        old_y = self.y
+        clockwise = rotation_change % 4 == 1
+        kick_table = I_KICK_TABLE if self.base is pieces[PIECE_I] else MAIN_KICK_TABLE
+        index = old_rotation if clockwise else self.rotation
+        for dx, dy in kick_table[index]:
+            if not clockwise:
+                dx = -dx
+                dy = -dy
+            self.x = old_x + dx
+            self.y = old_y + dy
+            if not self.intersect():
+                return True
         self.x = old_x
         self.y = old_y
         self.rotation = old_rotation
@@ -396,3 +411,19 @@ pieces = [
     PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2),
     PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2),
 ]
+
+KICKS = ((0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2))
+
+MAIN_KICK_TABLE = (
+        KICKS,
+        tuple((-x, -y) for x, y in KICKS),
+        tuple((-x, y) for x, y in KICKS),
+        tuple((x, -y) for x, y in KICKS),
+)
+
+I_KICK_TABLE = (
+    ((0, 0), (-2, 0), (1, 0), (-2, 1), (1, -2)),
+    ((0, 0), (-1, 0), (2, 0), (-1, -2), (2, 1)),
+    ((0, 0), (2, 0), (-1, 0), (2, -1), (-1, 2)),
+    ((0, 0), (1, 0), (-2, 0), (1, 2), (-2, -1))
+)
