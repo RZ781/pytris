@@ -2,5 +2,4 @@
  - add option for infinite hold
  - add other rotation systems
  - read keys from X or wayland rather than terminal to allow for configurable handling settings
- - windows port
  - add multiplayer

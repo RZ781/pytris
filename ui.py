@@ -1,4 +1,4 @@
-import sys, select, termios, time, os, shutil
+import sys, time, os, shutil
 
 COLOUR_BLACK    = 0
 COLOUR_RED      = 1
@@ -47,8 +47,8 @@ class Menu:
     def resize(self, width, height): raise NotImplementedError
 
 class UI:
-    def init(self): pass
-    def quit(self): pass
+    def init(self): raise NotImplementedError
+    def quit(self): raise NotImplementedError
     def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK): raise NotImplementedError
     def set_pixel(self, colour, x, y): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
@@ -58,7 +58,7 @@ class UI:
     def get_colour_modes(self): raise NotImplementedError
     def set_colour_mode(self, mode): raise NotImplementedError
 
-class TerminalUI(UI):
+class BaseTerminalUI(UI):
     MODES = ["4 bit", "8 bit", "24 bit", "Monochrome"]
     COLOURS_8_BIT = (232, 160, 40, 166, 21, 129, 45, 255, 243, 196, 118, 226, 27, 165, 51, 255)
     fg_colour_codes = [
@@ -85,25 +85,8 @@ class TerminalUI(UI):
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
 
-    def init(self):
-        # update terminal options
-        self.initial_options = termios.tcgetattr(0)
-        custom_options = self.initial_options.copy()
-        custom_options[3] &= ~termios.ECHO
-        custom_options[3] &= ~termios.ICANON
-        termios.tcsetattr(0, termios.TCSANOW, custom_options)
-
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
-
-    def quit(self):
-        # reset terminal options
-        termios.tcsetattr(0, termios.TCSANOW, self.initial_options)
-        # reset terminal
-        self.set_fg_colour(COLOUR_WHITE)
-        self.set_bg_colour(COLOUR_BLACK)
-        self.goto(0, 0)
-        self.update_screen()
 
     def set_fg_colour(self, colour):
         if colour != self.fg_colour:
@@ -151,39 +134,10 @@ class TerminalUI(UI):
         sys.stdout.flush()
         self.buffer = ""
 
-    def main_loop(self, menu, tps=60):
-        try:
-            self.clear()
-            self.update_screen()
-            menu.init(self)
-            time_left = 1/tps
-            while True:
-                start_time = time.perf_counter()
-                r, _, _ = select.select([0], [], [], time_left)
-                terminal_size = shutil.get_terminal_size()
-                width = terminal_size.columns // 2
-                height = terminal_size.lines
-                if width != self.width or height != self.height:
-                    self.width = width
-                    self.height = height
-                    menu.resize(width, height)
-                end_time = time.perf_counter()
-                time_left -= end_time - start_time
-                if r:
-                    menu.key(os.read(0, 100).decode("utf8"))
-                while time_left < 0:
-                    time_left += 1/tps
-                    menu.tick()
-        except ExitException:
-            return
-
     def menu(self, options, starting_option=0):
         menu = TerminalMenu(options, starting_option)
         self.main_loop(menu)
         return menu.current
-
-    def get_key(self):
-        return os.read(0, 100).decode("utf8")
 
     def get_colour_modes(self):
         return TerminalUI.MODES
@@ -231,10 +185,115 @@ class TerminalMenu:
             self.current -= 1
         elif c == '\x1b[B' or c == 'j':
             self.current += 1
-        elif c == '\n':
+        elif c == '\n' or c == ' ':
             raise ExitException
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
     def tick(self):
         pass
+
+if os.name == "posix":
+    import select, termios
+    class TerminalUI(BaseTerminalUI):
+        def init(self):
+            # update terminal options
+            self.initial_options = termios.tcgetattr(0)
+            custom_options = self.initial_options.copy()
+            custom_options[3] &= ~termios.ECHO
+            custom_options[3] &= ~termios.ICANON
+            termios.tcsetattr(0, termios.TCSANOW, custom_options)
+
+        def quit(self):
+            # reset terminal options
+            termios.tcsetattr(0, termios.TCSANOW, self.initial_options)
+            # reset terminal
+            self.set_fg_colour(COLOUR_WHITE)
+            self.set_bg_colour(COLOUR_BLACK)
+            self.goto(0, 0)
+            self.update_screen()
+
+        def main_loop(self, menu, tps=60):
+            try:
+                self.clear()
+                self.update_screen()
+                menu.init(self)
+                time_left = 1/tps
+                while True:
+                    start_time = time.perf_counter()
+                    r, _, _ = select.select([0], [], [], time_left)
+                    terminal_size = shutil.get_terminal_size()
+                    width = terminal_size.columns // 2
+                    height = terminal_size.lines
+                    if width != self.width or height != self.height:
+                        self.width = width
+                        self.height = height
+                        menu.resize(width, height)
+                    end_time = time.perf_counter()
+                    time_left -= end_time - start_time
+                    if r:
+                        menu.key(os.read(0, 100).decode("utf8"))
+                    while time_left < 0:
+                        time_left += 1/tps
+                        menu.tick()
+            except ExitException:
+                return
+
+        def get_key(self):
+            return os.read(0, 100).decode("utf8")
+
+elif os.name == "nt":
+    import msvcrt
+    class TerminalUI(BaseTerminalUI):
+        def init(self):
+            pass
+
+        def quit(self):
+            self.set_fg_colour(COLOUR_WHITE)
+            self.set_bg_colour(COLOUR_BLACK)
+            self.goto(0, 0)
+            self.update_screen()
+
+        def main_loop(self, menu, tps=60):
+            try:
+                self.clear()
+                self.update_screen()
+                menu.init(self)
+                while True:
+                    terminal_size = shutil.get_terminal_size()
+                    width = terminal_size.columns // 2
+                    height = terminal_size.lines
+                    if width != self.width or height != self.height:
+                        self.width = width
+                        self.height = height
+                        menu.resize(width, height)
+                    end_time = time.perf_counter()
+                    if msvcrt.kbhit():
+                        menu.key(self.get_key())
+                    menu.tick()
+                    time.sleep(1/tps)
+            except ExitException:
+                return
+
+        def get_key(self):
+            c = msvcrt.getwch()
+            if c == '\r':
+                return '\n'
+            if c == 'à':
+                c = msvcrt.getwch()
+                if c == 'H':
+                    return "\x1b[A"
+                if c == 'P':
+                    return "\x1b[B"
+                if c == 'M':
+                    return "\x1b[C"
+                if c == 'K':
+                    return "\x1b[D"
+                return "à" + c
+            if c == "\x00":
+                c = msvcrt.getwch()
+                return "\x00" + c
+            return c
+
+else:
+    exit("Unsupported operating system")
