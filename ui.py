@@ -37,6 +37,19 @@ COLOURS = (
     (255, 255, 255),
 )
 
+SCANCODE_TO_ESCAPE_CODE = {
+    0x48: "\x1b[A", # up
+    0x50: "\x1b[B", # down
+    0x4D: "\x1b[C", # right
+    0x4B: "\x1b[D", # left
+    0x47: "\x1b[1~", # home
+    0x52: "\x1b[2~", # insert
+    0x53: "\x1b[3~", # delete
+    0x4F: "\x1b[4~", # end
+    0x49: "\x1b[5~", # page up
+    0x51: "\x1b[6~", # page down
+}
+
 class ExitException(Exception):
     pass
 
@@ -276,24 +289,16 @@ elif os.name == "nt":
                 return
 
         def get_key(self):
-            c = msvcrt.getwch()
-            if c == '\r':
+            c = msvcrt.getch()
+            if c == b'\r':
                 return '\n'
-            if c == 'à':
-                c = msvcrt.getwch()
-                if c == 'H':
-                    return "\x1b[A"
-                if c == 'P':
-                    return "\x1b[B"
-                if c == 'M':
-                    return "\x1b[C"
-                if c == 'K':
-                    return "\x1b[D"
-                return "à" + c
-            if c == "\x00":
-                c = msvcrt.getwch()
-                return "\x00" + c
-            return c
+            elif c == b'\xe0' or c == b'\x00':
+                scancode = msvcrt.getch()[0]
+                # use an arbritary string as a fallback so the game can still distinguish keys even if it doesn't know what they are
+                s = "\x00" + chr(scancode)
+                return SCANCODE_TO_ESCAPE_CODE.get(scancode, s)
+            else:
+                return chr(c[0])
 
 else:
     exit("Unsupported operating system")

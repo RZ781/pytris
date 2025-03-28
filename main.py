@@ -9,8 +9,16 @@ KEYS = {
     "\x1b[D": "Left",
     " ": "Space",
     "\t": "Tab",
-    "\n": "Return"
+    "\n": "Return",
+    "\x1b[1~": "Home",
+    "\x1b[2~": "Insert",
+    "\x1b[3~": "Delete",
+    "\x1b[4~": "End",
+    "\x1b[5~": "Page Up",
+    "\x1b[6~": "Page Down",
+    "\x1b": "Escape",
 }
+
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
 
 def key_name(key):
