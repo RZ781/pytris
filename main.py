@@ -103,7 +103,8 @@ try:
                     continue
                 else:
                     key = option - 2
-                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key].lower()}", 25, option)
+                text = f"Press key for {CONTROL_NAMES[key].lower()}"
+                main_ui.draw_text(text, (main_ui.width - len(text)//2)//2, main_ui.height // 10)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
             config.save("controls", controls)
