@@ -137,9 +137,16 @@ class BaseTerminalUI(UI):
         self.buffer += text
 
     def set_pixel(self, colour, x, y):
-        self.set_bg_colour(colour)
         self.goto(x, y)
-        self.buffer += "  "
+        if self.mode == 3 and colour == COLOUR_BRIGHT_BLACK:
+            self.set_bg_colour(COLOUR_BLACK)
+            self.buffer += "''"
+        elif self.mode == 3 and colour == COLOUR_WHITE:
+            self.set_bg_colour(COLOUR_BLACK)
+            self.buffer += "##"
+        else:
+            self.set_bg_colour(colour)
+            self.buffer += "  "
 
     def update_screen(self):
         self.goto(0, 0)
