@@ -44,6 +44,7 @@ class Piece:
         self.rotation = 0
         self.base = base
         self.game = game
+        self.rotation_last = False
 
     def draw(self, board_x, board_y, colour=None, shadow=True):
         if shadow:
@@ -94,12 +95,8 @@ class Piece:
             self.x -= dx
             self.y -= dy
             return False
+        self.rotation_last = False
         return True
-
-    def hard_drop(self):
-        while not self.on_floor():
-            self.y += 1
-        self.game.lock_piece()
 
     def lock(self):
         for y, row in enumerate(self.base.shapes[self.rotation]):
@@ -133,6 +130,7 @@ class Piece:
         self.rotation %= 4
         if rotation_change % 4 == 2:
             if not self.intersect():
+                self.rotation_last = True
                 return True
             self.rotation = old_rotation
             return False
@@ -149,6 +147,7 @@ class Piece:
             self.x = old_x + dx
             self.y = old_y + dy
             if not self.intersect():
+                self.rotation_last = True
                 return True
         self.x = old_x
         self.y = old_y
@@ -193,6 +192,20 @@ class Game(ui.Menu):
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
+        # t spin detection
+        t_spin = False
+        if self.current_piece.base is pieces[PIECE_T] and self.current_piece.rotation_last:
+            corners = 0
+            for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
+                x = self.current_piece.x + dx
+                y = self.current_piece.y + dy
+                if 0 <= x < 10 and 0 <= y < 20:
+                    if self.board[y][x] != ui.COLOUR_BLACK:
+                        corners += 1
+                else:
+                    corners += 1
+            if corners >= 3:
+                t_spin = True
         # clear lines
         full = []
         for i, line in enumerate(self.board):
@@ -205,7 +218,10 @@ class Game(ui.Menu):
         for i in full:
             self.board.insert(0, [ui.COLOUR_BLACK]*10)
         # add score
-        multiplier = (0, 100, 300, 500, 800)[len(full)]
+        if t_spin:
+            multiplier = (400, 800, 1200, 1600)[len(full)]
+        else:
+            multiplier = (0, 100, 300, 500, 800)[len(full)]
         self.score += multiplier * self.level
         self.lines += len(full)
         self.level = self.lines // 10 + 1
@@ -302,7 +318,8 @@ class Game(ui.Menu):
             return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
         if c == self.controls[KEY_SOFT_DROP]:
-            self.current_piece.move(0, 1)
+            if self.current_piece.move(0, 1):
+                self.score += 1
         if c == self.controls[KEY_HOLD]:
             if not self.held:
                 self.held = True
@@ -334,7 +351,9 @@ class Game(ui.Menu):
                 self.lock_reset()
         if c == self.controls[KEY_HARD_DROP]:
             if self.no_hard_drop_ticks <= 0:
-                self.current_piece.hard_drop()
+                while self.current_piece.move(0, 1):
+                    self.score += 2
+                self.lock_piece()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
