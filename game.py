@@ -320,6 +320,7 @@ class Game(ui.Menu):
         if c == self.controls[KEY_SOFT_DROP]:
             if self.current_piece.move(0, 1):
                 self.score += 1
+                self.redraw_counters()
         if c == self.controls[KEY_HOLD]:
             if not self.held:
                 self.held = True
@@ -382,6 +383,9 @@ class Game(ui.Menu):
                 self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_BRIGHT_BLACK, shadow=False)
             else:
                 self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
+        self.redraw_counters()
+
+    def redraw_counters(self):
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
         self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
         self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
