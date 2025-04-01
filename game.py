@@ -192,20 +192,30 @@ class Game(ui.Menu):
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
+
         # t spin detection
         t_spin = False
+        mini_t_spin = False
         if self.current_piece.base is pieces[PIECE_T] and self.current_piece.rotation_last:
             corners = 0
+            front_corners = 0
+            back_corners = 0
+            front_x, front_y = ((1, 0), (2, 1), (1, 2), (0, 1))[self.current_piece.rotation]
             for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
                 x = self.current_piece.x + dx
                 y = self.current_piece.y + dy
                 if 0 <= x < 10 and 0 <= y < 20:
-                    if self.board[y][x] != ui.COLOUR_BLACK:
-                        corners += 1
+                    corner_filled = self.board[y][x] != ui.COLOUR_BLACK
                 else:
-                    corners += 1
-            if corners >= 3:
+                    corner_filled = True
+                if front_x == dx or front_y == dy:
+                    front_corners += corner_filled
+                else:
+                    back_corners += corner_filled
+            if front_corners == 2 and back_corners >= 1:
                 t_spin = True
+            elif front_corners == 1 and back_corners == 2:
+                mini_t_spin = True
         # clear lines
         full = []
         for i, line in enumerate(self.board):
@@ -220,6 +230,8 @@ class Game(ui.Menu):
         # add score
         if t_spin:
             multiplier = (400, 800, 1200, 1600)[len(full)]
+        elif mini_t_spin:
+            multiplier = (100, 200, 400)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
         self.score += multiplier * self.level

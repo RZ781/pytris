@@ -1,4 +1,4 @@
- - detect mini t spins, combos, b2b
+ - detect combos and b2b
  - add option for infinite hold
  - add other rotation systems
  - read keys from X or wayland rather than terminal to allow for configurable handling settings
