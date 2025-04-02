@@ -175,6 +175,7 @@ class Game(ui.Menu):
         self.held = False
         self.no_hard_drop_ticks = 0
         self.ticks = 0
+        self.b2b = 0
 
     def create_piece(self):
         return Piece(pieces[self.randomiser.next_piece()], self)
@@ -234,6 +235,16 @@ class Game(ui.Menu):
             multiplier = (100, 200, 400)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
+        if t_spin or mini_t_spin:
+            if len(full) > 0:
+                self.b2b += 1
+        else:
+            if len(full) == 4:
+                self.b2b += 1
+            elif len(full) > 0:
+                self.b2b = 0
+        if self.b2b > 1 and len(full) > 0:
+            multiplier = int(multiplier * 1.5)
         self.score += multiplier * self.level
         self.lines += len(full)
         self.level = self.lines // 10 + 1
