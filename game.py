@@ -257,6 +257,17 @@ class Game(ui.Menu):
         self.held = False
         self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
         self.redraw()
+        # action text
+        name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
+        if t_spin:
+            name = "T Spin " + name
+        elif mini_t_spin:
+            name = "Mini T Spin " + name
+        name = name.strip()
+        self.ui.draw_text(" "*20, self.board_x, self.board_y-4)
+        if name:
+            self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
+            self.ui.update_screen()
 
     def lock_reset(self):
         if self.current_piece.on_floor() and self.lock_count:
