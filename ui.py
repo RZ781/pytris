@@ -97,13 +97,16 @@ class BaseTerminalUI(UI):
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
-        colour_mode = config.load("colours")
         self.mode = 1
+        colour_mode = config.load("colours")
         if colour_mode:
             mode = colour_mode["mode"]
             if mode in BaseTerminalUI.MODES:
                 self.mode = BaseTerminalUI.MODES.index(mode)
         self.enable_beep = True
+        beep = config.load("beep")
+        if beep:
+            self.enable_beep = beep["enabled"]
 
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
@@ -179,6 +182,7 @@ class BaseTerminalUI(UI):
                 config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
             elif option == 1:
                 self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.beep else 1) == 0
+                config.save("beep", {"enabled": self.enable_beep})
             else:
                 break
 
