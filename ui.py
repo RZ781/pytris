@@ -103,6 +103,7 @@ class BaseTerminalUI(UI):
             mode = colour_mode["mode"]
             if mode in BaseTerminalUI.MODES:
                 self.mode = BaseTerminalUI.MODES.index(mode)
+        self.enable_beep = True
 
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
@@ -155,7 +156,8 @@ class BaseTerminalUI(UI):
             self.buffer += "  "
 
     def beep(self):
-        self.buffer += "\x07"
+        if self.enable_beep:
+            self.buffer += "\x07"
 
     def update_screen(self):
         self.goto(0, 0)
@@ -176,7 +178,7 @@ class BaseTerminalUI(UI):
                 self.mode = self.menu(BaseTerminalUI.MODES, starting_option=self.mode)
                 config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
             elif option == 1:
-                self.beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.beep else 1)
+                self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.beep else 1) == 0
             else:
                 break
 
