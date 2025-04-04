@@ -217,6 +217,7 @@ class Game(ui.Menu):
                 t_spin = True
             elif front_corners == 1 and back_corners == 2:
                 mini_t_spin = True
+
         # clear lines
         full = []
         for i, line in enumerate(self.board):
@@ -228,6 +229,7 @@ class Game(ui.Menu):
             offset += 1
         for i in full:
             self.board.insert(0, [ui.COLOUR_BLACK]*10)
+
         # add score
         if t_spin:
             multiplier = (400, 800, 1200, 1600)[len(full)]
@@ -249,6 +251,7 @@ class Game(ui.Menu):
         self.lines += len(full)
         self.level = self.lines // 10 + 1
         self.fall_speed = 1.2 + self.level * 0.5
+
         # reset state
         self.ground_ticks = LOCK_TIME * TPS
         self.fall_ticks = TPS / self.fall_speed
@@ -257,6 +260,7 @@ class Game(ui.Menu):
         self.held = False
         self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
         self.redraw()
+
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
         if t_spin:
@@ -268,6 +272,8 @@ class Game(ui.Menu):
         if name:
             self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
             self.ui.update_screen()
+        if len(full) > 0:
+            self.ui.beep()
 
     def lock_reset(self):
         if self.current_piece.on_floor() and self.lock_count:

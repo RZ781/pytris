@@ -1,4 +1,5 @@
 import sys, time, os, shutil
+import config
 
 COLOUR_BLACK    = 0
 COLOUR_RED      = 1
@@ -64,12 +65,12 @@ class UI:
     def quit(self): raise NotImplementedError
     def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK): raise NotImplementedError
     def set_pixel(self, colour, x, y): raise NotImplementedError
+    def beep(self): raise NotImplementedError
     def update_screen(self): raise NotImplementedError
     def main_loop(self, menu, tps=10): raise NotImplementedError
     def menu(self, options, starting_option=0): raise NotImplementedError
     def get_key(self): raise NotImplementedError
-    def get_colour_modes(self): raise NotImplementedError
-    def set_colour_mode(self, mode): raise NotImplementedError
+    def options_menu(self): raise NotImplementedError
 
 class BaseTerminalUI(UI):
     MODES = ["4 bit", "8 bit", "24 bit", "Monochrome"]
@@ -91,12 +92,17 @@ class BaseTerminalUI(UI):
     def __init__(self):
         self.fg_colour = COLOUR_WHITE
         self.bg_colour = COLOUR_BLACK
-        self.mode = 1
         self.buffer = ""
         self.inital_options = None
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
+        colour_mode = config.load("colours")
+        self.mode = 1
+        if colour_mode:
+            mode = colour_mode["mode"]
+            if mode in BaseTerminalUI.MODES:
+                self.mode = BaseTerminalUI.MODES.index(mode)
 
     def clear(self):
         self.buffer += "\x1b[0m\x1b[2J"
@@ -148,6 +154,9 @@ class BaseTerminalUI(UI):
             self.set_bg_colour(colour)
             self.buffer += "  "
 
+    def beep(self):
+        self.buffer += "\x07"
+
     def update_screen(self):
         self.goto(0, 0)
         sys.stdout.write(self.buffer)
@@ -159,11 +168,17 @@ class BaseTerminalUI(UI):
         self.main_loop(menu)
         return menu.current
 
-    def get_colour_modes(self):
-        return TerminalUI.MODES
-
-    def set_colour_mode(self, mode):
-        self.mode = mode
+    def options_menu(self):
+        options = ("Colours", "Beep", "Close")
+        while True:
+            option = self.menu(options)
+            if option == 0:
+                self.mode = self.menu(BaseTerminalUI.MODES, starting_option=self.mode)
+                config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
+            elif option == 1:
+                self.beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.beep else 1)
+            else:
+                break
 
 class TerminalMenu:
     def __init__(self, options, current):
