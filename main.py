@@ -17,6 +17,7 @@ KEYS = {
     "\x1b[5~": "Page Up",
     "\x1b[6~": "Page Down",
     "\x1b": "Escape",
+    "\x7f": "Backspace"
 }
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")

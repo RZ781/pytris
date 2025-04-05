@@ -49,6 +49,7 @@ SCANCODE_TO_ESCAPE_CODE = {
     0x4F: "\x1b[4~", # end
     0x49: "\x1b[5~", # page up
     0x51: "\x1b[6~", # page down
+    0x08: "\x7f", # delete
 }
 
 class ExitException(Exception):
