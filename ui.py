@@ -104,7 +104,7 @@ class BaseTerminalUI(UI):
             mode = colour_mode["mode"]
             if mode in BaseTerminalUI.MODES:
                 self.mode = BaseTerminalUI.MODES.index(mode)
-        self.enable_beep = True
+        self.enable_beep = False
         beep = config.load("beep")
         if beep:
             self.enable_beep = beep["enabled"]
