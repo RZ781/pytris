@@ -268,8 +268,10 @@ class Game(ui.Menu):
             name = "T Spin " + name
         elif mini_t_spin:
             name = "Mini T Spin " + name
+        if self.b2b > 1 and len(full) > 0:
+            name = "B2B " + name
         name = name.strip()
-        self.ui.draw_text(" "*20, self.board_x, self.board_y-4)
+        self.ui.draw_text(" "*24, self.board_x-1, self.board_y-4)
         if name:
             self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
             self.ui.update_screen()
