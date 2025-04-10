@@ -31,6 +31,7 @@ main_ui = ui.TerminalUI()
 bag_type = 0
 objective = game.OBJECTIVE_NONE
 infinite_soft_drop = False
+infinite_hold = False
 
 default_controls = {
     game.KEY_LEFT: "\x1b[D",
@@ -54,7 +55,7 @@ try:
     main_ui.init()
     playing = True
     while playing:
-        option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "UI Options", "Quit"))
+        option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "UI Options", "Quit"))
         if option == 0:
             if bag_type == 0:
                 randomiser = game.BagRandomiser(1, 0)
@@ -84,7 +85,7 @@ try:
             elif objective == 5:
                 objective_type = game.OBJECTIVE_TIME
                 objective_count = 120
-            main_ui.main_loop(game.Game(objective_type, objective_count, randomiser, controls, infinite_soft_drop), tps=game.TPS)
+            main_ui.main_loop(game.Game(objective_type, objective_count, randomiser, controls, infinite_soft_drop, infinite_hold), tps=game.TPS)
         elif option == 1:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 2:
@@ -109,6 +110,8 @@ try:
         elif option == 4:
             infinite_soft_drop = main_ui.menu(("Enable", "Disable")) == 0
         elif option == 5:
+            infinite_hold = main_ui.menu(("Enable", "Disable")) == 0
+        elif option == 6:
             main_ui.options_menu()
         else:
             playing = False

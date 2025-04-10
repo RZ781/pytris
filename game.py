@@ -155,10 +155,11 @@ class Piece:
         return False
 
 class Game(ui.Menu):
-    def __init__(self, objective_type, objective_count, randomiser, controls, infinite_soft_drop):
+    def __init__(self, objective_type, objective_count, randomiser, controls, infinite_soft_drop, infinite_hold):
         self.objective_type = objective_type
         self.objective_count = objective_count
         self.infinite_soft_drop = infinite_soft_drop
+        self.infinite_hold = infinite_hold
         self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
         self.hold_piece = None
         self.fall_speed = 1.2
@@ -368,7 +369,8 @@ class Game(ui.Menu):
             self.redraw_counters()
         if c == self.controls[KEY_HOLD]:
             if not self.held:
-                self.held = True
+                if not self.infinite_hold:
+                    self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
                 self.fall_ticks = TPS / self.fall_speed
                 self.lock_count = LOCK_COUNT
