@@ -1,4 +1,3 @@
- - detect combos
  - add other rotation systems
  - read keys from X or wayland rather than terminal to allow for configurable handling settings
  - add multiplayer

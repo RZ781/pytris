@@ -178,6 +178,7 @@ class Game(ui.Menu):
         self.no_hard_drop_ticks = 0
         self.ticks = 0
         self.b2b = 0
+        self.combo = 0
 
     def create_piece(self):
         return Piece(pieces[self.randomiser.next_piece()], self)
@@ -247,12 +248,17 @@ class Game(ui.Menu):
                 self.b2b += 1
             elif len(full) > 0:
                 self.b2b = 0
+        multiplier += self.combo * 50
         if self.b2b > 1 and len(full) > 0:
             multiplier = int(multiplier * 1.5)
         self.score += multiplier * self.level
         self.lines += len(full)
         self.level = self.lines // 10 + 1
         self.fall_speed = 1.2 + self.level * 0.5
+        if len(full) > 0:
+            self.combo += 1
+        else:
+            self.combo = 0
 
         # reset state
         self.ground_ticks = LOCK_TIME * TPS
@@ -266,11 +272,13 @@ class Game(ui.Menu):
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
         if t_spin:
-            name = "T Spin " + name
+            name = f"T Spin {name}"
         elif mini_t_spin:
-            name = "Mini T Spin " + name
+            name = f"Mini T Spin {name}"
         if self.b2b > 1 and len(full) > 0:
-            name = "B2B " + name
+            name = f"B2B {name}"
+        if self.combo > 1:
+            name = f"{name} Combo {self.combo-1}"
         name = name.strip()
         self.ui.draw_text(" "*24, self.board_x-1, self.board_y-4)
         if name:
