@@ -101,7 +101,7 @@ class Piece:
     def lock(self):
         for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
-            if y < 0:
+            if any(row) and y < 0:
                 return False
             for x, c in enumerate(row):
                 x += self.x
