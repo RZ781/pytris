@@ -280,7 +280,7 @@ class Game(ui.Menu):
         if self.combo > 1:
             name = f"{name} Combo {self.combo-1}"
         name = name.strip()
-        self.ui.draw_text(" "*24, self.board_x-1, self.board_y-4)
+        self.ui.draw_text(" "*32, self.board_x-3, self.board_y-4)
         if name:
             self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
             self.ui.update_screen()
