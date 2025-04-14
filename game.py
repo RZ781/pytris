@@ -300,16 +300,12 @@ class Game(ui.Menu):
         self.board_x = (width - BOARD_WIDTH) // 2
         self.board_y = (height - BOARD_HEIGHT) // 2
         self.hold_x = self.board_x - 5
-        self.hold_y = self.board_y + 2
+        self.hold_y = self.board_y + 1
         self.next_x = self.board_x + 11
-        self.next_y = self.board_y + 2
+        self.next_y = self.board_y + 1
         self.counter_x = self.board_x - 8
         self.counter_y = self.board_y + 15
         self.ui.clear()
-        for x in range(12):
-            for y in range(3):
-                # draw the gray border 3 above the main board
-                self.ui.set_pixel(ui.COLOUR_BRIGHT_BLACK, x+self.board_x-1, y+self.board_y-3)
         for x in range(12):
             for y in range(21):
                 if x in (0, 11) or y in (0, 20):
@@ -414,9 +410,6 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def redraw(self):
-        for y in range(2):
-            for x in range(10):
-                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.board_x, y+self.board_y-2)
         for y, row in enumerate(self.board):
             ty = y + self.board_y
             for x, c in enumerate(row):
