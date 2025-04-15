@@ -73,13 +73,8 @@ class Piece:
             y += self.y
             for x, c in enumerate(row):
                 x += self.x
-                if c:
-                    if y >= len(self.game.board):
-                        return True
-                    if not 0 <= x < len(self.game.board[y]):
-                        return True
-                    if y >= 0 and self.game.board[y][x] != ui.COLOUR_BLACK:
-                        return True
+                if c and self.game.board_get(x, y):
+                    return True
         return False
 
     def on_floor(self):
@@ -106,7 +101,7 @@ class Piece:
             for x, c in enumerate(row):
                 x += self.x
                 if c:
-                    self.game.board[y][x] = self.base.colour
+                    self.game.board_set(x, y, self.base.colour)
         return True
 
     def reset(self, hold=False):
@@ -160,7 +155,7 @@ class Game(ui.Menu):
         self.objective_count = objective_count
         self.infinite_soft_drop = infinite_soft_drop
         self.infinite_hold = infinite_hold
-        self.board = [[ui.COLOUR_BLACK]*10 for i in range(20)]
+        self.board = {i: [ui.COLOUR_BLACK]*10 for i in range(20)}
         self.hold_piece = None
         self.fall_speed = 1.2
         self.fall_ticks = TPS / self.fall_speed
@@ -179,6 +174,20 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
+
+    def board_get(self, x, y):
+        if y > 19:
+            return True
+        if not 0 <= x < 10:
+            return True
+        if y not in self.board:
+            return False
+        return self.board[y][x] != ui.COLOUR_BLACK
+
+    def board_set(self, x, y, colour):
+        if y not in self.board:
+            self.board[y] = [ui.COLOUR_BLACK] * 10
+        self.board[y][x] = colour
 
     def create_piece(self):
         return Piece(pieces[self.randomiser.next_piece()], self)
@@ -209,7 +218,7 @@ class Game(ui.Menu):
                 x = self.current_piece.x + dx
                 y = self.current_piece.y + dy
                 if 0 <= x < 10 and 0 <= y < 20:
-                    corner_filled = self.board[y][x] != ui.COLOUR_BLACK
+                    corner_filled = self.board_get(x, y)
                 else:
                     corner_filled = True
                 if front_x == dx or front_y == dy:
@@ -223,15 +232,19 @@ class Game(ui.Menu):
 
         # clear lines
         full = []
-        for i, line in enumerate(self.board):
-            if all([x != ui.COLOUR_BLACK for x in line]):
-                full.append(i)
+        for y, line in self.board.items():
+            if all([c != ui.COLOUR_BLACK for c in line]):
+                full.append(y)
         offset = 0
-        for i in full:
-            del self.board[i-offset]
-            offset += 1
-        for i in full:
-            self.board.insert(0, [ui.COLOUR_BLACK]*10)
+        rows = list(reversed(self.board.keys()))
+        for i in rows:
+            if i in full:
+                del self.board[i]
+                offset += 1
+            else:
+                if offset:
+                    self.board[i+offset] = self.board[i]
+                    del self.board[i]
 
         # add score
         if t_spin:
@@ -410,7 +423,7 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def redraw(self):
-        for y, row in enumerate(self.board):
+        for y, row in self.board.items():
             ty = y + self.board_y
             for x, c in enumerate(row):
                 tx = x + self.board_x
