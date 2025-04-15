@@ -155,7 +155,7 @@ class Game(ui.Menu):
         self.objective_count = objective_count
         self.infinite_soft_drop = infinite_soft_drop
         self.infinite_hold = infinite_hold
-        self.board = {i: [ui.COLOUR_BLACK]*10 for i in range(20)}
+        self.board = {}
         self.hold_piece = None
         self.fall_speed = 1.2
         self.fall_ticks = TPS / self.fall_speed
@@ -236,13 +236,14 @@ class Game(ui.Menu):
             if all([c != ui.COLOUR_BLACK for c in line]):
                 full.append(y)
         offset = 0
-        rows = list(reversed(self.board.keys()))
+        rows = sorted(self.board.keys())
+        rows.reverse()
         for i in rows:
             if i in full:
                 del self.board[i]
                 offset += 1
             else:
-                if offset:
+                if offset > 0:
                     self.board[i+offset] = self.board[i]
                     del self.board[i]
 
@@ -318,20 +319,6 @@ class Game(ui.Menu):
         self.next_y = self.board_y + 1
         self.counter_x = self.board_x - 8
         self.counter_y = self.board_y + 15
-        self.ui.clear()
-        for x in range(12):
-            for y in range(21):
-                if x in (0, 11) or y in (0, 20):
-                    # draw main border
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
-        for x in range(5):
-            for y in range(6):
-                if x == 0 or y in (0, 5):
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.hold_x-1, y+self.hold_y-1)
-        for x in range(5):
-            for y in range(14):
-                if x == 4 or y in (0, 13):
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.next_x, y+self.next_y-1)
         self.redraw()
 
     def tick(self):
@@ -423,6 +410,20 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def redraw(self):
+        self.ui.clear()
+        for x in range(12):
+            for y in range(21):
+                if x in (0, 11) or y == 20:
+                    # draw main border
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
+        for x in range(5):
+            for y in range(6):
+                if x == 0 or y in (0, 5):
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.hold_x-1, y+self.hold_y-1)
+        for x in range(5):
+            for y in range(14):
+                if x == 4 or y in (0, 13):
+                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.next_x, y+self.next_y-1)
         for y, row in self.board.items():
             ty = y + self.board_y
             for x, c in enumerate(row):
