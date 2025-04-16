@@ -110,7 +110,7 @@ class BaseTerminalUI(UI):
             self.enable_beep = beep["enabled"]
 
     def clear(self):
-        self.buffer += "\x1b[0m\x1b[2J"
+        self.buffer += "\x1b[0m\x1b[2J\x1b[3J"
 
     def set_fg_colour(self, colour):
         if colour != self.fg_colour:
