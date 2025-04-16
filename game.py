@@ -96,13 +96,10 @@ class Piece:
     def lock(self):
         for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
-            if any(row) and y < 0:
-                return False
             for x, c in enumerate(row):
                 x += self.x
                 if c:
                     self.game.board_set(x, y, self.base.colour)
-        return True
 
     def reset(self, hold=False):
         self.rotation = 0
@@ -199,12 +196,7 @@ class Game(ui.Menu):
         return piece
 
     def lock_piece(self):
-        success = self.current_piece.lock()
-        if not success:
-            self.ui.draw_text("You died", self.board_x+3, self.board_y+7)
-            self.ui.update_screen()
-            self.death_ticks = TPS * 2
-            return
+        self.current_piece.lock()
 
         # t spin detection
         t_spin = False
@@ -282,6 +274,11 @@ class Game(ui.Menu):
         self.held = False
         self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
         self.redraw()
+        if self.current_piece.intersect():
+            self.ui.draw_text("You died", self.board_x+3, self.board_y+7)
+            self.ui.update_screen()
+            self.death_ticks = TPS * 2
+            return
 
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
