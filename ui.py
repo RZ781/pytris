@@ -98,7 +98,14 @@ class BaseTerminalUI(UI):
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
-        self.mode = 1
+        terminal = os.environ.get("TERM", "")
+        colour = os.environ.get("COLORTERM", "")
+        if "256color" in terminal:
+            self.mode = 1
+        elif colour == "24bit" or colour == "truecolor":
+            self.mode = 2
+        else:
+            self.mode = 0
         colour_mode = config.load("colours")
         if colour_mode:
             mode = colour_mode["mode"]
