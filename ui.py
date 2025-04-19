@@ -98,14 +98,7 @@ class BaseTerminalUI(UI):
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
-        terminal = os.environ.get("TERM", "")
-        colour = os.environ.get("COLORTERM", "")
-        if "256color" in terminal:
-            self.mode = 1
-        elif colour == "24bit" or colour == "truecolor":
-            self.mode = 2
-        else:
-            self.mode = 0
+        self.mode = self.detect_colour_mode()
         colour_mode = config.load("colours")
         if colour_mode:
             mode = colour_mode["mode"]
@@ -291,6 +284,16 @@ if os.name == "posix":
         def get_key(self):
             return os.read(0, 100).decode("utf8")
 
+        def detect_colour_mode(self):
+            terminal = os.environ.get("TERM", "")
+            colour = os.environ.get("COLORTERM", "")
+            if "256color" in terminal:
+                return 1
+            elif colour == "24bit" or colour == "truecolor":
+                return 2
+            else:
+                return 0
+
 elif os.name == "nt":
     import msvcrt
     class TerminalUI(BaseTerminalUI):
@@ -335,6 +338,9 @@ elif os.name == "nt":
                 return SCANCODE_TO_ESCAPE_CODE.get(scancode, s)
             else:
                 return chr(c[0])
+
+        def detect_colour_mode(self):
+            return 1
 
 else:
     exit("Unsupported operating system")
