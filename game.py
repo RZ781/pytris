@@ -443,12 +443,12 @@ class Game(ui.Menu):
             else:
                 self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
         self.redraw_counters()
+        self.ui.update_screen()
 
     def redraw_counters(self):
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
         self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
         self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
-        self.ui.update_screen()
 
 class Randomiser:
     def next_piece(self): raise NotImplemented
