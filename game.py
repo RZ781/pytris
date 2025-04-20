@@ -45,6 +45,7 @@ class Piece:
         self.base = base
         self.game = game
         self.rotation_last = False
+        self.last_kick = 0
 
     def draw(self, board_x, board_y, colour=None, shadow=True):
         if shadow:
@@ -123,6 +124,7 @@ class Piece:
         if rotation_change % 4 == 2:
             if not self.intersect():
                 self.rotation_last = True
+                self.last_kick = 0
                 return True
             self.rotation = old_rotation
             return False
@@ -132,7 +134,8 @@ class Piece:
         clockwise = rotation_change % 4 == 1
         kick_table = I_KICK_TABLE if self.base is pieces[PIECE_I] else MAIN_KICK_TABLE
         index = old_rotation if clockwise else self.rotation
-        for dx, dy in kick_table[index]:
+        for i, kick in enumerate(kick_table[index]):
+            dx, dy = kick
             if not clockwise:
                 dx = -dx
                 dy = -dy
@@ -140,6 +143,7 @@ class Piece:
             self.y = old_y + dy
             if not self.intersect():
                 self.rotation_last = True
+                self.last_kick = i
                 return True
         self.x = old_x
         self.y = old_y
@@ -220,7 +224,10 @@ class Game(ui.Menu):
             if front_corners == 2 and back_corners >= 1:
                 t_spin = True
             elif front_corners == 1 and back_corners == 2:
-                mini_t_spin = True
+                if self.current_piece.last_kick == 4:
+                    t_spin = True
+                else:
+                    mini_t_spin = True
 
         # clear lines
         full = []
