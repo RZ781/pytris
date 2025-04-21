@@ -377,6 +377,8 @@ class Game(ui.Menu):
             self.redraw_counters()
         if c == self.controls[KEY_HOLD]:
             if not self.held:
+                self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
+                self.redraw_hold_piece(colour=ui.COLOUR_BLACK)
                 if not self.infinite_hold:
                     self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
@@ -389,7 +391,7 @@ class Game(ui.Menu):
                     self.current_piece = self.next_piece()
                 self.current_piece.reset()
                 self.hold_piece.reset(hold=True)
-                self.redraw()
+                self.redraw_hold_piece()
         if c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
@@ -413,7 +415,13 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
-    def redraw(self):
+    def redraw_hold_piece(self, colour=None):
+        if self.hold_piece:
+            if colour is None and self.held:
+                colour = ui.COLOUR_BRIGHT_BLACK
+            self.hold_piece.draw(self.hold_x, self.hold_y, colour=colour, shadow=False)
+
+    def redraw(self, update=True):
         self.ui.clear()
         for x in range(12):
             for y in range(21):
@@ -444,13 +452,10 @@ class Game(ui.Menu):
         for y in range(4):
             for x in range(4):
                 self.ui.set_pixel(ui.COLOUR_BLACK, x+self.hold_x, y+self.hold_y)
-        if self.hold_piece:
-            if self.held:
-                self.hold_piece.draw(self.hold_x, self.hold_y, colour=ui.COLOUR_BRIGHT_BLACK, shadow=False)
-            else:
-                self.hold_piece.draw(self.hold_x, self.hold_y, shadow=False)
+        self.redraw_hold_piece()
         self.redraw_counters()
-        self.ui.update_screen()
+        if update:
+            self.ui.update_screen()
 
     def redraw_counters(self):
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
