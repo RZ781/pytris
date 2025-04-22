@@ -262,6 +262,12 @@ class Game(ui.Menu):
             elif len(full) > 0:
                 self.b2b = 0
         multiplier += self.combo * 50
+        all_clear = len(self.board) == 0
+        if all_clear:
+            if self.b2b > 1:
+                multiplier += 3200
+            else:
+                multiplier += (0, 800, 1200, 1800, 2000)[len(full)]
         if self.b2b > 1 and len(full) > 0:
             multiplier = int(multiplier * 1.5)
         self.score += multiplier * self.level
@@ -297,8 +303,9 @@ class Game(ui.Menu):
             name = f"B2B {name}"
         if self.combo > 1:
             name = f"{name} Combo {self.combo-1}"
+        if all_clear:
+            name =  f"All Clear {name}"
         name = name.strip()
-        self.ui.draw_text(" "*32, self.board_x-3, self.board_y-4)
         if name:
             self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
             self.ui.update_screen()
