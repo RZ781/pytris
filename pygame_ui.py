@@ -5,23 +5,32 @@ import config, ui
 try:
     import pygame
     supported = True
+    KEY_TO_ESCAPE_CODE = {
+        pygame.K_UP: "\x1b[A", # up
+        pygame.K_DOWN: "\x1b[B", # down
+        pygame.K_RIGHT: "\x1b[C", # right
+        pygame.K_LEFT: "\x1b[D" # left
+    }
 except Exception:
     supported = False
 
 class PygameUI(ui.UI):
     def __init__(self):
         self.inital_options = None
-        self.width = 50
-        self.height = 40
+        self.width = 40
+        self.height = 30
+        self.pixel_size = 25
         self.enable_beep = False
         self.screen = None
+        self.font = None
         beep = config.load("beep")
         if beep:
             self.enable_beep = beep["enabled"]
 
     def init(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((self.width * 10, self.height * 10))
+        self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size))
+        self.font = pygame.font.SysFont("courier", self.pixel_size)
         pygame.display.set_caption("Pytris")
 
     def quit(self):
@@ -32,9 +41,10 @@ class PygameUI(ui.UI):
             clock = pygame.time.Clock()
             menu.init(self)
             while True:
-                for event in pygame.event.get():
-                    if event.type == pygame.TEXTINPUT:
-                        menu.key(event.text)
+                key = self.get_key(block=False)
+                while key is not None:
+                    menu.key(key)
+                    key = self.get_key(block=False)
                 menu.tick()
                 clock.tick(tps)
         except ui.ExitException:
@@ -44,10 +54,14 @@ class PygameUI(ui.UI):
         self.screen.fill(ui.COLOURS[ui.COLOUR_BLACK])
 
     def draw_text(self, text, x, y, fg_colour=ui.COLOUR_WHITE, bg_colour=ui.COLOUR_BLACK):
-        print(text)
+        image = self.font.render(text, True, ui.COLOURS[fg_colour])
+        rect = (x*self.pixel_size, y*self.pixel_size, image.get_width(), image.get_height())
+        pygame.draw.rect(self.screen, ui.COLOURS[bg_colour], rect)
+        self.screen.blit(image, (x*self.pixel_size, y*self.pixel_size))
 
     def set_pixel(self, colour, x, y):
-        pygame.draw.rect(self.screen, ui.COLOURS[colour], (x*10, y*10, 10, 10))
+        rect = (x*self.pixel_size, y*self.pixel_size, self.pixel_size, self.pixel_size)
+        pygame.draw.rect(self.screen, ui.COLOURS[colour], rect)
 
     def beep(self):
         pass
@@ -70,10 +84,22 @@ class PygameUI(ui.UI):
             else:
                 break
 
-    def get_key(self):
-        for event in pygame.event.get():
-            if event.type == pygame.TEXTINPUT:
-                return event.text
+    def get_key(self, block=True):
+        while True:
+            event = pygame.event.poll()
+            if event.type == pygame.KEYDOWN:
+                if event.unicode == "\r":
+                    return "\n"
+                elif event.unicode:
+                    return event.unicode
+                return KEY_TO_ESCAPE_CODE.get(event.key, f"Key{event.scancode}")
+            elif event.type == pygame.QUIT:
+                raise ui.ExitException
+            elif event.type == pygame.NOEVENT:
+                if block:
+                    continue
+                else:
+                    return None
 
 class PygameMenu:
     def __init__(self, options, current):
@@ -109,7 +135,7 @@ class PygameMenu:
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
     def key(self, c):
-        self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
+        self.ui.set_pixel(ui.COLOUR_BLACK, self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
         if c == '\x1b[A' or c == 'k':
             self.current -= 1
