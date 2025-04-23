@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-import game, ui, config
+import game, ui, config, terminal_ui, pygame_ui
 
 KEYS = {
     "\x1b[A": "Up",
@@ -27,7 +27,10 @@ def key_name(key):
         return KEYS[key]
     return key
 
-main_ui = ui.TerminalUI()
+if pygame_ui.supported and "--pygame" in sys.argv:
+    main_ui = pygame_ui.PygameUI()
+else:
+    main_ui = terminal_ui.TerminalUI()
 bag_type = 0
 objective = game.OBJECTIVE_NONE
 infinite_soft_drop = False
