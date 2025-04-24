@@ -1,5 +1,3 @@
-import sys, time, os, shutil
-import select, termios
 import config, ui
 
 try:
