@@ -393,12 +393,18 @@ class Game(ui.Menu):
                 self.lock_count = LOCK_COUNT
                 if self.hold_piece:
                     self.hold_piece, self.current_piece = self.current_piece, self.hold_piece
+                    first_hold = False
                 else:
                     self.hold_piece = self.current_piece
                     self.current_piece = self.next_piece()
+                    first_hold = True
                 self.current_piece.reset()
                 self.hold_piece.reset(hold=True)
-                self.redraw_hold_piece()
+                if first_hold:
+                    self.redraw()
+                else:
+                    self.redraw_hold_piece()
+                
         if c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
