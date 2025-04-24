@@ -27,8 +27,11 @@ def key_name(key):
         return KEYS[key]
     return key
 
-if pygame_ui.supported and "--pygame" in sys.argv:
-    main_ui = pygame_ui.PygameUI()
+if "--pygame" in sys.argv:
+    if pygame_ui.supported:
+        main_ui = pygame_ui.PygameUI()
+    else:
+        exit("You haven't installed pygame")
 else:
     main_ui = terminal_ui.TerminalUI()
 bag_type = 0
