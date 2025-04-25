@@ -50,12 +50,33 @@ default_controls = {
     game.KEY_180: "a",
     game.KEY_HOLD: "c",
 }
-controls = config.load("controls")
-if controls:
+
+# version 1 of the config stored the keys directly in the json
+# version 2 stores has an attribute for the keys, infinite hold, and infinite soft drop
+controls_config = config.load("controls")
+if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 2):
+    if "version" in controls_config:
+        version = controls_config["version"]
+    else:
+        version = 1
+    if version == 1:
+        keys = controls_config
+    else:
+        keys = controls_config["keys"]
     # json casts all keys to strings, so they must be converted back
-    controls = {int(a): b for a, b in controls.items()}
+    controls = {int(a): b for a, b in keys.items()}
+    if version == 2:
+        infinite_soft_drop = controls_config["infinite_soft_drop"]
+        infinite_hold = controls_config["infinite_hold"]
 else:
     controls = default_controls.copy()
+
+controls_config = {
+    "version": 2,
+    "keys": controls,
+    "infinite_soft_drop": infinite_soft_drop,
+    "infinite_hold": infinite_hold
+}
 
 try:
     main_ui.init()
@@ -110,13 +131,18 @@ try:
                 main_ui.draw_text(text, (main_ui.width - len(text)//2)//2, main_ui.height // 10)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
-            config.save("controls", controls)
+            controls_config["keys"] = controls
+            config.save("controls", controls_config)
         elif option == 3:
             bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         elif option == 4:
             infinite_soft_drop = main_ui.menu(("Enable", "Disable")) == 0
+            controls_config["infinite_soft_drop"] = infinite_soft_drop
+            config.save("controls", controls_config)
         elif option == 5:
             infinite_hold = main_ui.menu(("Enable", "Disable")) == 0
+            controls_config["infinite_hold"] = infinite_hold
+            config.save("controls", controls_config)
         elif option == 6:
             main_ui.options_menu()
         else:
