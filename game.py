@@ -1,5 +1,6 @@
 import random, sys, copy, time
 import ui, random
+from typing import List, Optional, Dict
 
 TPS = 60 # ticks per second
 LOCK_TIME = 0.5 # seconds
@@ -23,7 +24,7 @@ OBJECTIVE_LINES = 1
 OBJECTIVE_TIME = 2
 
 class PieceType:
-    def __init__(self, shape, colour, spawn_x, spawn_y):
+    def __init__(self, shape: List[List[int]], colour: int, spawn_x: int, spawn_y: int) -> None:
         shapes = []
         for i in range(4):
             shapes.append(shape)
@@ -38,7 +39,7 @@ class PieceType:
         self.spawn_y = spawn_y
 
 class Piece:
-    def __init__(self, base, game):
+    def __init__(self, base: PieceType, game: "Game") -> None:
         self.x = base.spawn_x
         self.y = base.spawn_y
         self.rotation = 0
@@ -47,7 +48,7 @@ class Piece:
         self.rotation_last = False
         self.last_kick = 0
 
-    def draw(self, board_x, board_y, colour=None, shadow=True):
+    def draw(self, board_x: int, board_y: int, colour: Optional[int] = None, shadow: bool = True) -> None:
         if shadow:
             old_y = self.y
             while not self.on_floor():
@@ -69,7 +70,7 @@ class Piece:
             for dx in range(count):
                 self.game.ui.set_pixel(colour, tx+dx, ty)
 
-    def intersect(self):
+    def intersect(self) -> bool:
         for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
             for x, c in enumerate(row):
@@ -78,13 +79,13 @@ class Piece:
                     return True
         return False
 
-    def on_floor(self):
+    def on_floor(self) -> bool:
         self.y += 1
         x = self.intersect()
         self.y -= 1
         return x
 
-    def move(self, dx, dy):
+    def move(self, dx: int, dy: int) -> bool:
         self.x += dx
         self.y += dy
         if self.intersect():
@@ -94,7 +95,7 @@ class Piece:
         self.rotation_last = False
         return True
 
-    def lock(self):
+    def lock(self) -> None:
         for y, row in enumerate(self.base.shapes[self.rotation]):
             y += self.y
             for x, c in enumerate(row):
@@ -102,7 +103,7 @@ class Piece:
                 if c:
                     self.game.board_set(x, y, self.base.colour)
 
-    def reset(self, hold=False):
+    def reset(self, hold: bool = False) -> None:
         self.rotation = 0
         if hold:
             if len(self.base.shapes[0]) == 4:
@@ -113,7 +114,7 @@ class Piece:
             self.x = self.base.spawn_x
             self.y = self.base.spawn_y
 
-    def rotate(self, rotation_change):
+    def rotate(self, rotation_change: int) -> bool:
         # O pieces don't rotate
         if self.base is pieces[PIECE_O]:
             return True
@@ -150,8 +151,15 @@ class Piece:
         self.rotation = old_rotation
         return False
 
+class Randomiser:
+    def next_piece(self) -> int: raise NotImplementedError
+
 class Game(ui.Menu):
-    def __init__(self, objective_type, objective_count, randomiser, controls, infinite_soft_drop, infinite_hold):
+    board: Dict[int, List[int]]
+    hold_piece: Optional[Piece]
+    death_ticks: Optional[int]
+
+    def __init__(self, objective_type: int, objective_count: int, randomiser: Randomiser, controls: Dict[int, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
         self.objective_type = objective_type
         self.objective_count = objective_count
         self.infinite_soft_drop = infinite_soft_drop
@@ -176,7 +184,7 @@ class Game(ui.Menu):
         self.b2b = 0
         self.combo = 0
 
-    def board_get(self, x, y):
+    def board_get(self, x: int, y: int) -> bool:
         if y > 19:
             return True
         if not 0 <= x < 10:
@@ -185,21 +193,21 @@ class Game(ui.Menu):
             return False
         return self.board[y][x] != ui.COLOUR_BLACK
 
-    def board_set(self, x, y, colour):
+    def board_set(self, x: int, y: int, colour: int) -> None:
         if y not in self.board:
             self.board[y] = [ui.COLOUR_BLACK] * 10
         self.board[y][x] = colour
 
-    def create_piece(self):
+    def create_piece(self) -> Piece:
         return Piece(pieces[self.randomiser.next_piece()], self)
 
-    def next_piece(self):
+    def next_piece(self) -> Piece:
         self.next_pieces.append(self.create_piece())
         piece = self.next_pieces.pop(0)
         piece.reset()
         return piece
 
-    def lock_piece(self):
+    def lock_piece(self) -> None:
         self.current_piece.lock()
 
         # t spin detection
@@ -285,7 +293,7 @@ class Game(ui.Menu):
         self.lock_count = LOCK_COUNT
         self.current_piece = self.next_piece()
         self.held = False
-        self.no_hard_drop_ticks = MISCLICK_PROTECT_TIME * TPS
+        self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
         self.redraw()
         if self.current_piece.intersect():
             self.ui.draw_text("You died", self.board_x+3, self.board_y+7)
@@ -312,27 +320,27 @@ class Game(ui.Menu):
         if len(full) > 0:
             self.ui.beep()
 
-    def lock_reset(self):
+    def lock_reset(self) -> None:
         if self.current_piece.on_floor() and self.lock_count:
             self.lock_count -= 1
             self.ground_ticks = LOCK_TIME * TPS
 
-    def init(self, main_ui):
+    def init(self, main_ui: ui.UI) -> None:
         self.ui = main_ui
         self.resize(main_ui.width, main_ui.height)
 
-    def resize(self, width, height):
+    def resize(self, width: int, height: int) -> None:
         self.board_x = (width - BOARD_WIDTH) // 2
         self.board_y = (height - BOARD_HEIGHT) // 2
         self.hold_x = self.board_x - 5
         self.hold_y = self.board_y + 1
         self.next_x = self.board_x + 11
         self.next_y = self.board_y + 1
-        self.counter_x = self.board_x - 8
+        self.counter_x = self.board_x - 10
         self.counter_y = self.board_y + 15
         self.redraw()
 
-    def tick(self):
+    def tick(self) -> None:
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
@@ -372,7 +380,7 @@ class Game(ui.Menu):
             self.current_piece.draw(self.board_x, self.board_y)
             self.ui.update_screen()
 
-    def key(self, c):
+    def key(self, c: str) -> None:
         if self.death_ticks is not None:
             return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
@@ -428,13 +436,13 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
-    def redraw_hold_piece(self, colour=None):
+    def redraw_hold_piece(self, colour: Optional[int] = None) -> None:
         if self.hold_piece:
             if colour is None and self.held:
                 colour = ui.COLOUR_BRIGHT_BLACK
             self.hold_piece.draw(self.hold_x, self.hold_y, colour=colour, shadow=False)
 
-    def redraw(self, update=True):
+    def redraw(self, update: bool = True) -> None:
         self.ui.clear()
         for x in range(12):
             for y in range(21):
@@ -470,18 +478,16 @@ class Game(ui.Menu):
         if update:
             self.ui.update_screen()
 
-    def redraw_counters(self):
+    def redraw_counters(self) -> None:
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
         self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
         self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
 
-class Randomiser:
-    def next_piece(self): raise NotImplemented
-
 class ClassicRandomiser(Randomiser):
-    def __init__(self):
-        self.previous = None
-    def next_piece(self):
+    previous: int
+    def __init__(self) -> None:
+        self.previous = 0
+    def next_piece(self) -> int:
         i = self.previous
         while i == self.previous:
             i = random.randint(0, 6)
@@ -489,11 +495,12 @@ class ClassicRandomiser(Randomiser):
         return i
 
 class BagRandomiser(Randomiser):
-    def __init__(self, n_7_pieces, n_extras):
+    bag: List[int]
+    def __init__(self, n_7_pieces: int, n_extras: int) -> None:
         self.n_7_pieces = n_7_pieces;
         self.n_extras = n_extras
         self.bag = []
-    def next_piece(self):
+    def next_piece(self) -> int:
         if not self.bag:
             self.bag = list(range(7)) * self.n_7_pieces
             for i in range(self.n_extras):

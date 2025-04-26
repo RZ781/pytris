@@ -1,5 +1,6 @@
 import sys, time, os, shutil
 import config, ui
+from typing import Optional, Collection, Union
 
 SCANCODE_TO_ESCAPE_CODE = {
     0x48: "\x1b[A", # up
@@ -32,7 +33,7 @@ class BaseTerminalUI(ui.UI):
     ]
     reset_code = "\x1b[0m"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fg_colour = ui.COLOUR_WHITE
         self.bg_colour = ui.COLOUR_BLACK
         self.buffer = ""
@@ -51,10 +52,10 @@ class BaseTerminalUI(ui.UI):
         if beep:
             self.enable_beep = beep["enabled"]
 
-    def clear(self):
+    def clear(self) -> None:
         self.buffer += "\x1b[0m\x1b[2J\x1b[3J"
 
-    def set_fg_colour(self, colour):
+    def set_fg_colour(self, colour: int) -> None:
         if colour != self.fg_colour:
             if colour == ui.COLOUR_WHITE:
                 self.buffer += TerminalUI.reset_code
@@ -67,7 +68,7 @@ class BaseTerminalUI(ui.UI):
                 self.buffer += TerminalUI.fg_colour_codes[self.mode][colour]
                 self.fg_colour = colour
 
-    def set_bg_colour(self, colour):
+    def set_bg_colour(self, colour: int) -> None:
         if colour != self.bg_colour:
             if colour == ui.COLOUR_BLACK:
                 self.buffer += TerminalUI.reset_code
@@ -80,19 +81,19 @@ class BaseTerminalUI(ui.UI):
                 self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
                 self.bg_colour = colour
 
-    def goto(self, x, y):
+    def goto(self, x: int, y: int) -> None:
         self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
 
-    def draw_text(self, text, x, y, fg_colour=ui.COLOUR_WHITE, bg_colour=ui.COLOUR_BLACK):
+    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK) -> None:
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
         self.goto(x, y)
         self.buffer += text
 
-    def set_pixel(self, colour, x, y):
+    def set_pixel(self, colour: int, x: int, y: int) -> None:
         self.goto(x, y)
         if self.mode == 3 and colour == ui.COLOUR_BRIGHT_BLACK:
-            self.set_bg_colou(ui.COLOUR_BLACK)
+            self.set_bg_colour(ui.COLOUR_BLACK)
             self.buffer += "''"
         elif self.mode == 3 and colour == ui.COLOUR_WHITE:
             self.set_bg_colour(ui.COLOUR_BLACK)
@@ -101,22 +102,22 @@ class BaseTerminalUI(ui.UI):
             self.set_bg_colour(colour)
             self.buffer += "  "
 
-    def beep(self):
+    def beep(self) -> None:
         if self.enable_beep:
             self.buffer += "\x07"
 
-    def update_screen(self):
+    def update_screen(self) -> None:
         self.goto(0, 0)
         sys.stdout.write(self.buffer)
         sys.stdout.flush()
         self.buffer = ""
 
-    def menu(self, options, starting_option=0):
+    def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
         menu = TerminalMenu(options, starting_option)
         self.main_loop(menu)
         return menu.current
 
-    def options_menu(self):
+    def options_menu(self) -> None:
         options = ("Colours", "Beep", "Close")
         while True:
             option = self.menu(options)
@@ -124,13 +125,16 @@ class BaseTerminalUI(ui.UI):
                 self.mode = self.menu(BaseTerminalUI.MODES, starting_option=self.mode)
                 config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
             elif option == 1:
-                self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.beep else 1) == 0
+                self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.enable_beep else 1) == 0
                 config.save("beep", {"enabled": self.enable_beep})
             else:
                 break
 
-class TerminalMenu:
-    def __init__(self, options, current):
+    def get_key(self) -> str: raise NotImplementedError
+    def detect_colour_mode(self) -> int: raise NotImplementedError
+
+class TerminalMenu(ui.Menu):
+    def __init__(self, options: Collection[Union[str, Collection[str]]], current: int) -> None:
         self.columns = []
         self.n_options = len(options)
         length = max(len(option) for option in options)
@@ -145,11 +149,12 @@ class TerminalMenu:
                     column.append("")
             self.columns.append(column)
         self.current = current
-        self.ui = None
-    def init(self, ui):
+
+    def init(self, ui: ui.UI) -> None:
         self.ui = ui
         self.resize(ui.width, ui.height)
-    def resize(self, width, height):
+
+    def resize(self, width: int, height: int) -> None:
         self.ui.clear()
         text_width = max(max(len(x)//2 + 4 for x in column) for column in self.columns)
         self.menu_x = (width - text_width) // 2
@@ -162,7 +167,8 @@ class TerminalMenu:
             column_x += max_length // 2 + 4
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
-    def key(self, c):
+
+    def key(self, c: str) -> None:
         self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
         if c == '\x1b[A' or c == 'k':
@@ -174,13 +180,63 @@ class TerminalMenu:
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
-    def tick(self):
+
+    def tick(self) -> None:
         pass
 
-if os.name == "posix":
+if sys.platform == "win32":
+    import msvcrt
+
+    class TerminalUI(BaseTerminalUI):
+        def init(self) -> None:
+            pass
+
+        def quit(self) -> None:
+            self.set_fg_colour(ui.COLOUR_WHITE)
+            self.set_bg_colour(ui.COLOUR_BLACK)
+            self.goto(0, 0)
+            self.update_screen()
+
+        def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
+            try:
+                self.clear()
+                self.update_screen()
+                menu.init(self)
+                while True:
+                    terminal_size = shutil.get_terminal_size()
+                    width = terminal_size.columns // 2
+                    height = terminal_size.lines
+                    if width != self.width or height != self.height:
+                        self.width = width
+                        self.height = height
+                        menu.resize(width, height)
+                    end_time = time.perf_counter()
+                    if msvcrt.kbhit():
+                        menu.key(self.get_key())
+                    menu.tick()
+                    time.sleep(1/tps)
+            except ui.ExitException:
+                return
+
+        def get_key(self) -> str:
+            c = msvcrt.getch()
+            if c == b'\r':
+                return '\n'
+            elif c == b'\xe0' or c == b'\x00':
+                scancode = msvcrt.getch()[0]
+                # use an arbritary string as a fallback so the game can still distinguish keys even if it doesn't know what they are
+                s = "\x00" + chr(scancode)
+                return SCANCODE_TO_ESCAPE_CODE.get(scancode, s)
+            else:
+                return chr(c[0])
+
+        def detect_colour_mode(self) -> int:
+            return 1
+
+else:
     import select, termios
     class TerminalUI(BaseTerminalUI):
-        def init(self):
+        def init(self) -> None:
             # update terminal options
             self.initial_options = termios.tcgetattr(0)
             custom_options = self.initial_options.copy()
@@ -188,7 +244,7 @@ if os.name == "posix":
             custom_options[3] &= ~termios.ICANON
             termios.tcsetattr(0, termios.TCSANOW, custom_options)
 
-        def quit(self):
+        def quit(self) -> None:
             # reset terminal options
             termios.tcsetattr(0, termios.TCSANOW, self.initial_options)
             # reset terminal
@@ -197,7 +253,7 @@ if os.name == "posix":
             self.goto(0, 0)
             self.update_screen()
 
-        def main_loop(self, menu, tps=60):
+        def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
             try:
                 self.clear()
                 self.update_screen()
@@ -223,10 +279,10 @@ if os.name == "posix":
             except ui.ExitException:
                 return
 
-        def get_key(self):
+        def get_key(self) -> str:
             return os.read(0, 100).decode("utf8")
 
-        def detect_colour_mode(self):
+        def detect_colour_mode(self) -> int:
             terminal = os.environ.get("TERM", "")
             colour = os.environ.get("COLORTERM", "")
             if "256color" in terminal:
@@ -235,54 +291,3 @@ if os.name == "posix":
                 return 2
             else:
                 return 0
-
-elif os.name == "nt":
-    import msvcrt
-    class TerminalUI(BaseTerminalUI):
-        def init(self):
-            pass
-
-        def quit(self):
-            self.set_fg_colour(ui.COLOUR_WHITE)
-            self.set_bg_colour(ui.COLOUR_BLACK)
-            self.goto(0, 0)
-            self.update_screen()
-
-        def main_loop(self, menu, tps=60):
-            try:
-                self.clear()
-                self.update_screen()
-                menu.init(self)
-                while True:
-                    terminal_size = shutil.get_terminal_size()
-                    width = terminal_size.columns // 2
-                    height = terminal_size.lines
-                    if width != self.width or height != self.height:
-                        self.width = width
-                        self.height = height
-                        menu.resize(width, height)
-                    end_time = time.perf_counter()
-                    if msvcrt.kbhit():
-                        menu.key(self.get_key())
-                    menu.tick()
-                    time.sleep(1/tps)
-            except ui.ExitException:
-                return
-
-        def get_key(self):
-            c = msvcrt.getch()
-            if c == b'\r':
-                return '\n'
-            elif c == b'\xe0' or c == b'\x00':
-                scancode = msvcrt.getch()[0]
-                # use an arbritary string as a fallback so the game can still distinguish keys even if it doesn't know what they are
-                s = "\x00" + chr(scancode)
-                return SCANCODE_TO_ESCAPE_CODE.get(scancode, s)
-            else:
-                return chr(c[0])
-
-        def detect_colour_mode(self):
-            return 1
-
-else:
-    exit("Unsupported operating system")

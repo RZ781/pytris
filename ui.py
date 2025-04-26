@@ -1,3 +1,5 @@
+from typing import Collection, Union
+
 COLOUR_BLACK    = 0
 COLOUR_RED      = 1
 COLOUR_GREEN    = 2
@@ -39,19 +41,22 @@ class ExitException(Exception):
     pass
 
 class Menu:
-    def init(self, ui): raise NotImplementedError
-    def tick(self): raise NotImplementedError
-    def key(self, c): raise NotImplementedError
-    def resize(self, width, height): raise NotImplementedError
+    def init(self, ui: "UI") -> None: raise NotImplementedError
+    def tick(self) -> None: raise NotImplementedError
+    def key(self, c: str) -> None: raise NotImplementedError
+    def resize(self, width: int, height: int) -> None: raise NotImplementedError
 
 class UI:
-    def init(self): raise NotImplementedError
-    def quit(self): raise NotImplementedError
-    def draw_text(self, text, x, y, fg_colour=COLOUR_WHITE, bg_colour=COLOUR_BLACK): raise NotImplementedError
-    def set_pixel(self, colour, x, y): raise NotImplementedError
-    def beep(self): raise NotImplementedError
-    def update_screen(self): raise NotImplementedError
-    def main_loop(self, menu, tps=10): raise NotImplementedError
-    def menu(self, options, starting_option=0): raise NotImplementedError
-    def get_key(self): raise NotImplementedError
-    def options_menu(self): raise NotImplementedError
+    width: int
+    height: int
+    def init(self) -> None: raise NotImplementedError
+    def quit(self) -> None: raise NotImplementedError
+    def draw_text(self, text: str, x: int, y: int, fg_colour: int = COLOUR_WHITE, bg_colour: int = COLOUR_BLACK) -> None: raise NotImplementedError
+    def set_pixel(self, colour: int, x: int, y: int) -> None: raise NotImplementedError
+    def beep(self) -> None: raise NotImplementedError
+    def clear(self) -> None: raise NotImplementedError
+    def update_screen(self) -> None: raise NotImplementedError
+    def main_loop(self, menu: Menu, tps: int = 10) -> None: raise NotImplementedError
+    def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int: raise NotImplementedError
+    def get_key(self) -> str: raise NotImplementedError
+    def options_menu(self) -> None: raise NotImplementedError

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-import game, ui, config, terminal_ui, pygame_ui
+import game, ui, config, terminal_ui
 
 KEYS = {
     "\x1b[A": "Up",
@@ -22,18 +22,22 @@ KEYS = {
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
 
-def key_name(key):
+def key_name(key: str) -> str:
     if key in KEYS:
         return KEYS[key]
     return key
 
+main_ui: ui.UI
 if "--pygame" in sys.argv:
-    if pygame_ui.supported:
-        main_ui = pygame_ui.PygameUI()
-    else:
+    try:
+        import pygame
+    except Exception:
         exit("You haven't installed pygame")
+    import pygame_ui
+    main_ui = pygame_ui.PygameUI()
 else:
     main_ui = terminal_ui.TerminalUI()
+
 bag_type = 0
 objective = game.OBJECTIVE_NONE
 infinite_soft_drop = False
@@ -84,6 +88,7 @@ try:
     while playing:
         option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "UI Options", "Quit"))
         if option == 0:
+            randomiser: game.Randomiser
             if bag_type == 0:
                 randomiser = game.BagRandomiser(1, 0)
             elif bag_type == 1:
