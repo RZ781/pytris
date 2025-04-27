@@ -2,18 +2,18 @@ import sys, time, os, shutil
 import config, ui
 from typing import Optional, Collection, Union
 
-SCANCODE_TO_ESCAPE_CODE = {
-    0x48: "\x1b[A", # up
-    0x50: "\x1b[B", # down
-    0x4D: "\x1b[C", # right
-    0x4B: "\x1b[D", # left
-    0x47: "\x1b[1~", # home
-    0x52: "\x1b[2~", # insert
-    0x53: "\x1b[3~", # delete
-    0x4F: "\x1b[4~", # end
-    0x49: "\x1b[5~", # page up
-    0x51: "\x1b[6~", # page down
-    0x08: "\x7f", # delete
+SCANCODE_TO_NAME = {
+    0x48: "Up",
+    0x50: "Down",
+    0x4D: "Right",
+    0x4B: "Left",
+    0x47: "Home",
+    0x52: "Insert",
+    0x53: "Delete",
+    0x4F: "End",
+    0x49: "Page Up",
+    0x51: "Page Down",
+    0x08: "Delete"
 }
 
 class BaseTerminalUI(ui.UI):
@@ -171,11 +171,11 @@ class TerminalMenu(ui.Menu):
     def key(self, c: str) -> None:
         self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
-        if c == '\x1b[A' or c == 'k':
+        if c == "Up" or c == 'k':
             self.current -= 1
-        elif c == '\x1b[B' or c == 'j':
+        elif c == "Down" or c == 'j':
             self.current += 1
-        elif c == '\n' or c == ' ':
+        elif c == "Return" or c == "Space":
             raise ui.ExitException
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
@@ -220,15 +220,13 @@ if sys.platform == "win32":
 
         def get_key(self) -> str:
             c = msvcrt.getch()
-            if c == b'\r':
-                return '\n'
-            elif c == b'\xe0' or c == b'\x00':
+            if c == b'\xe0' or c == b'\x00':
                 scancode = msvcrt.getch()[0]
-                # use an arbritary string as a fallback so the game can still distinguish keys even if it doesn't know what they are
-                s = "\x00" + chr(scancode)
-                return SCANCODE_TO_ESCAPE_CODE.get(scancode, s)
+                s = f"Scancode{scancode}"
+                return SCANCODE_TO_NAME.get(scancode, s)
             else:
-                return chr(c[0])
+                s = chr(c[0])
+                return ui.ASCII_TO_NAME.get(s, s)
 
         def detect_colour_mode(self) -> int:
             return 1
@@ -272,7 +270,7 @@ else:
                     end_time = time.perf_counter()
                     time_left -= end_time - start_time
                     if r:
-                        menu.key(os.read(0, 100).decode("utf8"))
+                        menu.key(self.get_key())
                     while time_left < 0:
                         time_left += 1/tps
                         menu.tick()
@@ -280,7 +278,10 @@ else:
                 return
 
         def get_key(self) -> str:
-            return os.read(0, 100).decode("utf8")
+            s = os.read(0, 100).decode("utf8")
+            if s in ui.ESCAPE_CODE_TO_NAME:
+                return ui.ESCAPE_CODE_TO_NAME[s];
+            return ui.ASCII_TO_NAME.get(s, s);
 
         def detect_colour_mode(self) -> int:
             terminal = os.environ.get("TERM", "")

@@ -2,11 +2,11 @@ import config, ui, pygame
 from typing import Optional, Collection, Union
 
 pygame.init()
-KEY_TO_ESCAPE_CODE = {
-    pygame.K_UP: "\x1b[A", # up
-    pygame.K_DOWN: "\x1b[B", # down
-    pygame.K_RIGHT: "\x1b[C", # right
-    pygame.K_LEFT: "\x1b[D" # left
+KEY_TO_NAME = {
+    pygame.K_UP: "Up",
+    pygame.K_DOWN: "Down",
+    pygame.K_RIGHT: "Right",
+    pygame.K_LEFT: "Left"
 }
 
 class PygameUI(ui.UI):
@@ -83,11 +83,9 @@ class PygameUI(ui.UI):
         while True:
             event = pygame.event.poll()
             if event.type == pygame.KEYDOWN:
-                if event.unicode == "\r":
-                    return "\n"
-                elif event.unicode:
-                    return event.unicode
-                return KEY_TO_ESCAPE_CODE.get(event.key, f"Key{event.scancode}")
+                if event.unicode:
+                    return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
+                return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
             elif event.type == pygame.QUIT:
                 raise ui.ExitException
             elif event.type == pygame.NOEVENT:
@@ -137,11 +135,11 @@ class PygameMenu(ui.Menu):
     def key(self, c: str) -> None:
         self.ui.set_pixel(ui.COLOUR_BLACK, self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
-        if c == '\x1b[A' or c == 'k':
+        if c == "Up" or c == 'k':
             self.current -= 1
-        elif c == '\x1b[B' or c == 'j':
+        elif c == "Down" or c == 'j':
             self.current += 1
-        elif c == '\n' or c == ' ':
+        elif c == "Return" or c == "Space":
             raise ui.ExitException
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)

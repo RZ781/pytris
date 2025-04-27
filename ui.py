@@ -37,6 +37,28 @@ COLOURS = (
     (255, 255, 255),
 )
 
+ASCII_TO_NAME = {
+    " ": "Space",
+    "\t": "Tab",
+    "\n": "Return",
+    "\r": "Return",
+    "\x1b": "Escape",
+    "\x7f": "Backspace"
+}
+
+ESCAPE_CODE_TO_NAME = {
+    "\x1b[A": "Up",
+    "\x1b[B": "Down",
+    "\x1b[C": "Right",
+    "\x1b[D": "Left",
+    "\x1b[1~": "Home",
+    "\x1b[2~": "Insert",
+    "\x1b[3~": "Delete",
+    "\x1b[4~": "End",
+    "\x1b[5~": "Page Up",
+    "\x1b[6~": "Page Down",
+}
+
 class ExitException(Exception):
     pass
 

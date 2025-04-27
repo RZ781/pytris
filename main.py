@@ -2,30 +2,7 @@
 import sys
 import game, ui, config, terminal_ui
 
-KEYS = {
-    "\x1b[A": "Up",
-    "\x1b[B": "Down",
-    "\x1b[C": "Right",
-    "\x1b[D": "Left",
-    " ": "Space",
-    "\t": "Tab",
-    "\n": "Return",
-    "\x1b[1~": "Home",
-    "\x1b[2~": "Insert",
-    "\x1b[3~": "Delete",
-    "\x1b[4~": "End",
-    "\x1b[5~": "Page Up",
-    "\x1b[6~": "Page Down",
-    "\x1b": "Escape",
-    "\x7f": "Backspace"
-}
-
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
-
-def key_name(key: str) -> str:
-    if key in KEYS:
-        return KEYS[key]
-    return key
 
 main_ui: ui.UI
 if "--pygame" in sys.argv:
@@ -44,11 +21,11 @@ infinite_soft_drop = False
 infinite_hold = False
 
 default_controls = {
-    game.KEY_LEFT: "\x1b[D",
-    game.KEY_RIGHT: "\x1b[C",
-    game.KEY_SOFT_DROP: "\x1b[B",
-    game.KEY_HARD_DROP: " ",
-    game.KEY_ROTATE: "\x1b[A",
+    game.KEY_LEFT: "Left",
+    game.KEY_RIGHT: "Right",
+    game.KEY_SOFT_DROP: "Down",
+    game.KEY_HARD_DROP: "Space",
+    game.KEY_ROTATE: "Up",
     game.KEY_CLOCKWISE: "x",
     game.KEY_ANTICLOCKWISE: "z",
     game.KEY_180: "a",
@@ -56,9 +33,10 @@ default_controls = {
 }
 
 # version 1 of the config stored the keys directly in the json
-# version 2 stores has an attribute for the keys, infinite hold, and infinite soft drop
+# version 2 and 3 stores has an attribute for the keys, infinite hold, and infinite soft drop
+# version 1 and 2 use escape codes while version 3 use key names
 controls_config = config.load("controls")
-if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 2):
+if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 3):
     if "version" in controls_config:
         version = controls_config["version"]
     else:
@@ -69,14 +47,21 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
         keys = controls_config["keys"]
     # json casts all keys to strings, so they must be converted back
     controls = {int(a): b for a, b in keys.items()}
-    if version == 2:
+    if version >= 2:
         infinite_soft_drop = controls_config["infinite_soft_drop"]
         infinite_hold = controls_config["infinite_hold"]
+    # convert escape codes to key names
+    if version < 3:
+        for control, s in controls.items():
+            if s in ui.ASCII_TO_NAME:
+                controls[control] = ui.ASCII_TO_NAME[s]
+            elif s in ui.ESCAPE_CODE_TO_NAME:
+                controls[control] = ui.ESCAPE_CODE_TO_NAME[s]
 else:
     controls = default_controls.copy()
 
 controls_config = {
-    "version": 2,
+    "version": 3,
     "keys": controls,
     "infinite_soft_drop": infinite_soft_drop,
     "infinite_hold": infinite_hold
@@ -123,7 +108,7 @@ try:
         elif option == 2:
             option = 0
             while True:
-                options = ("Close", "Defaults") + tuple((x, key_name(controls[i])) for i, x in enumerate(CONTROL_NAMES))
+                options = ("Close", "Defaults") + tuple((x, controls[i]) for i, x in enumerate(CONTROL_NAMES))
                 option = main_ui.menu(options, starting_option=option)
                 if option == 0:
                     break
