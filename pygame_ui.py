@@ -87,7 +87,8 @@ class PygameUI(ui.UI):
                     return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
                 return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
             elif event.type == pygame.QUIT:
-                raise ui.ExitException
+                pygame.quit()
+                exit()
             elif event.type == pygame.NOEVENT:
                 return None
 
