@@ -1,5 +1,5 @@
 import config, ui, pygame
-from typing import Optional, Collection, Union
+from typing import Optional, Collection, Union, Dict
 
 pygame.init()
 KEY_TO_NAME = {
@@ -9,9 +9,18 @@ KEY_TO_NAME = {
     pygame.K_LEFT: "Left"
 }
 
+ARR = 5
+DAS = 12
+
+def key_name(event):
+    if event.unicode:
+        return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
+    return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
+
 class PygameUI(ui.UI):
     screen: pygame.Surface
     font: pygame.font.Font
+    keys: Dict[str, int]
 
     def __init__(self) -> None:
         self.inital_options = None
@@ -21,6 +30,7 @@ class PygameUI(ui.UI):
         self.enable_beep = False
         self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size))
         self.font = pygame.font.SysFont("courier", self.pixel_size)
+        self.keys = {}
         beep = config.load("beep")
         if beep:
             self.enable_beep = beep["enabled"]
@@ -36,10 +46,19 @@ class PygameUI(ui.UI):
             clock = pygame.time.Clock()
             menu.init(self)
             while True:
-                key = self.get_key_nonblocking()
-                while key is not None:
-                    menu.key(key)
-                    key = self.get_key_nonblocking()
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        key = key_name(event)
+                        self.keys[key] = 0
+                    elif event.type == pygame.KEYUP:
+                        self.keys.pop(key_name(event))
+                    elif event.type == pygame.QUIT:
+                        pygame.quit()
+                        exit()
+                for key, frame in self.keys.items():
+                    if frame == 0 or (frame >= DAS and (frame - DAS) % ARR == 0):
+                        menu.key(key)
+                    self.keys[key] += 1
                 menu.tick()
                 clock.tick(tps)
         except ui.ExitException:
@@ -83,9 +102,7 @@ class PygameUI(ui.UI):
         while True:
             event = pygame.event.poll()
             if event.type == pygame.KEYDOWN:
-                if event.unicode:
-                    return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
-                return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
+                return key_name(event)
             elif event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
