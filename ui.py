@@ -65,7 +65,7 @@ class ExitException(Exception):
 class Menu:
     def init(self, ui: "UI") -> None: raise NotImplementedError
     def tick(self) -> None: raise NotImplementedError
-    def key(self, c: str) -> None: raise NotImplementedError
+    def key(self, c: str, repeated: bool = False) -> None: raise NotImplementedError
     def resize(self, width: int, height: int) -> None: raise NotImplementedError
 
 class UI:

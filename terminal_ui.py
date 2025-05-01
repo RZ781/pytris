@@ -168,7 +168,7 @@ class TerminalMenu(ui.Menu):
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
 
-    def key(self, c: str) -> None:
+    def key(self, c: str, repeated: bool = False) -> None:
         self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
         if c == "Up" or c == 'k':

@@ -380,7 +380,7 @@ class Game(ui.Menu):
             self.current_piece.draw(self.board_x, self.board_y)
             self.ui.update_screen()
 
-    def key(self, c: str) -> None:
+    def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
             return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
@@ -390,7 +390,7 @@ class Game(ui.Menu):
                 if self.current_piece.move(0, 1):
                     self.score += 1
             self.redraw_counters()
-        if c == self.controls[KEY_HOLD]:
+        if c == self.controls[KEY_HOLD] and not repeated:
             if not self.held:
                 self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
                 self.redraw_hold_piece(colour=ui.COLOUR_BLACK)
@@ -412,20 +412,19 @@ class Game(ui.Menu):
                     self.redraw()
                 else:
                     self.redraw_hold_piece()
-                
         if c == self.controls[KEY_LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
         if c == self.controls[KEY_RIGHT]:
             if self.current_piece.move(1, 0):
                 self.lock_reset()
-        if c == self.controls[KEY_ANTICLOCKWISE]:
+        if c == self.controls[KEY_ANTICLOCKWISE] and not repeated:
             if self.current_piece.rotate(-1):
                 self.lock_reset()
-        if c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE]:
+        if c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE] and not repeated:
             if self.current_piece.rotate(1):
                 self.lock_reset()
-        if c == self.controls[KEY_180]:
+        if c == self.controls[KEY_180] and not repeated:
             if self.current_piece.rotate(2):
                 self.lock_reset()
         if c == self.controls[KEY_HARD_DROP]:

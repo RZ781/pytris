@@ -9,8 +9,8 @@ KEY_TO_NAME = {
     pygame.K_LEFT: "Left"
 }
 
-ARR = 5
-DAS = 12
+ARR = 4
+DAS = 10
 
 def key_name(event):
     if event.unicode:
@@ -56,8 +56,10 @@ class PygameUI(ui.UI):
                         pygame.quit()
                         exit()
                 for key, frame in self.keys.items():
-                    if frame == 0 or (frame >= DAS and (frame - DAS) % ARR == 0):
+                    if frame == 0:
                         menu.key(key)
+                    if frame >= DAS and (frame - DAS) % ARR == 0:
+                        menu.key(key, repeated=True)
                     self.keys[key] += 1
                 menu.tick()
                 clock.tick(tps)
@@ -150,7 +152,7 @@ class PygameMenu(ui.Menu):
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
 
-    def key(self, c: str) -> None:
+    def key(self, c: str, repeated: bool = False) -> None:
         self.ui.set_pixel(ui.COLOUR_BLACK, self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
         if c == "Up" or c == 'k':
