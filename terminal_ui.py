@@ -84,7 +84,9 @@ class BaseTerminalUI(ui.UI):
     def goto(self, x: int, y: int) -> None:
         self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
 
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK) -> None:
+    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK, align: int = ui.ALIGN_LEFT) -> None:
+        if align == ui.ALIGN_CENTER:
+            x -= len(text) // 4
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
         self.goto(x, y)

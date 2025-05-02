@@ -117,8 +117,7 @@ try:
                     continue
                 else:
                     key = option - 2
-                text = f"Press key for {CONTROL_NAMES[key].lower()}"
-                main_ui.draw_text(text, (main_ui.width - len(text)//2)//2, main_ui.height // 10)
+                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key].lower()}", main_ui.width // 2, main_ui.height // 10, align=ui.ALIGN_CENTER)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
             controls_config["keys"] = controls

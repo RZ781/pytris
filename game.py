@@ -315,7 +315,7 @@ class Game(ui.Menu):
             name =  f"All Clear {name}"
         name = name.strip()
         if name:
-            self.ui.draw_text(name, self.board_x+5-len(name)//4, self.board_y-4)
+            self.ui.draw_text(name, self.board_x+5, self.board_y-4, align=ui.ALIGN_CENTER)
             self.ui.update_screen()
         if len(full) > 0:
             self.ui.beep()
@@ -350,7 +350,7 @@ class Game(ui.Menu):
         if self.objective_type == OBJECTIVE_TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
-                self.ui.draw_text(text, self.board_x+5-len(text)//4, self.board_y+7)
+                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
                 self.ui.update_screen()
                 self.death_ticks = 3 * TPS
                 return
@@ -361,7 +361,7 @@ class Game(ui.Menu):
                 minutes = seconds // TPS
                 seconds %= TPS
                 text = f"Time: {minutes}:{seconds:02}.{ms:02}"
-                self.ui.draw_text(text, self.board_x+5-len(text)//4, self.board_y+7)
+                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
                 self.ui.update_screen()
                 self.death_ticks = 3 * TPS
                 return

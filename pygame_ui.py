@@ -69,11 +69,15 @@ class PygameUI(ui.UI):
     def clear(self) -> None:
         self.screen.fill(ui.COLOURS[ui.COLOUR_BLACK])
 
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK) -> None:
+    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK, align: int = ui.ALIGN_LEFT) -> None:
         image = self.font.render(text, True, ui.COLOURS[fg_colour])
-        rect = (x*self.pixel_size, y*self.pixel_size, image.get_width(), image.get_height())
+        pixel_x = x * self.pixel_size
+        pixel_y = y * self.pixel_size
+        if align == ui.ALIGN_CENTER:
+            pixel_x -= image.get_width() // 2
+        rect = (pixel_x, pixel_y, image.get_width(), image.get_height())
         pygame.draw.rect(self.screen, ui.COLOURS[bg_colour], rect)
-        self.screen.blit(image, (x*self.pixel_size, y*self.pixel_size))
+        self.screen.blit(image, (pixel_x, pixel_y))
 
     def set_pixel(self, colour: int, x: int, y: int) -> None:
         rect = (x*self.pixel_size, y*self.pixel_size, self.pixel_size, self.pixel_size)
