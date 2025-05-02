@@ -5,11 +5,13 @@ import game, ui, config, terminal_ui
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
 
 main_ui: ui.UI
-if "--pygame" in sys.argv:
-    try:
-        import pygame
-    except Exception:
-        exit("You haven't installed pygame")
+try:
+    import pygame
+    pygame_support = True
+except Exception:
+    pygame_support = False
+
+if pygame_support and "--terminal" not in sys.argv:
     import pygame_ui
     main_ui = pygame_ui.PygameUI()
 else:
