@@ -30,7 +30,6 @@ class PygameUI(ui.UI):
         self.enable_beep = False
         self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size))
         self.font = pygame.font.SysFont("courier", self.pixel_size)
-        self.keys = {}
         beep = config.load("beep")
         if beep:
             self.enable_beep = beep["enabled"]
@@ -42,6 +41,7 @@ class PygameUI(ui.UI):
         pygame.quit()
 
     def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
+        keys = {}
         try:
             clock = pygame.time.Clock()
             menu.init(self)
@@ -49,18 +49,20 @@ class PygameUI(ui.UI):
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
                         key = key_name(event)
-                        self.keys[key] = 0
+                        keys[key] = 0
                     elif event.type == pygame.KEYUP:
-                        self.keys.pop(key_name(event))
+                        name = key_name(event)
+                        if name in keys:
+                            keys.pop(name)
                     elif event.type == pygame.QUIT:
                         pygame.quit()
                         exit()
-                for key, frame in self.keys.items():
+                for key, frame in keys.items():
                     if frame == 0:
                         menu.key(key)
                     if frame >= DAS and (frame - DAS) % ARR == 0:
                         menu.key(key, repeated=True)
-                    self.keys[key] += 1
+                    keys[key] += 1
                 menu.tick()
                 clock.tick(tps)
         except ui.ExitException:
@@ -92,6 +94,7 @@ class PygameUI(ui.UI):
     def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
         menu = PygameMenu(options, starting_option)
         self.main_loop(menu)
+        print(menu.current)
         return menu.current
 
     def options_menu(self) -> None:
@@ -163,7 +166,7 @@ class PygameMenu(ui.Menu):
             self.current -= 1
         elif c == "Down" or c == 'j':
             self.current += 1
-        elif c == "Return" or c == "Space":
+        elif (c == "Return" or c == "Space") and not repeated:
             raise ui.ExitException
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)

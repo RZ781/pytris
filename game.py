@@ -304,7 +304,7 @@ class Game(ui.Menu):
         self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
         self.redraw()
         if self.current_piece.intersect():
-            self.ui.draw_text("You died", self.board_x+3, self.board_y+7)
+            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
             self.ui.update_screen()
             self.death_ticks = TPS * 2
             return
