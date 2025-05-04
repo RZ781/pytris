@@ -76,7 +76,7 @@ class UI:
     height: int
     def init(self) -> None: raise NotImplementedError
     def quit(self) -> None: raise NotImplementedError
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = COLOUR_WHITE, bg_colour: int = COLOUR_BLACK, align=ALIGN_LEFT) -> None: raise NotImplementedError
+    def draw_text(self, text: str, x: int, y: int, fg_colour: int = COLOUR_WHITE, bg_colour: int = COLOUR_BLACK, align: int = ALIGN_LEFT) -> None: raise NotImplementedError
     def set_pixel(self, colour: int, x: int, y: int) -> None: raise NotImplementedError
     def beep(self) -> None: raise NotImplementedError
     def clear(self) -> None: raise NotImplementedError

@@ -5,8 +5,6 @@ from typing import List, Optional, Dict
 TPS = 60 # ticks per second
 LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
-BOARD_WIDTH = 10
-BOARD_HEIGHT = 20
 MISCLICK_PROTECT_TIME = 0.15 # seconds
 
 KEY_LEFT = 0
@@ -24,7 +22,7 @@ OBJECTIVE_LINES = 1
 OBJECTIVE_TIME = 2
 
 class PieceType:
-    def __init__(self, shape: List[List[int]], colour: int, spawn_x: int, spawn_y: int) -> None:
+    def __init__(self, shape: List[List[int]], colour: int) -> None:
         shapes = []
         for i in range(4):
             shapes.append(shape)
@@ -35,16 +33,14 @@ class PieceType:
             shape = new_shape
         self.shapes = shapes
         self.colour = colour
-        self.spawn_x = spawn_x
-        self.spawn_y = spawn_y
 
 class Piece:
     def __init__(self, base: PieceType, game: "Game") -> None:
-        self.x = base.spawn_x
-        self.y = base.spawn_y
-        self.rotation = 0
         self.base = base
         self.game = game
+        self.x = (self.game.board_width - len(self.base.shapes[0][0])) // 2
+        self.y = -2
+        self.rotation = 0
         self.rotation_last = False
         self.last_kick = 0
 
@@ -111,8 +107,8 @@ class Piece:
             else:
                 self.x = self.y = 1
         else:
-            self.x = self.base.spawn_x
-            self.y = self.base.spawn_y
+            self.x = (self.game.board_width - len(self.base.shapes[0][0])) // 2
+            self.y = -2
 
     def rotate(self, rotation_change: int) -> bool:
         # O pieces don't rotate
@@ -158,19 +154,22 @@ class Game(ui.Menu):
     board: Dict[int, List[int]]
     hold_piece: Optional[Piece]
     death_ticks: Optional[int]
+    controls: Dict[int, str]
 
-    def __init__(self, objective_type: int, objective_count: int, randomiser: Randomiser, controls: Dict[int, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
-        self.objective_type = objective_type
-        self.objective_count = objective_count
-        self.infinite_soft_drop = infinite_soft_drop
-        self.infinite_hold = infinite_hold
+    def __init__(self, randomiser: Randomiser, width: int, height: int) -> None:
+        self.board_width = width
+        self.board_height = height
+        self.objective_type = OBJECTIVE_NONE
+        self.objective_count = 0
+        self.infinite_soft_drop = False
+        self.infinite_hold = False
+        self.controls = {}
         self.board = {}
         self.hold_piece = None
         self.fall_speed = 1.2
         self.fall_ticks = TPS / self.fall_speed
         self.ground_ticks = LOCK_TIME * TPS
         self.randomiser = randomiser
-        self.controls = controls
         self.lock_count = LOCK_COUNT
         self.death_ticks = None
         self.next_pieces = [self.create_piece() for i in range(3)]
@@ -184,10 +183,19 @@ class Game(ui.Menu):
         self.b2b = 0
         self.combo = 0
 
+    def set_objective(self, objective_type: int, objective_count: int) -> None:
+        self.objective_type = objective_type
+        self.objective_count = objective_count
+
+    def set_controls(self, controls: Dict[int, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
+        self.controls = controls
+        self.infinite_soft_drop = infinite_soft_drop
+        self.infinite_hold = infinite_hold
+
     def board_get(self, x: int, y: int) -> bool:
-        if y >= BOARD_HEIGHT:
+        if y >= self.board_height:
             return True
-        if not 0 <= x < BOARD_WIDTH:
+        if not 0 <= x < self.board_width:
             return True
         if y not in self.board:
             return False
@@ -195,7 +203,7 @@ class Game(ui.Menu):
 
     def board_set(self, x: int, y: int, colour: int) -> None:
         if y not in self.board:
-            self.board[y] = [ui.COLOUR_BLACK] * BOARD_WIDTH
+            self.board[y] = [ui.COLOUR_BLACK] * self.board_width
         self.board[y][x] = colour
 
     def create_piece(self) -> Piece:
@@ -221,7 +229,7 @@ class Game(ui.Menu):
             for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
                 x = self.current_piece.x + dx
                 y = self.current_piece.y + dy
-                if 0 <= x < BOARD_WIDTH and 0 <= y < BOARD_HEIGHT:
+                if 0 <= x < self.board_width and 0 <= y < self.board_height:
                     corner_filled = self.board_get(x, y)
                 else:
                     corner_filled = True
@@ -330,11 +338,11 @@ class Game(ui.Menu):
         self.resize(main_ui.width, main_ui.height)
 
     def resize(self, width: int, height: int) -> None:
-        self.board_x = (width - BOARD_WIDTH) // 2
-        self.board_y = (height - BOARD_HEIGHT) // 2
+        self.board_x = (width - self.board_width) // 2
+        self.board_y = (height - self.board_height) // 2
         self.hold_x = self.board_x - 5
         self.hold_y = self.board_y + 1
-        self.next_x = self.board_x + 11
+        self.next_x = self.board_x + self.board_width + 1
         self.next_y = self.board_y + 1
         self.counter_x = self.board_x - 10
         self.counter_y = self.board_y + 15
@@ -443,9 +451,9 @@ class Game(ui.Menu):
 
     def redraw(self, update: bool = True) -> None:
         self.ui.clear()
-        for x in range(BOARD_WIDTH+2):
-            for y in range(BOARD_HEIGHT+1):
-                if x in (0, BOARD_WIDTH+1) or y == BOARD_HEIGHT:
+        for x in range(self.board_width+2):
+            for y in range(self.board_height+1):
+                if x in (0, self.board_width+1) or y == self.board_height:
                     # draw main border
                     self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
@@ -516,13 +524,13 @@ PIECE_Z = 5
 PIECE_I = 6
 
 pieces = [
-    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW, 3, -2),
-    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, 3, -2),
-    PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW, 4, -2),
-    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, 3, -2),
-    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN, 3, -2),
-    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, 3, -2),
-    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, 3, -2),
+    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW),
+    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE),
+    PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW),
+    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA),
+    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN),
+    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED),
+    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN),
 ]
 
 KICKS = ((0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2))

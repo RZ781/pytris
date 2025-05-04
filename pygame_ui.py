@@ -12,7 +12,7 @@ KEY_TO_NAME = {
 ARR = 4
 DAS = 10
 
-def key_name(event):
+def key_name(event: pygame.event.Event) -> str:
     if event.unicode:
         return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
     return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")

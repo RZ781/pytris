@@ -21,6 +21,8 @@ bag_type = 0
 objective = game.OBJECTIVE_NONE
 infinite_soft_drop = False
 infinite_hold = False
+board_width = 10
+board_height = 20
 
 default_controls = {
     game.KEY_LEFT: "Left",
@@ -73,7 +75,7 @@ try:
     main_ui.init()
     playing = True
     while playing:
-        option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "UI Options", "Quit"))
+        option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "UI Options", "Quit"))
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -104,7 +106,10 @@ try:
             elif objective == 5:
                 objective_type = game.OBJECTIVE_TIME
                 objective_count = 120
-            main_ui.main_loop(game.Game(objective_type, objective_count, randomiser, controls, infinite_soft_drop, infinite_hold), tps=game.TPS)
+            x = game.Game(randomiser, board_width, board_height)
+            x.set_objective(objective_type, objective_count)
+            x.set_controls(controls, infinite_soft_drop, infinite_hold)
+            main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 2:
@@ -135,6 +140,14 @@ try:
             controls_config["infinite_hold"] = infinite_hold
             config.save("controls", controls_config)
         elif option == 6:
+            size = main_ui.menu(("Normal", "4 Wide"))
+            if size == 0:
+                board_width = 10
+                board_height = 20
+            else:
+                board_width = 4
+                board_height = 24
+        elif option == 7:
             main_ui.options_menu()
         else:
             playing = False
