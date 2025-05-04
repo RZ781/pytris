@@ -427,7 +427,7 @@ class Game(ui.Menu):
         if c == self.controls[KEY_180] and not repeated:
             if self.current_piece.rotate(2):
                 self.lock_reset()
-        if c == self.controls[KEY_HARD_DROP]:
+        if c == self.controls[KEY_HARD_DROP] and not repeated:
             if self.no_hard_drop_ticks <= 0:
                 while self.current_piece.move(0, 1):
                     self.score += 2
