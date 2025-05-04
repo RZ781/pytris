@@ -5,8 +5,8 @@ from typing import List, Optional, Dict
 TPS = 60 # ticks per second
 LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
-BOARD_WIDTH = 12
-BOARD_HEIGHT = 22
+BOARD_WIDTH = 10
+BOARD_HEIGHT = 20
 MISCLICK_PROTECT_TIME = 0.15 # seconds
 
 KEY_LEFT = 0
@@ -185,9 +185,9 @@ class Game(ui.Menu):
         self.combo = 0
 
     def board_get(self, x: int, y: int) -> bool:
-        if y > 19:
+        if y >= BOARD_HEIGHT:
             return True
-        if not 0 <= x < 10:
+        if not 0 <= x < BOARD_WIDTH:
             return True
         if y not in self.board:
             return False
@@ -195,7 +195,7 @@ class Game(ui.Menu):
 
     def board_set(self, x: int, y: int, colour: int) -> None:
         if y not in self.board:
-            self.board[y] = [ui.COLOUR_BLACK] * 10
+            self.board[y] = [ui.COLOUR_BLACK] * BOARD_WIDTH
         self.board[y][x] = colour
 
     def create_piece(self) -> Piece:
@@ -221,7 +221,7 @@ class Game(ui.Menu):
             for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
                 x = self.current_piece.x + dx
                 y = self.current_piece.y + dy
-                if 0 <= x < 10 and 0 <= y < 20:
+                if 0 <= x < BOARD_WIDTH and 0 <= y < BOARD_HEIGHT:
                     corner_filled = self.board_get(x, y)
                 else:
                     corner_filled = True
@@ -443,9 +443,9 @@ class Game(ui.Menu):
 
     def redraw(self, update: bool = True) -> None:
         self.ui.clear()
-        for x in range(12):
-            for y in range(21):
-                if x in (0, 11) or y == 20:
+        for x in range(BOARD_WIDTH+2):
+            for y in range(BOARD_HEIGHT+1):
+                if x in (0, BOARD_WIDTH+1) or y == BOARD_HEIGHT:
                     # draw main border
                     self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
