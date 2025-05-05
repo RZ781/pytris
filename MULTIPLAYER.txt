@@ -1,0 +1,9 @@
+A server is started with ./main.py --server, and hosts one lobby. It listens on TCP port 51737.
+Clients connect by using --connect, which connects to localhost when starting the game.
+
+The protocol sends all integers as unsigned big endian integers. The client and server send messages to each other, consisting of a one byte command, 2 bytes length, and the actual data.
+The client and server should both begin with a VERSION command, ensuring they are on the same version of the protocol (currently 0).
+
+The following commands exist:
+1 - SEND_GARBAGE - Client sends to server to say garbage has been sent. Data contains the number of lines sent.
+2 - RECEIVE_GARBAGE - Server sends to client to say garbage has been received. Data contains the number of lines received.

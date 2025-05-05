@@ -1,5 +1,5 @@
 import random, sys, copy, time
-import ui, random
+import ui, multiplayer
 from typing import List, Optional, Dict
 
 TPS = 60 # ticks per second
@@ -155,8 +155,9 @@ class Game(ui.Menu):
     hold_piece: Optional[Piece]
     death_ticks: Optional[int]
     controls: Dict[int, str]
+    connection: Optional[multiplayer.Connection]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, connect: bool) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = OBJECTIVE_NONE
@@ -182,6 +183,10 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
+        if connect:
+            self.connection = multiplayer.connect_to_server()
+        else:
+            self.connection = None
 
     def set_objective(self, objective_type: int, objective_count: int) -> None:
         self.objective_type = objective_type
@@ -261,6 +266,16 @@ class Game(ui.Menu):
                 if offset > 0:
                     self.board[i+offset] = self.board[i]
                     del self.board[i]
+
+        # send garbage
+        if self.connection is not None and len(full) > 0:
+            if t_spin:
+                lines = len(full) * 2
+            elif len(full) == 4:
+                lines = 4
+            else:
+                lines = len(full) - 1
+            self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
 
         # add score
         if t_spin:
@@ -352,8 +367,28 @@ class Game(ui.Menu):
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
+                if self.connection is not None:
+                    self.connection.close()
                 raise ui.ExitException
             return
+        if self.connection is not None:
+            messages = self.connection.recv()
+            for command, data in messages:
+                if command == multiplayer.CMD_RECEIVE_GARBAGE:
+                    lines = int.from_bytes(data)
+                    line = [ui.COLOUR_BRIGHT_BLACK] * self.board_width
+                    line[random.randint(0, self.board_width-1)] = ui.COLOUR_BLACK
+                    for _ in range(lines):
+                        for i in sorted(self.board.keys()):
+                            self.board[i-1] = self.board[i]
+                            self.board.pop(i)
+                        self.board[self.board_height-1] = line.copy()
+                        if self.current_piece.intersect():
+                            self.current_piece.y -= 1
+                            self.lock_piece()
+                    self.redraw()
+                else:
+                    exit(f"Unknown command: {command}")
         self.ticks += 1
         if self.objective_type == OBJECTIVE_TIME:
             if self.ticks >= self.objective_count * TPS:
@@ -386,7 +421,7 @@ class Game(ui.Menu):
             self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
             self.current_piece.move(0, 1)
             self.current_piece.draw(self.board_x, self.board_y)
-            self.ui.update_screen()
+        self.ui.update_screen()
 
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:

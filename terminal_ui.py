@@ -1,4 +1,4 @@
-import sys, time, os, shutil
+import sys, time, os, shutil, socket, select
 import config, ui
 from typing import Optional, Collection, Union
 
@@ -234,7 +234,7 @@ if sys.platform == "win32":
             return 1
 
 else:
-    import select, termios
+    import termios
     class TerminalUI(BaseTerminalUI):
         def init(self) -> None:
             # update terminal options

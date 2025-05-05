@@ -1,20 +1,38 @@
 #!/usr/bin/env python3
 import sys
-import game, ui, config, terminal_ui
+import game, ui, config, multiplayer
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
 
-main_ui: ui.UI
 try:
     import pygame
     pygame_support = True
 except Exception:
     pygame_support = False
 
-if pygame_support and "--terminal" not in sys.argv:
+terminal = False
+server = False
+connect = False
+for arg in sys.argv[1:]:
+    if arg == "--terminal":
+        terminal = True
+    elif arg == "--server":
+        server = True
+    elif arg == "--connect":
+        connect = True
+    else:
+        exit(f"Invalid argument {arg}")
+
+if server:
+    multiplayer.server()
+    exit()
+
+main_ui: ui.UI
+if pygame_support and not terminal:
     import pygame_ui
     main_ui = pygame_ui.PygameUI()
 else:
+    import terminal_ui
     main_ui = terminal_ui.TerminalUI()
 
 bag_type = 0
@@ -106,7 +124,7 @@ try:
             elif objective == 5:
                 objective_type = game.OBJECTIVE_TIME
                 objective_count = 120
-            x = game.Game(randomiser, board_width, board_height)
+            x = game.Game(randomiser, board_width, board_height, connect)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
             main_ui.main_loop(x, tps=game.TPS)

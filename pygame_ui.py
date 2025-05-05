@@ -94,7 +94,6 @@ class PygameUI(ui.UI):
     def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
         menu = PygameMenu(options, starting_option)
         self.main_loop(menu)
-        print(menu.current)
         return menu.current
 
     def options_menu(self) -> None:
