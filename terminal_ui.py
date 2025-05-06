@@ -81,15 +81,17 @@ class BaseTerminalUI(ui.UI):
                 self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
                 self.bg_colour = colour
 
-    def goto(self, x: int, y: int) -> None:
-        self.buffer += f"\x1b[{y+1};{2*x+1}H" # double x so pixels are approximately square
+    def goto(self, x: float, y: float) -> None:
+        self.buffer += f"\x1b[{int(y+1)};{int(2*x+1)}H" # double x so pixels are approximately square
 
     def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK, align: int = ui.ALIGN_LEFT) -> None:
         if align == ui.ALIGN_CENTER:
-            x -= len(text) // 4
+            offset = -len(text) / 4
+        else:
+            offset = 0
         self.set_fg_colour(fg_colour)
         self.set_bg_colour(bg_colour)
-        self.goto(x, y)
+        self.goto(x+offset, y)
         self.buffer += text
 
     def set_pixel(self, colour: int, x: int, y: int) -> None:

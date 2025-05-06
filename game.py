@@ -387,8 +387,14 @@ class Game(ui.Menu):
                             self.current_piece.y -= 1
                             self.lock_piece()
                     self.redraw()
+                elif command == multiplayer.CMD_EXIT:
+                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
+                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.ALIGN_CENTER)
+                    self.ui.update_screen()
+                    self.death_ticks = TPS * 2
+                    return
                 else:
-                    exit(f"Unknown command: {command}")
+                    exit(f"Unknown command from server: {command}")
         self.ticks += 1
         if self.objective_type == OBJECTIVE_TIME:
             if self.ticks >= self.objective_count * TPS:
