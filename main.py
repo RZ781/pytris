@@ -12,14 +12,11 @@ except Exception:
 
 terminal = False
 server = False
-connect = False
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         terminal = True
     elif arg == "--server":
         server = True
-    elif arg == "--connect":
-        connect = True
     else:
         exit(f"Invalid argument {arg}")
 
@@ -93,7 +90,7 @@ try:
     main_ui.init()
     playing = True
     while playing:
-        option = main_ui.menu(("Play", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "UI Options", "Quit"))
+        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "UI Options", "Quit"))
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -124,13 +121,19 @@ try:
             elif objective == 5:
                 objective_type = game.OBJECTIVE_TIME
                 objective_count = 120
-            x = game.Game(randomiser, board_width, board_height, connect)
+            x = game.Game(randomiser, board_width, board_height, False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
-            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
+            randomiser = game.BagRandomiser(1, 0)
+            x = game.Game(randomiser, 10, 20, True)
+            x.set_objective(game.OBJECTIVE_NONE, 0)
+            x.set_controls(controls, infinite_soft_drop, False)
+            main_ui.main_loop(x, tps=game.TPS)
         elif option == 2:
+            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
+        elif option == 3:
             option = 0
             while True:
                 options = ("Close", "Defaults") + tuple((x, controls[i]) for i, x in enumerate(CONTROL_NAMES))
@@ -147,17 +150,17 @@ try:
                 controls[key] = main_ui.get_key()
             controls_config["keys"] = controls
             config.save("controls", controls_config)
-        elif option == 3:
-            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         elif option == 4:
+            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
+        elif option == 5:
             infinite_soft_drop = main_ui.menu(("Enable", "Disable")) == 0
             controls_config["infinite_soft_drop"] = infinite_soft_drop
             config.save("controls", controls_config)
-        elif option == 5:
+        elif option == 6:
             infinite_hold = main_ui.menu(("Enable", "Disable")) == 0
             controls_config["infinite_hold"] = infinite_hold
             config.save("controls", controls_config)
-        elif option == 6:
+        elif option == 7:
             size = main_ui.menu(("Normal", "4 Wide"))
             if size == 0:
                 board_width = 10
@@ -165,7 +168,7 @@ try:
             else:
                 board_width = 4
                 board_height = 24
-        elif option == 7:
+        elif option == 8:
             main_ui.options_menu()
         else:
             playing = False
