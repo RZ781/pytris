@@ -96,7 +96,7 @@ class BaseTerminalUI(ui.UI):
 
     def set_pixel(self, colour: int, x: int, y: int) -> None:
         self.goto(x, y)
-        if self.mode == 3 and colour == ui.COLOUR_BRIGHT_BLACK:
+        if self.mode == 3 and colour == ui.COLOUR_GRAY:
             self.set_bg_colour(ui.COLOUR_BLACK)
             self.buffer += "''"
         elif self.mode == 3 and colour == ui.COLOUR_WHITE:

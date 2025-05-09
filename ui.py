@@ -1,40 +1,27 @@
 from typing import Collection, Union
 
 COLOUR_BLACK    = 0
-COLOUR_RED      = 1
-COLOUR_GREEN    = 2
-COLOUR_YELLOW   = 3
-COLOUR_BLUE     = 4
-COLOUR_MAGENTA  = 5
-COLOUR_CYAN     = 6
-COLOUR_WHITE    = 7
-
-COLOUR_BRIGHT_BLACK    = 8
-COLOUR_BRIGHT_RED      = 9
-COLOUR_BRIGHT_GREEN    = 10
-COLOUR_BRIGHT_YELLOW   = 11
-COLOUR_BRIGHT_BLUE     = 12
-COLOUR_BRIGHT_MAGENTA  = 13
-COLOUR_BRIGHT_CYAN     = 14
-COLOUR_BRIGHT_WHITE    = 15
+COLOUR_WHITE    = 1
+COLOUR_GRAY     = 2
+COLOUR_RED      = 3
+COLOUR_ORANGE   = 4
+COLOUR_YELLOW   = 5
+COLOUR_GREEN    = 6
+COLOUR_BLUE     = 7
+COLOUR_CYAN     = 8
+COLOUR_MAGENTA  = 9
 
 COLOURS = (
     (0, 0, 0),
-    (188, 46, 61),
-    (8, 148, 24),
-    (202, 99, 41),
-    (55, 67, 190),
-    (155, 55, 134),
-    (89, 154, 209),
     (255, 255, 255),
     (128, 128, 128),
-    (237, 28, 36),
-    (117, 174, 54),
+    (188, 46, 61),
+    (202, 99, 41),
     (253, 255, 12),
-    (4, 42, 255),
-    (196, 6, 255),
-    (8, 254, 255),
-    (255, 255, 255),
+    (117, 174, 54),
+    (55, 67, 190),
+    (89, 154, 209),
+    (155, 55, 134),
 )
 
 ASCII_TO_NAME = {

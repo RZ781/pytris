@@ -51,7 +51,7 @@ class Piece:
                 self.y += 1
             shadow_colour = colour
             if shadow_colour is None:
-                shadow_colour = ui.COLOUR_BRIGHT_BLACK
+                shadow_colour = ui.COLOUR_GRAY
             self.draw(board_x, board_y, colour=shadow_colour, shadow=False)
             self.y = old_y
         if colour is None:
@@ -376,7 +376,7 @@ class Game(ui.Menu):
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     lines = int.from_bytes(data)
-                    line = [ui.COLOUR_BRIGHT_BLACK] * self.board_width
+                    line = [ui.COLOUR_GRAY] * self.board_width
                     line[random.randint(0, self.board_width-1)] = ui.COLOUR_BLACK
                     for _ in range(lines):
                         for i in sorted(self.board.keys()):
@@ -487,7 +487,7 @@ class Game(ui.Menu):
     def redraw_hold_piece(self, colour: Optional[int] = None) -> None:
         if self.hold_piece:
             if colour is None and self.held:
-                colour = ui.COLOUR_BRIGHT_BLACK
+                colour = ui.COLOUR_GRAY
             self.hold_piece.draw(self.hold_x, self.hold_y, colour=colour, shadow=False)
 
     def redraw(self, update: bool = True) -> None:
@@ -565,11 +565,11 @@ PIECE_Z = 5
 PIECE_I = 6
 
 pieces = [
-    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_YELLOW),
+    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_ORANGE),
     PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE),
-    PieceType([[1, 1], [1, 1]], ui.COLOUR_BRIGHT_YELLOW),
+    PieceType([[1, 1], [1, 1]], ui.COLOUR_YELLOW),
     PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA),
-    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_BRIGHT_GREEN),
+    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN),
     PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED),
     PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN),
 ]
