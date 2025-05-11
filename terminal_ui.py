@@ -1,4 +1,4 @@
-import sys, time, os, shutil, socket, select
+import sys, time, os, shutil, select
 import config, ui
 from typing import Optional, Collection, Union
 
@@ -24,13 +24,13 @@ class BaseTerminalUI(ui.UI):
         [f"\x1b[38;5;{x}m" for x in COLOURS_4_BIT], # 4 bit
         [f"\x1b[38;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
         [f"\x1b[38;2;{r};{g};{b}m" for r, g, b in ui.COLOURS], # 24 bit
-        ["", "\x1b[0m"] + [""]*8, # monochrome
+        [""] * 10, # monochrome
     ]
     bg_colour_codes = [
         [f"\x1b[48;5;{x}m" for x in COLOURS_4_BIT], # 4 bit
         [f"\x1b[48;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
         [f"\x1b[48;2;{r};{g};{b}m" for r, g, b in ui.COLOURS], # 24 bit
-        ["\x1b[0m"] + ["\x1b[7m"]*15, # monochrome
+        ["\x1b[0m"] + ["\x1b[7m"]*9, # monochrome
     ]
     reset_code = "\x1b[0m"
 
