@@ -331,7 +331,11 @@ class Game(ui.Menu):
         elif mini_t_spin:
             name = f"Mini T Spin {name}"
         if self.b2b > 1 and len(full) > 0:
-            name = f"B2B {name}"
+            if self.b2b == 2:
+                count = ""
+            else:
+                count = f"x{self.b2b-1} "
+            name = f"B2B {count}{name}"
         if self.combo > 1:
             name = f"{name} Combo {self.combo-1}"
         if all_clear:
