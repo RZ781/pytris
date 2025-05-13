@@ -25,7 +25,7 @@ class PygameUI(ui.UI):
     def __init__(self) -> None:
         self.inital_options = None
         self.width = 40
-        self.height = 30
+        self.height = 32
         self.pixel_size = 25
         self.enable_beep = False
         self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size))

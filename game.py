@@ -342,7 +342,7 @@ class Game(ui.Menu):
             name =  f"All Clear {name}"
         name = name.strip()
         if name:
-            self.ui.draw_text(name, self.board_x+5, self.board_y-4, align=ui.ALIGN_CENTER)
+            self.ui.draw_text(name, self.board_x+self.board_width//2, self.board_y-4, align=ui.ALIGN_CENTER)
             self.ui.update_screen()
         if len(full) > 0:
             self.ui.beep()
