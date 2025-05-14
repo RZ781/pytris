@@ -161,13 +161,19 @@ try:
             controls_config["infinite_hold"] = infinite_hold
             config.save("controls", controls_config)
         elif option == 7:
-            size = main_ui.menu(("Normal", "4 Wide"))
+            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"))
             if size == 0:
                 board_width = 10
                 board_height = 20
-            else:
+            elif size == 1:
                 board_width = 4
                 board_height = 24
+            elif size == 2:
+                board_width = 5
+                board_height = 10
+            else:
+                board_width = 20
+                board_height = 20
         elif option == 8:
             main_ui.options_menu()
         else:
