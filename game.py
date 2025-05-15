@@ -267,15 +267,39 @@ class Game(ui.Menu):
                     self.board[i+offset] = self.board[i]
                     del self.board[i]
 
-        # send garbage
-        if self.connection is not None and len(full) > 0:
-            if t_spin:
-                lines = len(full) * 2
-            elif len(full) == 4:
-                lines = 4
-            else:
-                lines = len(full) - 1
-            self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
+        # send and receive garbage
+        if self.connection is not None:
+            if len(full) > 0:
+                if t_spin:
+                    lines = len(full) * 2
+                elif len(full) == 4:
+                    lines = 4
+                else:
+                    lines = len(full) - 1
+                self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
+            messages = self.connection.recv()
+            for command, data in messages:
+                if command == multiplayer.CMD_RECEIVE_GARBAGE:
+                    lines = int.from_bytes(data)
+                    line = [ui.COLOUR_GRAY] * self.board_width
+                    line[random.randint(0, self.board_width-1)] = ui.COLOUR_BLACK
+                    for _ in range(lines):
+                        for i in sorted(self.board.keys()):
+                            self.board[i-1] = self.board[i]
+                            self.board.pop(i)
+                        self.board[self.board_height-1] = line.copy()
+                        if self.current_piece.intersect():
+                            self.current_piece.y -= 1
+                            self.lock_piece()
+                    self.redraw()
+                elif command == multiplayer.CMD_EXIT:
+                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
+                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.ALIGN_CENTER)
+                    self.ui.update_screen()
+                    self.death_ticks = TPS * 2
+                    return
+                else:
+                    exit(f"Unknown command from server: {command}")
 
         # add score
         if t_spin:
@@ -375,30 +399,6 @@ class Game(ui.Menu):
                     self.connection.close()
                 raise ui.ExitException
             return
-        if self.connection is not None:
-            messages = self.connection.recv()
-            for command, data in messages:
-                if command == multiplayer.CMD_RECEIVE_GARBAGE:
-                    lines = int.from_bytes(data)
-                    line = [ui.COLOUR_GRAY] * self.board_width
-                    line[random.randint(0, self.board_width-1)] = ui.COLOUR_BLACK
-                    for _ in range(lines):
-                        for i in sorted(self.board.keys()):
-                            self.board[i-1] = self.board[i]
-                            self.board.pop(i)
-                        self.board[self.board_height-1] = line.copy()
-                        if self.current_piece.intersect():
-                            self.current_piece.y -= 1
-                            self.lock_piece()
-                    self.redraw()
-                elif command == multiplayer.CMD_EXIT:
-                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
-                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.ALIGN_CENTER)
-                    self.ui.update_screen()
-                    self.death_ticks = TPS * 2
-                    return
-                else:
-                    exit(f"Unknown command from server: {command}")
         self.ticks += 1
         if self.objective_type == OBJECTIVE_TIME:
             if self.ticks >= self.objective_count * TPS:
