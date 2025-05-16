@@ -296,7 +296,7 @@ class Game(ui.Menu):
                     self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
                     self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.ALIGN_CENTER)
                     self.ui.update_screen()
-                    self.death_ticks = TPS * 2
+                    self.end_game()
                     return
                 else:
                     exit(f"Unknown command from server: {command}")
@@ -345,7 +345,7 @@ class Game(ui.Menu):
         if self.current_piece.intersect():
             self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
             self.ui.update_screen()
-            self.death_ticks = TPS * 2
+            self.end_game()
             return
 
         # action text
@@ -391,12 +391,15 @@ class Game(ui.Menu):
         self.counter_y = self.board_y + 15
         self.redraw()
 
+    def end_game(self):
+        self.death_ticks = TPS * 3
+        if self.connection is not None:
+            self.connection.close()
+
     def tick(self) -> None:
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
-                if self.connection is not None:
-                    self.connection.close()
                 raise ui.ExitException
             return
         self.ticks += 1
@@ -405,7 +408,7 @@ class Game(ui.Menu):
                 text = f"Score: {self.score}"
                 self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
                 self.ui.update_screen()
-                self.death_ticks = 3 * TPS
+                self.end_game()
                 return
         elif self.objective_type == OBJECTIVE_LINES:
             if self.lines >= self.objective_count:
@@ -416,7 +419,7 @@ class Game(ui.Menu):
                 text = f"Time: {minutes}:{seconds:02}.{ms:02}"
                 self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
                 self.ui.update_screen()
-                self.death_ticks = 3 * TPS
+                self.end_game()
                 return
         if self.no_hard_drop_ticks > 0:
             self.no_hard_drop_ticks -= 1
