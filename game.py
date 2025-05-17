@@ -268,6 +268,7 @@ class Game(ui.Menu):
                     del self.board[i]
 
         # send and receive garbage
+        all_clear = len(self.board) == 0
         if self.connection is not None:
             if len(full) > 0:
                 if t_spin:
@@ -276,6 +277,8 @@ class Game(ui.Menu):
                     lines = 4
                 else:
                     lines = len(full) - 1
+                if all_clear:
+                    lines += 5
                 self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
             messages = self.connection.recv()
             for command, data in messages:
@@ -317,7 +320,6 @@ class Game(ui.Menu):
             elif len(full) > 0:
                 self.b2b = 0
         multiplier += self.combo * 50
-        all_clear = len(self.board) == 0
         if all_clear:
             if self.b2b > 1:
                 multiplier += 3200
@@ -391,7 +393,7 @@ class Game(ui.Menu):
         self.counter_y = self.board_y + 15
         self.redraw()
 
-    def end_game(self):
+    def end_game(self) -> None:
         self.death_ticks = TPS * 3
         if self.connection is not None:
             self.connection.close()
