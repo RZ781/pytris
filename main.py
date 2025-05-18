@@ -38,6 +38,7 @@ infinite_soft_drop = False
 infinite_hold = False
 board_width = 10
 board_height = 20
+spin_type = game.SPIN_T_SPIN
 
 default_controls = {
     game.KEY_LEFT: "Left",
@@ -90,7 +91,7 @@ try:
     main_ui.init()
     playing = True
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "UI Options", "Quit"))
+        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "UI Options", "Quit"))
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -121,13 +122,13 @@ try:
             elif objective == 5:
                 objective_type = game.OBJECTIVE_TIME
                 objective_count = 120
-            x = game.Game(randomiser, board_width, board_height, False)
+            x = game.Game(randomiser, board_width, board_height, spin_type, False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, True)
+            x = game.Game(randomiser, 10, 20, spin_type, True)
             x.set_objective(game.OBJECTIVE_NONE, 0)
             x.set_controls(controls, infinite_soft_drop, False)
             main_ui.main_loop(x, tps=game.TPS)
@@ -175,6 +176,8 @@ try:
                 board_width = 20
                 board_height = 20
         elif option == 8:
+            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), spin_type)
+        elif option == 9:
             main_ui.options_menu()
         else:
             playing = False

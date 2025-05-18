@@ -21,8 +21,13 @@ OBJECTIVE_NONE = 0
 OBJECTIVE_LINES = 1
 OBJECTIVE_TIME = 2
 
+SPIN_T_SPIN = 0
+SPIN_ALL_SPIN = 1
+SPIN_ALL_MINI = 2
+SPIN_NONE = 3
+
 class PieceType:
-    def __init__(self, shape: List[List[int]], colour: int) -> None:
+    def __init__(self, shape: List[List[int]], colour: int, name: str) -> None:
         shapes = []
         for i in range(4):
             shapes.append(shape)
@@ -33,11 +38,13 @@ class PieceType:
             shape = new_shape
         self.shapes = shapes
         self.colour = colour
+        self.name = name
 
 class Piece:
     def __init__(self, base: PieceType, game: "Game") -> None:
         self.base = base
         self.game = game
+        self.name = self.base.name
         self.x = (self.game.board_width - len(self.base.shapes[0][0])) // 2
         self.y = -2
         self.rotation = 0
@@ -157,13 +164,14 @@ class Game(ui.Menu):
     controls: Dict[int, str]
     connection: Optional[multiplayer.Connection]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, connect: bool) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: int, connect: bool) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = OBJECTIVE_NONE
         self.objective_count = 0
         self.infinite_soft_drop = False
         self.infinite_hold = False
+        self.spin_type = spin_type
         self.controls = {}
         self.board = {}
         self.hold_piece = None
@@ -223,32 +231,46 @@ class Game(ui.Menu):
     def lock_piece(self) -> None:
         self.current_piece.lock()
 
-        # t spin detection
-        t_spin = False
-        mini_t_spin = False
-        if self.current_piece.base is pieces[PIECE_T] and self.current_piece.rotation_last:
-            corners = 0
-            front_corners = 0
-            back_corners = 0
-            front_x, front_y = ((1, 0), (2, 1), (1, 2), (0, 1))[self.current_piece.rotation]
-            for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
-                x = self.current_piece.x + dx
-                y = self.current_piece.y + dy
-                if 0 <= x < self.board_width and 0 <= y < self.board_height:
-                    corner_filled = self.board_get(x, y)
-                else:
-                    corner_filled = True
-                if front_x == dx or front_y == dy:
-                    front_corners += corner_filled
-                else:
-                    back_corners += corner_filled
-            if front_corners == 2 and back_corners >= 1:
-                t_spin = True
-            elif front_corners == 1 and back_corners == 2:
-                if self.current_piece.last_kick == 4:
-                    t_spin = True
-                else:
-                    mini_t_spin = True
+        # spin detection
+        spin = False
+        mini_spin = False
+        if self.current_piece.rotation_last:
+            if self.current_piece.base is pieces[PIECE_T] and self.spin_type != SPIN_NONE:
+                corners = 0
+                front_corners = 0
+                back_corners = 0
+                front_x, front_y = ((1, 0), (2, 1), (1, 2), (0, 1))[self.current_piece.rotation]
+                for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
+                    x = self.current_piece.x + dx
+                    y = self.current_piece.y + dy
+                    if 0 <= x < self.board_width and 0 <= y < self.board_height:
+                        corner_filled = self.board_get(x, y)
+                    else:
+                        corner_filled = True
+                    if front_x == dx or front_y == dy:
+                        front_corners += corner_filled
+                    else:
+                        back_corners += corner_filled
+                if front_corners == 2 and back_corners >= 1:
+                    spin = True
+                elif front_corners == 1 and back_corners == 2:
+                    if self.current_piece.last_kick == 4:
+                        spin = True
+                    else:
+                        mini_spin = True
+            elif self.spin_type in (SPIN_ALL_SPIN, SPIN_ALL_MINI):
+                immobile = True
+                for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)):
+                    moved = self.current_piece.move(dx, dy)
+                    if moved:
+                        immobile = False
+                        self.current_piece.move(-dx, -dy)
+                        break
+                if immobile:
+                    if self.spin_type == SPIN_ALL_SPIN:
+                        spin = True
+                    else:
+                        mini_spin = True
 
         # clear lines
         full = []
@@ -271,7 +293,7 @@ class Game(ui.Menu):
         all_clear = len(self.board) == 0
         if self.connection is not None:
             if len(full) > 0:
-                if t_spin:
+                if spin:
                     lines = len(full) * 2
                 elif len(full) == 4:
                     lines = 4
@@ -305,13 +327,13 @@ class Game(ui.Menu):
                     exit(f"Unknown command from server: {command}")
 
         # add score
-        if t_spin:
+        if spin:
             multiplier = (400, 800, 1200, 1600)[len(full)]
-        elif mini_t_spin:
+        elif mini_spin:
             multiplier = (100, 200, 400)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
-        if t_spin or mini_t_spin:
+        if spin or mini_spin:
             if len(full) > 0:
                 self.b2b += 1
         else:
@@ -336,26 +358,12 @@ class Game(ui.Menu):
         else:
             self.combo = 0
 
-        # reset state
-        self.ground_ticks = LOCK_TIME * TPS
-        self.fall_ticks = TPS / self.fall_speed
-        self.lock_count = LOCK_COUNT
-        self.current_piece = self.next_piece()
-        self.held = False
-        self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
-        self.redraw()
-        if self.current_piece.intersect():
-            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
-            self.ui.update_screen()
-            self.end_game()
-            return
-
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
-        if t_spin:
-            name = f"T Spin {name}"
-        elif mini_t_spin:
-            name = f"Mini T Spin {name}"
+        if spin:
+            name = f"{self.current_piece.name} Spin {name}"
+        elif mini_spin:
+            name = f"Mini {self.current_piece.name} Spin {name}"
         if self.b2b > 1 and len(full) > 0:
             if self.b2b == 2:
                 count = ""
@@ -367,11 +375,24 @@ class Game(ui.Menu):
         if all_clear:
             name =  f"All Clear {name}"
         name = name.strip()
+
+        # reset state and redraw
+        self.ground_ticks = LOCK_TIME * TPS
+        self.fall_ticks = TPS / self.fall_speed
+        self.lock_count = LOCK_COUNT
+        self.current_piece = self.next_piece()
+        self.held = False
+        self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
+        self.redraw()
         if name:
             self.ui.draw_text(name, self.board_x+self.board_width//2, self.board_y-4, align=ui.ALIGN_CENTER)
-            self.ui.update_screen()
         if len(full) > 0:
             self.ui.beep()
+        if self.current_piece.intersect():
+            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
+            self.ui.update_screen()
+            self.end_game()
+            return
 
     def lock_reset(self) -> None:
         if self.current_piece.on_floor() and self.lock_count:
@@ -574,13 +595,13 @@ PIECE_Z = 5
 PIECE_I = 6
 
 pieces = [
-    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_ORANGE),
-    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE),
-    PieceType([[1, 1], [1, 1]], ui.COLOUR_YELLOW),
-    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA),
-    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN),
-    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED),
-    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN),
+    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_ORANGE, "L"),
+    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, "J"),
+    PieceType([[1, 1], [1, 1]], ui.COLOUR_YELLOW, "O"),
+    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, "T"),
+    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, "S"),
+    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, "Z"),
+    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, "I"),
 ]
 
 KICKS = ((0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2))
