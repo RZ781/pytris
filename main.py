@@ -128,7 +128,7 @@ try:
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, spin_type, True)
+            x = game.Game(randomiser, 10, 20, game.SPIN_ALL_MINI, True)
             x.set_objective(game.OBJECTIVE_NONE, 0)
             x.set_controls(controls, infinite_soft_drop, False)
             main_ui.main_loop(x, tps=game.TPS)
