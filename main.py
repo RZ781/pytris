@@ -90,8 +90,9 @@ controls_config = {
 try:
     main_ui.init()
     playing = True
+    option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "UI Options", "Quit"))
+        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "UI Options", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -135,17 +136,17 @@ try:
         elif option == 2:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 3:
-            option = 0
+            key = 0
             while True:
                 options = ("Close", "Defaults") + tuple((x, controls[i]) for i, x in enumerate(CONTROL_NAMES))
-                option = main_ui.menu(options, starting_option=option)
-                if option == 0:
+                key = main_ui.menu(options, starting_option=key)
+                if key == 0:
                     break
-                elif option == 1:
+                elif key == 1:
                     controls = default_controls.copy()
                     continue
                 else:
-                    key = option - 2
+                    key -= 2
                 main_ui.draw_text(f"Press key for {CONTROL_NAMES[key].lower()}", main_ui.width // 2, main_ui.height // 10, align=ui.ALIGN_CENTER)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
