@@ -69,21 +69,21 @@ class PygameUI(ui.UI):
             return
 
     def clear(self) -> None:
-        self.screen.fill(ui.COLOURS[ui.COLOUR_BLACK])
+        self.screen.fill(ui.COLOURS[ui.Colour.BLACK.value])
 
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK, align: int = ui.ALIGN_LEFT) -> None:
-        image = self.font.render(text, True, ui.COLOURS[fg_colour])
+    def draw_text(self, text: str, x: int, y: int, fg_colour: ui.Colour = ui.Colour.WHITE, bg_colour: ui.Colour = ui.Colour.BLACK, align: ui.Alignment = ui.Alignment.LEFT) -> None:
+        image = self.font.render(text, True, ui.COLOURS[fg_colour.value])
         pixel_x = x * self.pixel_size
         pixel_y = y * self.pixel_size
-        if align == ui.ALIGN_CENTER:
+        if align == ui.Alignment.CENTER:
             pixel_x -= image.get_width() // 2
         rect = (pixel_x, pixel_y, image.get_width(), image.get_height())
-        pygame.draw.rect(self.screen, ui.COLOURS[bg_colour], rect)
+        pygame.draw.rect(self.screen, ui.COLOURS[bg_colour.value], rect)
         self.screen.blit(image, (pixel_x, pixel_y))
 
-    def set_pixel(self, colour: int, x: int, y: int) -> None:
+    def set_pixel(self, colour: ui.Colour, x: int, y: int) -> None:
         rect = (x*self.pixel_size, y*self.pixel_size, self.pixel_size, self.pixel_size)
-        pygame.draw.rect(self.screen, ui.COLOURS[colour], rect)
+        pygame.draw.rect(self.screen, ui.COLOURS[colour.value], rect)
 
     def beep(self) -> None:
         pass
@@ -159,7 +159,7 @@ class PygameMenu(ui.Menu):
         self.ui.update_screen()
 
     def key(self, c: str, repeated: bool = False) -> None:
-        self.ui.set_pixel(ui.COLOUR_BLACK, self.menu_x, self.menu_y + self.current)
+        self.ui.set_pixel(ui.Colour.BLACK, self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
         if c == "Up" or c == 'k':
             self.current -= 1

@@ -1,4 +1,4 @@
-import random, sys, copy, time
+import random, sys, copy, time, enum
 import ui, multiplayer
 from typing import List, Optional, Dict
 
@@ -7,27 +7,30 @@ LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
 MISCLICK_PROTECT_TIME = 0.15 # seconds
 
-KEY_LEFT = 0
-KEY_RIGHT = 1
-KEY_SOFT_DROP = 2
-KEY_HARD_DROP = 3
-KEY_ROTATE = 4
-KEY_CLOCKWISE = 5
-KEY_ANTICLOCKWISE = 6
-KEY_180 = 7
-KEY_HOLD = 8
+class Key(enum.Enum):
+    LEFT = 0
+    RIGHT = 1
+    SOFT_DROP = 2
+    HARD_DROP = 3
+    ROTATE = 4
+    CLOCKWISE = 5
+    ANTICLOCKWISE = 6
+    ROTATE_180 = 7
+    HOLD = 8
 
-OBJECTIVE_NONE = 0
-OBJECTIVE_LINES = 1
-OBJECTIVE_TIME = 2
+class Objective(enum.Enum):
+    NONE = 0
+    LINES = 1
+    TIME = 2
 
-SPIN_T_SPIN = 0
-SPIN_ALL_SPIN = 1
-SPIN_ALL_MINI = 2
-SPIN_NONE = 3
+class SpinType(enum.Enum):
+    T_SPIN = 0
+    ALL_SPIN = 1
+    ALL_MINI = 2
+    NONE = 3
 
 class PieceType:
-    def __init__(self, shape: List[List[int]], colour: int, name: str) -> None:
+    def __init__(self, shape: List[List[int]], colour: ui.Colour, name: str) -> None:
         shapes = []
         for i in range(4):
             shapes.append(shape)
@@ -51,14 +54,14 @@ class Piece:
         self.rotation_last = False
         self.last_kick = 0
 
-    def draw(self, board_x: int, board_y: int, colour: Optional[int] = None, shadow: bool = True) -> None:
+    def draw(self, board_x: int, board_y: int, colour: Optional[ui.Colour] = None, shadow: bool = True) -> None:
         if shadow:
             old_y = self.y
             while not self.on_floor():
                 self.y += 1
             shadow_colour = colour
             if shadow_colour is None:
-                shadow_colour = ui.COLOUR_GRAY
+                shadow_colour = ui.Colour.GRAY
             self.draw(board_x, board_y, colour=shadow_colour, shadow=False)
             self.y = old_y
         if colour is None:
@@ -158,16 +161,16 @@ class Randomiser:
     def next_piece(self) -> int: raise NotImplementedError
 
 class Game(ui.Menu):
-    board: Dict[int, List[int]]
+    board: Dict[int, List[ui.Colour]]
     hold_piece: Optional[Piece]
     death_ticks: Optional[int]
-    controls: Dict[int, str]
+    controls: Dict[Key, str]
     connection: Optional[multiplayer.Connection]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: int, connect: bool) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, connect: bool) -> None:
         self.board_width = width
         self.board_height = height
-        self.objective_type = OBJECTIVE_NONE
+        self.objective_type = Objective.NONE
         self.objective_count = 0
         self.infinite_soft_drop = False
         self.infinite_hold = False
@@ -196,11 +199,11 @@ class Game(ui.Menu):
         else:
             self.connection = None
 
-    def set_objective(self, objective_type: int, objective_count: int) -> None:
+    def set_objective(self, objective_type: Objective, objective_count: int) -> None:
         self.objective_type = objective_type
         self.objective_count = objective_count
 
-    def set_controls(self, controls: Dict[int, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
+    def set_controls(self, controls: Dict[Key, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
         self.controls = controls
         self.infinite_soft_drop = infinite_soft_drop
         self.infinite_hold = infinite_hold
@@ -212,11 +215,11 @@ class Game(ui.Menu):
             return True
         if y not in self.board:
             return False
-        return self.board[y][x] != ui.COLOUR_BLACK
+        return self.board[y][x] != ui.Colour.BLACK
 
-    def board_set(self, x: int, y: int, colour: int) -> None:
+    def board_set(self, x: int, y: int, colour: ui.Colour) -> None:
         if y not in self.board:
-            self.board[y] = [ui.COLOUR_BLACK] * self.board_width
+            self.board[y] = [ui.Colour.BLACK] * self.board_width
         self.board[y][x] = colour
 
     def create_piece(self) -> Piece:
@@ -235,7 +238,7 @@ class Game(ui.Menu):
         spin = False
         mini_spin = False
         if self.current_piece.rotation_last:
-            if self.current_piece.base is pieces[PIECE_T] and self.spin_type != SPIN_NONE:
+            if self.current_piece.base is pieces[PIECE_T] and self.spin_type != SpinType.NONE:
                 corners = 0
                 front_corners = 0
                 back_corners = 0
@@ -258,7 +261,7 @@ class Game(ui.Menu):
                         spin = True
                     else:
                         mini_spin = True
-            elif self.spin_type in (SPIN_ALL_SPIN, SPIN_ALL_MINI):
+            elif self.spin_type in (SpinType.ALL_SPIN, SpinType.ALL_MINI):
                 immobile = True
                 for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)):
                     moved = self.current_piece.move(dx, dy)
@@ -267,7 +270,7 @@ class Game(ui.Menu):
                         self.current_piece.move(-dx, -dy)
                         break
                 if immobile:
-                    if self.spin_type == SPIN_ALL_SPIN:
+                    if self.spin_type == SpinType.ALL_SPIN:
                         spin = True
                     else:
                         mini_spin = True
@@ -275,7 +278,7 @@ class Game(ui.Menu):
         # clear lines
         full = []
         for y, line in self.board.items():
-            if all([c != ui.COLOUR_BLACK for c in line]):
+            if all([c != ui.Colour.BLACK for c in line]):
                 full.append(y)
         offset = 0
         rows = sorted(self.board.keys())
@@ -306,8 +309,8 @@ class Game(ui.Menu):
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     lines = int.from_bytes(data)
-                    line = [ui.COLOUR_GRAY] * self.board_width
-                    line[random.randint(0, self.board_width-1)] = ui.COLOUR_BLACK
+                    line = [ui.Colour.GRAY] * self.board_width
+                    line[random.randint(0, self.board_width-1)] = ui.Colour.BLACK
                     for _ in range(lines):
                         for i in sorted(self.board.keys()):
                             self.board[i-1] = self.board[i]
@@ -318,8 +321,8 @@ class Game(ui.Menu):
                             self.lock_piece()
                     self.redraw()
                 elif command == multiplayer.CMD_EXIT:
-                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
-                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.ALIGN_CENTER)
+                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
                     self.ui.update_screen()
                     self.end_game()
                     return
@@ -385,11 +388,11 @@ class Game(ui.Menu):
         self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
         self.redraw()
         if name:
-            self.ui.draw_text(name, self.board_x+self.board_width//2, self.board_y-4, align=ui.ALIGN_CENTER)
+            self.ui.draw_text(name, self.board_x+self.board_width//2, self.board_y-4, align=ui.Alignment.CENTER)
         if len(full) > 0:
             self.ui.beep()
         if self.current_piece.intersect():
-            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.ALIGN_CENTER)
+            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
             self.ui.update_screen()
             self.end_game()
             return
@@ -426,21 +429,21 @@ class Game(ui.Menu):
                 raise ui.ExitException
             return
         self.ticks += 1
-        if self.objective_type == OBJECTIVE_TIME:
+        if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
-                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
+                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
-        elif self.objective_type == OBJECTIVE_LINES:
+        elif self.objective_type == Objective.LINES:
             if self.lines >= self.objective_count:
                 seconds = self.ticks // TPS
                 ms = int((self.ticks % TPS) / TPS * 1000)
                 minutes = seconds // TPS
                 seconds %= TPS
                 text = f"Time: {minutes}:{seconds:02}.{ms:02}"
-                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.ALIGN_CENTER)
+                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
@@ -454,7 +457,7 @@ class Game(ui.Menu):
         self.fall_ticks -= 1
         if self.fall_ticks <= 0:
             self.fall_ticks = TPS / self.fall_speed
-            self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
+            self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
             self.current_piece.move(0, 1)
             self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
@@ -462,17 +465,17 @@ class Game(ui.Menu):
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
             return
-        self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
-        if c == self.controls[KEY_SOFT_DROP]:
+        self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
+        if c == self.controls[Key.SOFT_DROP]:
             count = 25 if self.infinite_soft_drop else 1
             for i in range(count):
                 if self.current_piece.move(0, 1):
                     self.score += 1
             self.redraw_counters()
-        if c == self.controls[KEY_HOLD] and not repeated:
+        if c == self.controls[Key.HOLD] and not repeated:
             if not self.held:
-                self.current_piece.draw(self.board_x, self.board_y, colour=ui.COLOUR_BLACK)
-                self.redraw_hold_piece(colour=ui.COLOUR_BLACK)
+                self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
+                self.redraw_hold_piece(colour=ui.Colour.BLACK)
                 if not self.infinite_hold:
                     self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
@@ -491,22 +494,22 @@ class Game(ui.Menu):
                     self.redraw()
                 else:
                     self.redraw_hold_piece()
-        if c == self.controls[KEY_LEFT]:
+        if c == self.controls[Key.LEFT]:
             if self.current_piece.move(-1, 0):
                 self.lock_reset()
-        if c == self.controls[KEY_RIGHT]:
+        if c == self.controls[Key.RIGHT]:
             if self.current_piece.move(1, 0):
                 self.lock_reset()
-        if c == self.controls[KEY_ANTICLOCKWISE] and not repeated:
+        if c == self.controls[Key.ANTICLOCKWISE] and not repeated:
             if self.current_piece.rotate(-1):
                 self.lock_reset()
-        if c == self.controls[KEY_ROTATE] or c == self.controls[KEY_CLOCKWISE] and not repeated:
+        if c == self.controls[Key.ROTATE] or c == self.controls[Key.CLOCKWISE] and not repeated:
             if self.current_piece.rotate(1):
                 self.lock_reset()
-        if c == self.controls[KEY_180] and not repeated:
+        if c == self.controls[Key.ROTATE_180] and not repeated:
             if self.current_piece.rotate(2):
                 self.lock_reset()
-        if c == self.controls[KEY_HARD_DROP] and not repeated:
+        if c == self.controls[Key.HARD_DROP] and not repeated:
             if self.no_hard_drop_ticks <= 0:
                 while self.current_piece.move(0, 1):
                     self.score += 2
@@ -514,10 +517,10 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
 
-    def redraw_hold_piece(self, colour: Optional[int] = None) -> None:
+    def redraw_hold_piece(self, colour: Optional[ui.Colour] = None) -> None:
         if self.hold_piece:
             if colour is None and self.held:
-                colour = ui.COLOUR_GRAY
+                colour = ui.Colour.GRAY
             self.hold_piece.draw(self.hold_x, self.hold_y, colour=colour, shadow=False)
 
     def redraw(self, update: bool = True) -> None:
@@ -526,15 +529,15 @@ class Game(ui.Menu):
             for y in range(self.board_height+1):
                 if x in (0, self.board_width+1) or y == self.board_height:
                     # draw main border
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.board_x-1, y+self.board_y)
+                    self.ui.set_pixel(ui.Colour.WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
             for y in range(6):
                 if x == 0 or y in (0, 5):
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.hold_x-1, y+self.hold_y-1)
+                    self.ui.set_pixel(ui.Colour.WHITE, x+self.hold_x-1, y+self.hold_y-1)
         for x in range(5):
             for y in range(14):
                 if x == 4 or y in (0, 13):
-                    self.ui.set_pixel(ui.COLOUR_WHITE, x+self.next_x, y+self.next_y-1)
+                    self.ui.set_pixel(ui.Colour.WHITE, x+self.next_x, y+self.next_y-1)
         for y, row in self.board.items():
             ty = y + self.board_y
             for x, c in enumerate(row):
@@ -543,14 +546,14 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y)
         for y in range(12):
             for x in range(4):
-                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.next_x, y+self.next_y)
+                self.ui.set_pixel(ui.Colour.BLACK, x+self.next_x, y+self.next_y)
         for i, piece in enumerate(self.next_pieces):
             piece.reset(hold=True)
             piece.y += i * 4
             piece.draw(self.next_x, self.next_y, shadow=False)
         for y in range(4):
             for x in range(4):
-                self.ui.set_pixel(ui.COLOUR_BLACK, x+self.hold_x, y+self.hold_y)
+                self.ui.set_pixel(ui.Colour.BLACK, x+self.hold_x, y+self.hold_y)
         self.redraw_hold_piece()
         self.redraw_counters()
         if update:
@@ -595,13 +598,13 @@ PIECE_Z = 5
 PIECE_I = 6
 
 pieces = [
-    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.COLOUR_ORANGE, "L"),
-    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_BLUE, "J"),
-    PieceType([[1, 1], [1, 1]], ui.COLOUR_YELLOW, "O"),
-    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.COLOUR_MAGENTA, "T"),
-    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.COLOUR_GREEN, "S"),
-    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.COLOUR_RED, "Z"),
-    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.COLOUR_CYAN, "I"),
+    PieceType([[0, 0, 1], [1, 1, 1], [0, 0, 0]], ui.Colour.ORANGE, "L"),
+    PieceType([[1, 0, 0], [1, 1, 1], [0, 0, 0]], ui.Colour.BLUE, "J"),
+    PieceType([[1, 1], [1, 1]], ui.Colour.YELLOW, "O"),
+    PieceType([[0, 1, 0], [1, 1, 1], [0, 0, 0]], ui.Colour.MAGENTA, "T"),
+    PieceType([[0, 1, 1], [1, 1, 0], [0, 0, 0]], ui.Colour.GREEN, "S"),
+    PieceType([[1, 1, 0], [0, 1, 1], [0, 0, 0]], ui.Colour.RED, "Z"),
+    PieceType([[0]*4, [1]*4, [0]*4, [0]*4], ui.Colour.CYAN, "I"),
 ]
 
 KICKS = ((0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2))

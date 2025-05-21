@@ -1,15 +1,21 @@
+import enum
 from typing import Collection, Union
 
-COLOUR_BLACK    = 0
-COLOUR_WHITE    = 1
-COLOUR_GRAY     = 2
-COLOUR_RED      = 3
-COLOUR_ORANGE   = 4
-COLOUR_YELLOW   = 5
-COLOUR_GREEN    = 6
-COLOUR_BLUE     = 7
-COLOUR_CYAN     = 8
-COLOUR_MAGENTA  = 9
+class Colour(enum.Enum):
+    BLACK    = 0
+    WHITE    = 1
+    GRAY     = 2
+    RED      = 3
+    ORANGE   = 4
+    YELLOW   = 5
+    GREEN    = 6
+    BLUE     = 7
+    CYAN     = 8
+    MAGENTA  = 9
+
+class Alignment(enum.Enum):
+    LEFT = 0
+    CENTER = 1
 
 COLOURS = (
     (0, 0, 0),
@@ -46,9 +52,6 @@ ESCAPE_CODE_TO_NAME = {
     "\x1b[6~": "Page Down",
 }
 
-ALIGN_LEFT = 0
-ALIGN_CENTER = 1
-
 class ExitException(Exception):
     pass
 
@@ -63,8 +66,8 @@ class UI:
     height: int
     def init(self) -> None: raise NotImplementedError
     def quit(self) -> None: raise NotImplementedError
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = COLOUR_WHITE, bg_colour: int = COLOUR_BLACK, align: int = ALIGN_LEFT) -> None: raise NotImplementedError
-    def set_pixel(self, colour: int, x: int, y: int) -> None: raise NotImplementedError
+    def draw_text(self, text: str, x: int, y: int, fg_colour: Colour = Colour.WHITE, bg_colour: Colour = Colour.BLACK, align: Alignment = Alignment.LEFT) -> None: raise NotImplementedError
+    def set_pixel(self, colour: Colour, x: int, y: int) -> None: raise NotImplementedError
     def beep(self) -> None: raise NotImplementedError
     def clear(self) -> None: raise NotImplementedError
     def update_screen(self) -> None: raise NotImplementedError

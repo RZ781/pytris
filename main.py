@@ -33,23 +33,23 @@ else:
     main_ui = terminal_ui.TerminalUI()
 
 bag_type = 0
-objective = game.OBJECTIVE_NONE
+objective = 0
 infinite_soft_drop = False
 infinite_hold = False
 board_width = 10
 board_height = 20
-spin_type = game.SPIN_T_SPIN
+spin_type = 0
 
 default_controls = {
-    game.KEY_LEFT: "Left",
-    game.KEY_RIGHT: "Right",
-    game.KEY_SOFT_DROP: "Down",
-    game.KEY_HARD_DROP: "Space",
-    game.KEY_ROTATE: "Up",
-    game.KEY_CLOCKWISE: "x",
-    game.KEY_ANTICLOCKWISE: "z",
-    game.KEY_180: "a",
-    game.KEY_HOLD: "c",
+    game.Key.LEFT: "Left",
+    game.Key.RIGHT: "Right",
+    game.Key.SOFT_DROP: "Down",
+    game.Key.HARD_DROP: "Space",
+    game.Key.ROTATE: "Up",
+    game.Key.CLOCKWISE: "x",
+    game.Key.ANTICLOCKWISE: "z",
+    game.Key.ROTATE_180: "a",
+    game.Key.HOLD: "c",
 }
 
 # version 1 of the config stored the keys directly in the json
@@ -66,7 +66,7 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
     else:
         keys = controls_config["keys"]
     # json casts all keys to strings, so they must be converted back
-    controls = {int(a): b for a, b in keys.items()}
+    controls = {game.Key(int(a)): b for a, b in keys.items()}
     if version >= 2:
         infinite_soft_drop = controls_config["infinite_soft_drop"]
         infinite_hold = controls_config["infinite_hold"]
@@ -82,7 +82,7 @@ else:
 
 controls_config = {
     "version": 3,
-    "keys": controls,
+    "keys": {key.value: controls[key] for key in controls},
     "infinite_soft_drop": infinite_soft_drop,
     "infinite_hold": infinite_hold
 }
@@ -106,51 +106,51 @@ try:
             else:
                 randomiser = game.ClassicRandomiser()
             if objective == 0:
-                objective_type = game.OBJECTIVE_NONE
+                objective_type = game.Objective.NONE
                 objective_count = 0
             elif objective == 1:
-                objective_type = game.OBJECTIVE_LINES
+                objective_type = game.Objective.LINES
                 objective_count = 20
             elif objective == 2:
-                objective_type = game.OBJECTIVE_LINES
+                objective_type = game.Objective.LINES
                 objective_count = 40
             elif objective == 3:
-                objective_type = game.OBJECTIVE_LINES
+                objective_type = game.Objective.LINES
                 objective_count = 100
             elif objective == 4:
-                objective_type = game.OBJECTIVE_TIME
+                objective_type = game.Objective.TIME
                 objective_count = 60
-            elif objective == 5:
-                objective_type = game.OBJECTIVE_TIME
+            else:
+                objective_type = game.Objective.TIME
                 objective_count = 120
-            x = game.Game(randomiser, board_width, board_height, spin_type, False)
+            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.SPIN_ALL_MINI, True)
-            x.set_objective(game.OBJECTIVE_NONE, 0)
+            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, True)
+            x.set_objective(game.Objective.NONE, 0)
             x.set_controls(controls, infinite_soft_drop, False)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 2:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 3:
-            key = 0
+            choice = 0
             while True:
-                options = ("Close", "Defaults") + tuple((x, controls[i]) for i, x in enumerate(CONTROL_NAMES))
-                key = main_ui.menu(options, starting_option=key)
-                if key == 0:
+                options = ("Close", "Defaults") + tuple((CONTROL_NAMES[key.value], controls[key]) for key in game.Key)
+                choice = main_ui.menu(options, starting_option=choice)
+                if choice == 0:
                     break
-                elif key == 1:
+                elif choice == 1:
                     controls = default_controls.copy()
                     continue
                 else:
-                    key -= 2
-                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key].lower()}", main_ui.width // 2, main_ui.height // 10, align=ui.ALIGN_CENTER)
+                    key = game.Key(choice - 2)
+                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key.value].lower()}", main_ui.width // 2, main_ui.height // 10, align=ui.Alignment.CENTER)
                 main_ui.update_screen()
                 controls[key] = main_ui.get_key()
-            controls_config["keys"] = controls
+            controls_config["keys"] = {key.value: controls[key] for key in controls}
             config.save("controls", controls_config)
         elif option == 4:
             bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)

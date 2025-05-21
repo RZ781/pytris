@@ -35,8 +35,8 @@ class BaseTerminalUI(ui.UI):
     reset_code = "\x1b[0m"
 
     def __init__(self) -> None:
-        self.fg_colour = ui.COLOUR_WHITE
-        self.bg_colour = ui.COLOUR_BLACK
+        self.fg_colour = ui.Colour.WHITE
+        self.bg_colour = ui.Colour.BLACK
         self.buffer = ""
         self.inital_options = None
         terminal_size = shutil.get_terminal_size()
@@ -56,37 +56,37 @@ class BaseTerminalUI(ui.UI):
     def clear(self) -> None:
         self.buffer += "\x1b[0m\x1b[2J\x1b[3J"
 
-    def set_fg_colour(self, colour: int) -> None:
+    def set_fg_colour(self, colour: ui.Colour) -> None:
         if colour != self.fg_colour:
-            if colour == ui.COLOUR_WHITE:
+            if colour == ui.Colour.WHITE:
                 self.buffer += TerminalUI.reset_code
                 # set background colour again if resetting terminal for foreground
                 old_bg_colour = self.bg_colour
-                self.fg_colour = ui.COLOUR_WHITE
-                self.bg_colour = ui.COLOUR_BLACK
+                self.fg_colour = ui.Colour.WHITE
+                self.bg_colour = ui.Colour.BLACK
                 self.set_bg_colour(old_bg_colour)
             else:
-                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour]
+                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour.value]
                 self.fg_colour = colour
 
-    def set_bg_colour(self, colour: int) -> None:
+    def set_bg_colour(self, colour: ui.Colour) -> None:
         if colour != self.bg_colour:
-            if colour == ui.COLOUR_BLACK:
+            if colour == ui.Colour.BLACK:
                 self.buffer += TerminalUI.reset_code
                 # set foreground colour again if resetting terminal for background
                 old_fg_colour = self.fg_colour
-                self.fg_colour = ui.COLOUR_WHITE
-                self.bg_colour = ui.COLOUR_BLACK
+                self.fg_colour = ui.Colour.WHITE
+                self.bg_colour = ui.Colour.BLACK
                 self.set_fg_colour(old_fg_colour)
             else:
-                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
+                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour.value]
                 self.bg_colour = colour
 
     def goto(self, x: float, y: float) -> None:
         self.buffer += f"\x1b[{int(y+1)};{int(2*x+1)}H" # double x so pixels are approximately square
 
-    def draw_text(self, text: str, x: int, y: int, fg_colour: int = ui.COLOUR_WHITE, bg_colour: int = ui.COLOUR_BLACK, align: int = ui.ALIGN_LEFT) -> None:
-        if align == ui.ALIGN_CENTER:
+    def draw_text(self, text: str, x: int, y: int, fg_colour: ui.Colour = ui.Colour.WHITE, bg_colour: ui.Colour = ui.Colour.BLACK, align: ui.Alignment = ui.Alignment.LEFT) -> None:
+        if align == ui.Alignment.CENTER:
             offset = -len(text) / 4
         else:
             offset = 0
@@ -95,13 +95,13 @@ class BaseTerminalUI(ui.UI):
         self.goto(x+offset, y)
         self.buffer += text
 
-    def set_pixel(self, colour: int, x: int, y: int) -> None:
+    def set_pixel(self, colour: ui.Colour, x: int, y: int) -> None:
         self.goto(x, y)
-        if self.mode == 3 and colour == ui.COLOUR_GRAY:
-            self.set_bg_colour(ui.COLOUR_BLACK)
+        if self.mode == 3 and colour == ui.Colour.GRAY:
+            self.set_bg_colour(ui.Colour.BLACK)
             self.buffer += "''"
-        elif self.mode == 3 and colour == ui.COLOUR_WHITE:
-            self.set_bg_colour(ui.COLOUR_BLACK)
+        elif self.mode == 3 and colour == ui.Colour.WHITE:
+            self.set_bg_colour(ui.Colour.BLACK)
             self.buffer += "##"
         else:
             self.set_bg_colour(colour)
@@ -197,8 +197,8 @@ if sys.platform == "win32":
             pass
 
         def quit(self) -> None:
-            self.set_fg_colour(ui.COLOUR_WHITE)
-            self.set_bg_colour(ui.COLOUR_BLACK)
+            self.set_fg_colour(ui.Colour.WHITE)
+            self.set_bg_colour(ui.Colour.BLACK)
             self.goto(0, 0)
             self.update_screen()
 
@@ -251,8 +251,8 @@ else:
             # reset terminal options
             termios.tcsetattr(0, termios.TCSANOW, self.initial_options)
             # reset terminal
-            self.set_fg_colour(ui.COLOUR_WHITE)
-            self.set_bg_colour(ui.COLOUR_BLACK)
+            self.set_fg_colour(ui.Colour.WHITE)
+            self.set_bg_colour(ui.Colour.BLACK)
             self.goto(0, 0)
             self.update_screen()
 
