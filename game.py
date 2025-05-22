@@ -62,7 +62,7 @@ class Piece:
                 self.y += 1
             shadow_colour = colour
             if shadow_colour is None:
-                shadow_colour = ui.Colour.GRAY
+                shadow_colour = ui.Colour.LIGHT_GREY
             self.draw(board_x, board_y, colour=shadow_colour, shadow=False)
             self.y = old_y
         if colour is None:
@@ -310,7 +310,7 @@ class Game(ui.Menu):
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     lines = int.from_bytes(data)
-                    line = [ui.Colour.GRAY] * self.board_width
+                    line = [ui.Colour.DARK_GREY] * self.board_width
                     line[random.randint(0, self.board_width-1)] = ui.Colour.BLACK
                     for _ in range(lines):
                         for i in sorted(self.board.keys()):
@@ -526,7 +526,7 @@ class Game(ui.Menu):
     def redraw_hold_piece(self, colour: Optional[ui.Colour] = None) -> None:
         if self.hold_piece:
             if colour is None and self.held:
-                colour = ui.Colour.GRAY
+                colour = ui.Colour.LIGHT_GREY
             self.hold_piece.draw(self.hold_x, self.hold_y, colour=colour, shadow=False)
 
     def redraw(self, update: bool = True) -> None:

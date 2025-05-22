@@ -19,7 +19,8 @@ SCANCODE_TO_NAME = {
 COLOURS_4_BIT = {
     ui.Colour.BLACK: 0,
     ui.Colour.WHITE: 7,
-    ui.Colour.GRAY: 8,
+    ui.Colour.LIGHT_GREY: 8,
+    ui.Colour.DARK_GREY: 8,
     ui.Colour.RED: 1,
     ui.Colour.ORANGE: 3,
     ui.Colour.YELLOW: 11,
@@ -32,7 +33,8 @@ COLOURS_4_BIT = {
 COLOURS_8_BIT = {
     ui.Colour.BLACK: 232,
     ui.Colour.WHITE: 255,
-    ui.Colour.GRAY: 243,
+    ui.Colour.LIGHT_GREY: 246,
+    ui.Colour.DARK_GREY: 241,
     ui.Colour.RED: 160,
     ui.Colour.ORANGE: 166,
     ui.Colour.YELLOW: 226,
@@ -121,7 +123,7 @@ class BaseTerminalUI(ui.UI):
 
     def set_pixel(self, colour: ui.Colour, x: int, y: int) -> None:
         self.goto(x, y)
-        if self.mode == 3 and colour == ui.Colour.GRAY:
+        if self.mode == 3 and colour == ui.Colour.LIGHT_GREY:
             self.set_bg_colour(ui.Colour.BLACK)
             self.buffer += "''"
         elif self.mode == 3 and colour == ui.Colour.WHITE:

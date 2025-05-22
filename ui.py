@@ -2,16 +2,17 @@ import enum
 from typing import Collection, Union
 
 class Colour(enum.Enum):
-    BLACK    = 0
-    WHITE    = 1
-    GRAY     = 2
-    RED      = 3
-    ORANGE   = 4
-    YELLOW   = 5
-    GREEN    = 6
-    BLUE     = 7
-    CYAN     = 8
-    MAGENTA  = 9
+    BLACK      = 0
+    WHITE      = 1
+    LIGHT_GREY = 2
+    DARK_GREY  = 3
+    RED        = 4
+    ORANGE     = 5
+    YELLOW     = 6
+    GREEN      = 7
+    BLUE       = 8
+    CYAN       = 9
+    MAGENTA    = 10
 
 class Alignment(enum.Enum):
     LEFT = 0
@@ -20,7 +21,8 @@ class Alignment(enum.Enum):
 COLOURS = {
     Colour.BLACK: (0, 0, 0),
     Colour.WHITE: (255, 255, 255),
-    Colour.GRAY: (128, 128, 128),
+    Colour.LIGHT_GREY: (150, 150, 150),
+    Colour.DARK_GREY: (100, 100, 100),
     Colour.RED: (188, 46, 61),
     Colour.ORANGE: (202, 99, 41),
     Colour.YELLOW: (253, 255, 12),
