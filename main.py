@@ -2,7 +2,7 @@
 import sys
 import game, ui, config, multiplayer
 
-CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold")
+CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
 
 try:
     import pygame
@@ -50,6 +50,7 @@ default_controls = {
     game.Key.ANTICLOCKWISE: "z",
     game.Key.ROTATE_180: "a",
     game.Key.HOLD: "c",
+    game.Key.FORFEIT: "Escape",
 }
 
 # version 1 of the config stored the keys directly in the json
@@ -77,6 +78,8 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
                 controls[control] = ui.ASCII_TO_NAME[s]
             elif s in ui.ESCAPE_CODE_TO_NAME:
                 controls[control] = ui.ESCAPE_CODE_TO_NAME[s]
+    # add missing keys
+    controls = default_controls | controls
 else:
     controls = default_controls.copy()
 

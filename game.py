@@ -17,6 +17,7 @@ class Key(enum.Enum):
     ANTICLOCKWISE = 6
     ROTATE_180 = 7
     HOLD = 8
+    FORFEIT = 9
 
 class Objective(enum.Enum):
     NONE = 0
@@ -395,7 +396,6 @@ class Game(ui.Menu):
             self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
             self.ui.update_screen()
             self.end_game()
-            return
 
     def lock_reset(self) -> None:
         if self.current_piece.on_floor() and self.lock_count:
@@ -466,6 +466,12 @@ class Game(ui.Menu):
         if self.death_ticks is not None:
             return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
+        if c == self.controls[Key.FORFEIT]:
+            self.redraw()
+            self.ui.draw_text("Forfeited", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.update_screen()
+            self.end_game()
+            return
         if c == self.controls[Key.SOFT_DROP]:
             count = 25 if self.infinite_soft_drop else 1
             for i in range(count):
