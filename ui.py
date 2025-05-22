@@ -17,18 +17,18 @@ class Alignment(enum.Enum):
     LEFT = 0
     CENTER = 1
 
-COLOURS = (
-    (0, 0, 0),
-    (255, 255, 255),
-    (128, 128, 128),
-    (188, 46, 61),
-    (202, 99, 41),
-    (253, 255, 12),
-    (117, 174, 54),
-    (55, 67, 190),
-    (89, 154, 209),
-    (155, 55, 134),
-)
+COLOURS = {
+    Colour.BLACK: (0, 0, 0),
+    Colour.WHITE: (255, 255, 255),
+    Colour.GRAY: (128, 128, 128),
+    Colour.RED: (188, 46, 61),
+    Colour.ORANGE: (202, 99, 41),
+    Colour.YELLOW: (253, 255, 12),
+    Colour.GREEN: (117, 174, 54),
+    Colour.BLUE: (55, 67, 190),
+    Colour.CYAN: (89, 154, 209),
+    Colour.MAGENTA: (155, 55, 134),
+}
 
 ASCII_TO_NAME = {
     " ": "Space",
@@ -36,7 +36,7 @@ ASCII_TO_NAME = {
     "\n": "Return",
     "\r": "Return",
     "\x1b": "Escape",
-    "\x7f": "Backspace"
+    "\x7f": "Backspace",
 }
 
 ESCAPE_CODE_TO_NAME = {

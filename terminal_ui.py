@@ -16,21 +16,45 @@ SCANCODE_TO_NAME = {
     0x08: "Delete"
 }
 
+COLOURS_4_BIT = {
+    ui.Colour.BLACK: 0,
+    ui.Colour.WHITE: 7,
+    ui.Colour.GRAY: 8,
+    ui.Colour.RED: 1,
+    ui.Colour.ORANGE: 3,
+    ui.Colour.YELLOW: 11,
+    ui.Colour.GREEN: 10,
+    ui.Colour.BLUE: 4,
+    ui.Colour.CYAN: 6,
+    ui.Colour.MAGENTA: 5
+}
+
+COLOURS_8_BIT = {
+    ui.Colour.BLACK: 232,
+    ui.Colour.WHITE: 255,
+    ui.Colour.GRAY: 243,
+    ui.Colour.RED: 160,
+    ui.Colour.ORANGE: 166,
+    ui.Colour.YELLOW: 226,
+    ui.Colour.GREEN: 118,
+    ui.Colour.BLUE: 21,
+    ui.Colour.CYAN: 45,
+    ui.Colour.MAGENTA: 129,
+}
+
 class BaseTerminalUI(ui.UI):
     MODES = ["4 bit", "8 bit", "24 bit", "Monochrome"]
-    COLOURS_4_BIT = (0, 7, 8, 1, 3, 11, 10, 4, 6, 5)
-    COLOURS_8_BIT = (232, 255, 243, 160, 166, 226, 118, 21, 45, 129)
     fg_colour_codes = [
-        [f"\x1b[38;5;{x}m" for x in COLOURS_4_BIT], # 4 bit
-        [f"\x1b[38;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
-        [f"\x1b[38;2;{r};{g};{b}m" for r, g, b in ui.COLOURS], # 24 bit
-        [""] * 10, # monochrome
+        {c: f"\x1b[38;5;{COLOURS_4_BIT[c]}m" for c in ui.Colour}, # 4 bit
+        {c: f"\x1b[38;5;{COLOURS_8_BIT[c]}m" for c in ui.Colour}, # 8 bit
+        {c: f"\x1b[38;2;{r};{g};{b}m" for c, (r, g, b) in ui.COLOURS.items()}, # 24 bit
+        {c: "" for c in ui.Colour}, # monochrome
     ]
     bg_colour_codes = [
-        [f"\x1b[48;5;{x}m" for x in COLOURS_4_BIT], # 4 bit
-        [f"\x1b[48;5;{x}m" for x in COLOURS_8_BIT], # 8 bit
-        [f"\x1b[48;2;{r};{g};{b}m" for r, g, b in ui.COLOURS], # 24 bit
-        ["\x1b[0m"] + ["\x1b[7m"]*9, # monochrome
+        {c: f"\x1b[48;5;{COLOURS_4_BIT[c]}m" for c in ui.Colour}, # 4 bit
+        {c: f"\x1b[48;5;{COLOURS_8_BIT[c]}m" for c in ui.Colour}, # 8 bit
+        {c: f"\x1b[48;2;{r};{g};{b}m" for c, (r, g, b) in ui.COLOURS.items()}, # 24 bit
+        {c: "\x1b[0m" if c == ui.Colour.BLACK else "\x1b[7m" for c in ui.Colour}, # monochrome
     ]
     reset_code = "\x1b[0m"
 
@@ -66,7 +90,7 @@ class BaseTerminalUI(ui.UI):
                 self.bg_colour = ui.Colour.BLACK
                 self.set_bg_colour(old_bg_colour)
             else:
-                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour.value]
+                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour]
                 self.fg_colour = colour
 
     def set_bg_colour(self, colour: ui.Colour) -> None:
@@ -79,7 +103,7 @@ class BaseTerminalUI(ui.UI):
                 self.bg_colour = ui.Colour.BLACK
                 self.set_fg_colour(old_fg_colour)
             else:
-                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour.value]
+                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
                 self.bg_colour = colour
 
     def goto(self, x: float, y: float) -> None:
