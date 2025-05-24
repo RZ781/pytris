@@ -293,8 +293,22 @@ class Game(ui.Menu):
                     self.board[i+offset] = self.board[i]
                     del self.board[i]
 
-        # send and receive garbage
+        # check all clear, b2b, combo
         all_clear = len(self.board) == 0
+        if spin or mini_spin:
+            if len(full) > 0:
+                self.b2b += 1
+        else:
+            if len(full) == 4:
+                self.b2b += 1
+            elif len(full) > 0:
+                self.b2b = 0
+        if len(full) > 0:
+            self.combo += 1
+        else:
+            self.combo = 0
+
+        # send and receive garbage
         if self.connection is not None:
             if len(full) > 0:
                 if spin:
@@ -305,6 +319,8 @@ class Game(ui.Menu):
                     lines = len(full) - 1
                 if all_clear:
                     lines += 5
+                if self.b2b > 1:
+                    lines += 1
                 self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
             messages = self.connection.recv()
             for command, data in messages:
@@ -337,15 +353,8 @@ class Game(ui.Menu):
             multiplier = (100, 200, 400)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
-        if spin or mini_spin:
-            if len(full) > 0:
-                self.b2b += 1
-        else:
-            if len(full) == 4:
-                self.b2b += 1
-            elif len(full) > 0:
-                self.b2b = 0
-        multiplier += self.combo * 50
+        if self.combo > 1:
+            multiplier += (self.combo - 1) * 50
         if all_clear:
             if self.b2b > 1:
                 multiplier += 3200
@@ -357,10 +366,6 @@ class Game(ui.Menu):
         self.lines += len(full)
         self.level = self.lines // 10 + 1
         self.fall_speed = 1.2 + self.level * 0.5
-        if len(full) > 0:
-            self.combo += 1
-        else:
-            self.combo = 0
 
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
@@ -372,8 +377,8 @@ class Game(ui.Menu):
             if self.b2b == 2:
                 count = ""
             else:
-                count = f"x{self.b2b-1} "
-            name = f"B2B {count}{name}"
+                count = f" x{self.b2b-1}"
+            name = f"B2B{count} {name}"
         if self.combo > 1:
             name = f"{name} Combo {self.combo-1}"
         if all_clear:

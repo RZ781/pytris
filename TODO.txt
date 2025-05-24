@@ -1,2 +1,3 @@
  - add other rotation systems
+ - allow garbage to be cancelled
  - add online multiplayer
