@@ -1,4 +1,4 @@
-import random, sys, copy, time, enum
+import random, sys, copy, time, enum, math
 import ui, multiplayer
 from typing import List, Optional, Dict
 
@@ -321,6 +321,11 @@ class Game(ui.Menu):
                     lines += 5
                 if self.b2b > 1:
                     lines += 1
+                if self.combo > 1:
+                    if lines == 0:
+                        lines = int(math.log(1 + 1.25 * (self.combo - 1)))
+                    else:
+                        lines = int(lines * (1 + 0.25 * (self.combo - 1)))
                 self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
             messages = self.connection.recv()
             for command, data in messages:
@@ -335,7 +340,6 @@ class Game(ui.Menu):
                         self.board[self.board_height-1] = line.copy()
                         if self.current_piece.intersect():
                             self.current_piece.y -= 1
-                            self.lock_piece()
                     self.redraw()
                 elif command == multiplayer.CMD_EXIT:
                     self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
