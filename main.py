@@ -36,9 +36,8 @@ bag_type = 0
 objective = 0
 infinite_soft_drop = False
 infinite_hold = False
-board_width = 10
-board_height = 20
 spin_type = 0
+size = 0
 
 default_controls = {
     game.Key.LEFT: "Left",
@@ -126,6 +125,18 @@ try:
             else:
                 objective_type = game.Objective.TIME
                 objective_count = 120
+            if size == 0:
+                board_width = 10
+                board_height = 20
+            elif size == 1:
+                board_width = 4
+                board_height = 24
+            elif size == 2:
+                board_width = 5
+                board_height = 10
+            else:
+                board_width = 20
+                board_height = 20
             x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
@@ -158,29 +169,17 @@ try:
         elif option == 4:
             bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         elif option == 5:
-            infinite_soft_drop = main_ui.menu(("Enable", "Disable")) == 0
+            infinite_soft_drop = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_soft_drop else 1) == 0
             controls_config["infinite_soft_drop"] = infinite_soft_drop
             config.save("controls", controls_config)
         elif option == 6:
-            infinite_hold = main_ui.menu(("Enable", "Disable")) == 0
+            infinite_hold = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_hold else 1) == 0
             controls_config["infinite_hold"] = infinite_hold
             config.save("controls", controls_config)
         elif option == 7:
-            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"))
-            if size == 0:
-                board_width = 10
-                board_height = 20
-            elif size == 1:
-                board_width = 4
-                board_height = 24
-            elif size == 2:
-                board_width = 5
-                board_height = 10
-            else:
-                board_width = 20
-                board_height = 20
+            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 8:
-            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), spin_type)
+            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
         elif option == 9:
             main_ui.options_menu()
         else:
