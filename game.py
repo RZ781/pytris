@@ -167,6 +167,7 @@ class Game(ui.Menu):
     death_ticks: Optional[int]
     controls: Dict[Key, str]
     connection: Optional[multiplayer.Connection]
+    garbage_queue: List[int]
 
     def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, connect: bool) -> None:
         self.board_width = width
@@ -195,6 +196,7 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
+        self.garbage_queue = []
         if connect:
             self.connection = multiplayer.connect_to_server()
         else:
@@ -308,7 +310,7 @@ class Game(ui.Menu):
         else:
             self.combo = 0
 
-        # send and receive garbage
+        # send and cancel garbage
         if self.connection is not None:
             if len(full) > 0:
                 if spin:
@@ -326,29 +328,28 @@ class Game(ui.Menu):
                         lines = int(math.log(1 + 1.25 * (self.combo - 1)))
                     else:
                         lines = int(lines * (1 + 0.25 * (self.combo - 1)))
+                while lines > 0 and len(self.garbage_queue) > 0:
+                    if lines >= self.garbage_queue[0]:
+                        lines -= self.garbage_queue.pop(0)
+                    else:
+                        self.garbage_queue[0] -= lines
+                        lines = 0
                 self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
-            messages = self.connection.recv()
-            for command, data in messages:
-                if command == multiplayer.CMD_RECEIVE_GARBAGE:
-                    lines = int.from_bytes(data)
-                    line = [ui.Colour.DARK_GREY] * self.board_width
-                    line[random.randint(0, self.board_width-1)] = ui.Colour.BLACK
-                    for _ in range(lines):
-                        for i in sorted(self.board.keys()):
-                            self.board[i-1] = self.board[i]
-                            self.board.pop(i)
-                        self.board[self.board_height-1] = line.copy()
-                        if self.current_piece.intersect():
-                            self.current_piece.y -= 1
-                    self.redraw()
-                elif command == multiplayer.CMD_EXIT:
-                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
-                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
-                    self.ui.update_screen()
-                    self.end_game()
-                    return
-                else:
-                    exit(f"Unknown command from server: {command}")
+
+        # receive garbage
+        if len(self.garbage_queue) > 0 and len(full) == 0:
+            for lines in self.garbage_queue:
+                line = [ui.Colour.DARK_GREY] * self.board_width
+                line[random.randint(0, self.board_width-1)] = ui.Colour.BLACK
+                for _ in range(lines):
+                    for i in sorted(self.board.keys()):
+                        self.board[i-1] = self.board[i]
+                        self.board.pop(i)
+                    self.board[self.board_height-1] = line.copy()
+                    if self.current_piece.intersect():
+                        self.current_piece.y -= 1
+            self.redraw()
+            self.garbage_queue = []
 
         # add score
         if spin:
@@ -438,6 +439,19 @@ class Game(ui.Menu):
                 raise ui.ExitException
             return
         self.ticks += 1
+        if self.connection is not None:
+            messages = self.connection.recv()
+            for command, data in messages:
+                if command == multiplayer.CMD_RECEIVE_GARBAGE:
+                    self.garbage_queue.append(int.from_bytes(data))
+                elif command == multiplayer.CMD_EXIT:
+                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
+                    self.ui.update_screen()
+                    self.end_game()
+                    return
+                else:
+                    exit(f"Unknown command from server: {command}")
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
