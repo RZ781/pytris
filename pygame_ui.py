@@ -98,8 +98,9 @@ class PygameUI(ui.UI):
 
     def options_menu(self) -> None:
         options = ("Beep", "Close")
+        option = 0
         while True:
-            option = self.menu(options)
+            option = self.menu(options, starting_option=option)
             if option == 0:
                 self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.enable_beep else 1) == 0
                 config.save("beep", {"enabled": self.enable_beep})

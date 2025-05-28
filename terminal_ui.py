@@ -150,8 +150,9 @@ class BaseTerminalUI(ui.UI):
 
     def options_menu(self) -> None:
         options = ("Colours", "Beep", "Close")
+        option = 0
         while True:
-            option = self.menu(options)
+            option = self.menu(options, starting_option=option)
             if option == 0:
                 self.mode = self.menu(BaseTerminalUI.MODES, starting_option=self.mode)
                 config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
