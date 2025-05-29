@@ -419,7 +419,7 @@ class Game(ui.Menu):
     def resize(self, width: int, height: int) -> None:
         self.board_x = (width - self.board_width) // 2
         self.board_y = (height - self.board_height) // 2
-        self.hold_x = self.board_x - 5
+        self.hold_x = self.board_x - 7
         self.hold_y = self.board_y + 1
         self.next_x = self.board_x + self.board_width + 1
         self.next_y = self.board_y + 1
@@ -444,6 +444,7 @@ class Game(ui.Menu):
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     self.garbage_queue.append(int.from_bytes(data))
+                    self.redraw()
                 elif command == multiplayer.CMD_EXIT:
                     self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
                     self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
@@ -554,9 +555,9 @@ class Game(ui.Menu):
 
     def redraw(self, update: bool = True) -> None:
         self.ui.clear()
-        for x in range(self.board_width+2):
+        for x in range(-2, self.board_width+2):
             for y in range(self.board_height+1):
-                if x in (0, self.board_width+1) or y == self.board_height:
+                if x in (-2, 0, self.board_width+1) or y == self.board_height:
                     # draw main border
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.board_x-1, y+self.board_y)
         for x in range(5):
@@ -572,6 +573,9 @@ class Game(ui.Menu):
             for x, c in enumerate(row):
                 tx = x + self.board_x
                 self.ui.set_pixel(c, tx, ty)
+        # draw garbage meter
+        for y in range(sum(self.garbage_queue)):
+            self.ui.set_pixel(ui.Colour.RED, self.board_x-2, self.board_y+self.board_height-y-1)
         self.current_piece.draw(self.board_x, self.board_y)
         for y in range(12):
             for x in range(4):
