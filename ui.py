@@ -7,12 +7,13 @@ class Colour(enum.Enum):
     LIGHT_GREY = 2
     DARK_GREY  = 3
     RED        = 4
-    ORANGE     = 5
-    YELLOW     = 6
-    GREEN      = 7
-    BLUE       = 8
-    CYAN       = 9
-    MAGENTA    = 10
+    BRIGHT_RED = 5
+    ORANGE     = 6
+    YELLOW     = 7
+    GREEN      = 8
+    BLUE       = 9
+    CYAN       = 10
+    MAGENTA    = 11
 
 class Alignment(enum.Enum):
     LEFT = 0
@@ -24,6 +25,7 @@ COLOURS = {
     Colour.LIGHT_GREY: (150, 150, 150),
     Colour.DARK_GREY: (100, 100, 100),
     Colour.RED: (188, 46, 61),
+    Colour.BRIGHT_RED: (230, 56, 74),
     Colour.ORANGE: (202, 99, 41),
     Colour.YELLOW: (253, 255, 12),
     Colour.GREEN: (117, 174, 54),

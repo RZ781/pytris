@@ -559,6 +559,7 @@ class Game(ui.Menu):
 
     def redraw(self, update: bool = True) -> None:
         self.ui.clear()
+
         # draw main border
         if self.enable_garbage_queue:
             left = -2
@@ -568,25 +569,36 @@ class Game(ui.Menu):
             for y in range(self.board_height+1):
                 if x in (-2, 0, self.board_width+1) or y == self.board_height:
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.board_x-1, y+self.board_y)
+
         # draw hold border
         for x in range(5):
             for y in range(6):
                 if x == 0 or y in (0, 5):
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.hold_x-1, y+self.hold_y-1)
+
         # draw next piece border
         for x in range(5):
             for y in range(14):
                 if x == 4 or y in (0, 13):
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.next_x, y+self.next_y-1)
+
         # draw board
         for y, row in self.board.items():
             ty = y + self.board_y
             for x, c in enumerate(row):
                 tx = x + self.board_x
                 self.ui.set_pixel(c, tx, ty)
+
         # draw garbage meter
-        for y in range(sum(self.garbage_queue)):
-            self.ui.set_pixel(ui.Colour.RED, self.board_x-2, self.board_y+self.board_height-y-1)
+        if self.enable_garbage_queue:
+            y = self.board_y + self.board_height - 1
+            for lines in self.garbage_queue:
+                if lines == 0:
+                    continue
+                for i in range(lines):
+                    self.ui.set_pixel(ui.Colour.BRIGHT_RED, self.board_x-2, y)
+                    y -= 1
+                self.ui.set_pixel(ui.Colour.RED, self.board_x-2, y+1)
 
         self.current_piece.draw(self.board_x, self.board_y)
         for y in range(12):
