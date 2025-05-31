@@ -427,7 +427,7 @@ class Game(ui.Menu):
         self.hold_y = self.board_y + 1
         self.next_x = self.board_x + self.board_width + 1
         self.next_y = self.board_y + 1
-        self.counter_x = self.board_x - 10
+        self.counter_x = self.hold_x - 5
         self.counter_y = self.board_y + 15
         self.redraw()
 
