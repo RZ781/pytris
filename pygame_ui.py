@@ -24,11 +24,11 @@ class PygameUI(ui.UI):
 
     def __init__(self) -> None:
         self.inital_options = None
-        self.width = 40
-        self.height = 32
+        self.target_width = self.width = 40
+        self.target_height = self.height = 32
         self.pixel_size = 25
         self.enable_beep = False
-        self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size))
+        self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size), pygame.RESIZABLE)
         self.font = pygame.font.SysFont("courier", self.pixel_size)
         beep = config.load("beep")
         if beep:
@@ -57,6 +57,12 @@ class PygameUI(ui.UI):
                     elif event.type == pygame.QUIT:
                         pygame.quit()
                         exit()
+                    elif event.type == pygame.WINDOWRESIZED:
+                        self.pixel_size = min(event.x // self.target_width, event.y // self.target_height)
+                        self.width = event.x // self.pixel_size
+                        self.height = event.y // self.pixel_size
+                        self.font = pygame.font.SysFont("courier", self.pixel_size)
+                        menu.resize(self.width, self.height)
                 for key, frame in keys.items():
                     if frame == 0:
                         menu.key(key)
