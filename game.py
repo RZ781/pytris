@@ -30,6 +30,11 @@ class SpinType(enum.Enum):
     ALL_MINI = 2
     NONE = 3
 
+class GarbageType(enum.Enum):
+    NONE = 0
+    SLOW = 1
+    FAST = 2
+
 class PieceType:
     def __init__(self, shape: List[List[int]], colour: ui.Colour, name: str) -> None:
         shapes = []
@@ -169,11 +174,12 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, connect: bool) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, connect: bool) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = Objective.NONE
         self.objective_count = 0
+        self.garbage_type = garbage_type
         self.infinite_soft_drop = False
         self.infinite_hold = False
         self.spin_type = spin_type
@@ -457,6 +463,12 @@ class Game(ui.Menu):
                     return
                 else:
                     exit(f"Unknown command from server: {command}")
+        if self.garbage_type == GarbageType.SLOW:
+            if self.ticks % 300 == 0:
+                self.garbage_queue.append(1)
+        elif self.garbage_type == GarbageType.FAST:
+            if self.ticks % 120 == 0:
+                self.garbage_queue.append(1)
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"

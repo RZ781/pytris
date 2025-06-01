@@ -34,6 +34,7 @@ else:
 
 bag_type = 0
 objective = 0
+garbage_type = 0
 infinite_soft_drop = False
 infinite_hold = False
 spin_type = 0
@@ -94,7 +95,7 @@ try:
     playing = True
     option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "UI Options", "Quit"), starting_option=option)
+        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -137,13 +138,13 @@ try:
             else:
                 board_width = 20
                 board_height = 20
-            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), False)
+            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, infinite_hold)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, True)
+            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True)
             x.set_objective(game.Objective.NONE, 0)
             x.set_controls(controls, infinite_soft_drop, False)
             main_ui.main_loop(x, tps=game.TPS)
@@ -181,6 +182,8 @@ try:
         elif option == 8:
             spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
         elif option == 9:
+            garbage_type = main_ui.menu(("None", "Slow", "Fast"), starting_option=garbage_type)
+        elif option == 10:
             main_ui.options_menu()
         else:
             playing = False
