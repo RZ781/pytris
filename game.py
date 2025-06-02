@@ -202,7 +202,7 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
-        self.enable_garbage_queue = connect
+        self.enable_garbage_queue = connect or garbage_type != GarbageType.NONE
         self.garbage_queue = []
         if connect:
             self.connection = multiplayer.connect_to_server()
@@ -453,8 +453,7 @@ class Game(ui.Menu):
             messages = self.connection.recv()
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
-                    self.garbage_queue.append(int.from_bytes(data))
-                    self.redraw()
+                    self.receive_garbage(int.from_bytes(data))
                 elif command == multiplayer.CMD_EXIT:
                     self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
                     self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
@@ -465,10 +464,10 @@ class Game(ui.Menu):
                     exit(f"Unknown command from server: {command}")
         if self.garbage_type == GarbageType.SLOW:
             if self.ticks % 300 == 0:
-                self.garbage_queue.append(1)
+                self.receive_garbage(1)
         elif self.garbage_type == GarbageType.FAST:
             if self.ticks % 120 == 0:
-                self.garbage_queue.append(1)
+                self.receive_garbage(1)
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
@@ -562,6 +561,17 @@ class Game(ui.Menu):
                 self.lock_piece()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
+
+    def receive_garbage(self, lines: int) -> None:
+        if lines < 1:
+            return
+        y = self.board_y + self.board_height - sum(self.garbage_queue) - 1
+        for i in range(lines-1):
+            self.ui.set_pixel(ui.Colour.BRIGHT_RED, self.board_x - 2, y)
+            y -= 1
+        self.ui.set_pixel(ui.Colour.RED, self.board_x - 2, y)
+        self.ui.update_screen()
+        self.garbage_queue.append(lines)
 
     def redraw_hold_piece(self, colour: Optional[ui.Colour] = None) -> None:
         if self.hold_piece:
