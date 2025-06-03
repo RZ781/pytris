@@ -182,7 +182,7 @@ try:
         elif option == 8:
             spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
         elif option == 9:
-            garbage_type = main_ui.menu(("None", "Slow", "Fast"), starting_option=garbage_type)
+            garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
         elif option == 10:
             main_ui.options_menu()
         else:

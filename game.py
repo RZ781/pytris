@@ -32,8 +32,11 @@ class SpinType(enum.Enum):
 
 class GarbageType(enum.Enum):
     NONE = 0
-    SLOW = 1
-    FAST = 2
+    SLOW_CHEESE = 1
+    FAST_CHEESE = 2
+    SLOW_CLEAN = 3
+    FAST_CLEAN = 4
+    BACKFIRE = 5
 
 class PieceType:
     def __init__(self, shape: List[List[int]], colour: ui.Colour, name: str) -> None:
@@ -318,30 +321,29 @@ class Game(ui.Menu):
             self.combo = 0
 
         # send and cancel garbage
-        if self.connection is not None:
-            if len(full) > 0:
-                if spin:
-                    lines = len(full) * 2
-                elif len(full) == 4:
-                    lines = 4
+        if len(full) > 0:
+            if spin:
+                lines = len(full) * 2
+            elif len(full) == 4:
+                lines = 4
+            else:
+                lines = len(full) - 1
+            if all_clear:
+                lines += 5
+            if self.b2b > 1:
+                lines += 1
+            if self.combo > 1:
+                if lines == 0:
+                    lines = int(math.log(1 + 1.25 * (self.combo - 1)))
                 else:
-                    lines = len(full) - 1
-                if all_clear:
-                    lines += 5
-                if self.b2b > 1:
-                    lines += 1
-                if self.combo > 1:
-                    if lines == 0:
-                        lines = int(math.log(1 + 1.25 * (self.combo - 1)))
-                    else:
-                        lines = int(lines * (1 + 0.25 * (self.combo - 1)))
-                while lines > 0 and len(self.garbage_queue) > 0:
-                    if lines >= self.garbage_queue[0]:
-                        lines -= self.garbage_queue.pop(0)
-                    else:
-                        self.garbage_queue[0] -= lines
-                        lines = 0
-                self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
+                    lines = int(lines * (1 + 0.25 * (self.combo - 1)))
+            while lines > 0 and len(self.garbage_queue) > 0:
+                if lines >= self.garbage_queue[0]:
+                    lines -= self.garbage_queue.pop(0)
+                else:
+                    self.garbage_queue[0] -= lines
+                    lines = 0
+            self.send_garbage(lines)
 
         # receive garbage
         if len(self.garbage_queue) > 0 and len(full) == 0:
@@ -462,12 +464,18 @@ class Game(ui.Menu):
                     return
                 else:
                     exit(f"Unknown command from server: {command}")
-        if self.garbage_type == GarbageType.SLOW:
+        if self.garbage_type == GarbageType.SLOW_CHEESE:
             if self.ticks % 300 == 0:
                 self.receive_garbage(1)
-        elif self.garbage_type == GarbageType.FAST:
+        elif self.garbage_type == GarbageType.FAST_CHEESE:
             if self.ticks % 120 == 0:
                 self.receive_garbage(1)
+        elif self.garbage_type == GarbageType.SLOW_CLEAN:
+            if self.ticks % 600 == 0:
+                self.receive_garbage(4)
+        elif self.garbage_type == GarbageType.FAST_CLEAN:
+            if self.ticks % 300 == 0:
+                self.receive_garbage(4)
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
@@ -561,6 +569,12 @@ class Game(ui.Menu):
                 self.lock_piece()
         self.current_piece.draw(self.board_x, self.board_y)
         self.ui.update_screen()
+
+    def send_garbage(self, lines: int) -> None:
+        if self.connection is not None:
+            self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
+        if self.garbage_type == GarbageType.BACKFIRE:
+            self.receive_garbage(lines)
 
     def receive_garbage(self, lines: int) -> None:
         if lines < 1:
