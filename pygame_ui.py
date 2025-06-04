@@ -58,7 +58,7 @@ class PygameUI(ui.UI):
                         pygame.quit()
                         exit()
                     elif event.type == pygame.WINDOWRESIZED:
-                        self.pixel_size = min(event.x // self.target_width, event.y // self.target_height)
+                        self.pixel_size = max(2, min(event.x // self.target_width, event.y // self.target_height))
                         self.width = event.x // self.pixel_size
                         self.height = event.y // self.pixel_size
                         self.font = pygame.font.SysFont("courier", self.pixel_size)
