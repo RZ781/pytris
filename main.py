@@ -95,7 +95,7 @@ try:
     playing = True
     option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
+        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -149,8 +149,15 @@ try:
             x.set_controls(controls, infinite_soft_drop, False)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 2:
-            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
+            preset = main_ui.menu(("Marathon", "Classic", "40 Lines", "Ultra", "Survival", "Big Mode", "4 Wide", "Chaos"))
+            objective    = (0, 0, 2, 5, 0, 0, 0, 5)[preset]
+            bag_type     = (0, 4, 0, 0, 0, 0, 0, 1)[preset]
+            size         = (0, 0, 0, 0, 0, 2, 1, 0)[preset]
+            spin_type    = (0, 3, 0, 0, 0, 2, 2, 1)[preset]
+            garbage_type = (0, 0, 0, 0, 2, 0, 0, 5)[preset]
         elif option == 3:
+            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
+        elif option == 4:
             choice = 0
             while True:
                 options = ("Close", "Defaults") + tuple((CONTROL_NAMES[key.value], controls[key]) for key in game.Key)
@@ -167,23 +174,23 @@ try:
                 controls[key] = main_ui.get_key()
             controls_config["keys"] = {key.value: controls[key] for key in controls}
             config.save("controls", controls_config)
-        elif option == 4:
-            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         elif option == 5:
+            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
+        elif option == 6:
             infinite_soft_drop = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_soft_drop else 1) == 0
             controls_config["infinite_soft_drop"] = infinite_soft_drop
             config.save("controls", controls_config)
-        elif option == 6:
+        elif option == 7:
             infinite_hold = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_hold else 1) == 0
             controls_config["infinite_hold"] = infinite_hold
             config.save("controls", controls_config)
-        elif option == 7:
-            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 8:
-            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
+            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 9:
-            garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
+            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
         elif option == 10:
+            garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
+        elif option == 11:
             main_ui.options_menu()
         else:
             playing = False
