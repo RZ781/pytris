@@ -511,7 +511,7 @@ class Game(ui.Menu):
 
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
-            return
+            raise ui.ExitException
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
