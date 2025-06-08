@@ -207,6 +207,7 @@ class Game(ui.Menu):
         self.combo = 0
         self.enable_garbage_queue = connect or garbage_type != GarbageType.NONE
         self.garbage_queue = []
+        self.countdown = 3 * TPS
         if connect:
             self.connection = multiplayer.connect_to_server()
         else:
@@ -450,6 +451,10 @@ class Game(ui.Menu):
             if self.death_ticks == 0:
                 raise ui.ExitException
             return
+        if self.countdown:
+            self.countdown -= 1
+            self.redraw()
+            return
         self.ticks += 1
         if self.connection is not None:
             messages = self.connection.recv()
@@ -512,6 +517,8 @@ class Game(ui.Menu):
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
             raise ui.ExitException
+        if self.countdown:
+            return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
@@ -649,6 +656,8 @@ class Game(ui.Menu):
                 self.ui.set_pixel(ui.Colour.BLACK, x+self.hold_x, y+self.hold_y)
         self.redraw_hold_piece()
         self.redraw_counters()
+        if self.countdown > 0:
+            self.ui.draw_text(str(self.countdown//TPS + 1), self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
         if update:
             self.ui.update_screen()
 
