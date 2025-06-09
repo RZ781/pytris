@@ -516,7 +516,9 @@ class Game(ui.Menu):
 
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
-            raise ui.ExitException
+            if c == self.controls[Key.FORFEIT]:
+                raise ui.ExitException
+            return
         if self.countdown:
             return
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
