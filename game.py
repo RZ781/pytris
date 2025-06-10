@@ -453,7 +453,8 @@ class Game(ui.Menu):
             return
         if self.countdown:
             self.countdown -= 1
-            self.redraw()
+            if self.countdown % 60 == 0:
+                self.redraw()
             return
         self.ticks += 1
         if self.connection is not None:
@@ -659,7 +660,7 @@ class Game(ui.Menu):
         self.redraw_hold_piece()
         self.redraw_counters()
         if self.countdown > 0:
-            self.ui.draw_text(str(self.countdown//TPS + 1), self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.draw_text(str(self.countdown//TPS), self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
         if update:
             self.ui.update_screen()
 
