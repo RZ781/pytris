@@ -485,7 +485,7 @@ class Game(ui.Menu):
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
                 text = f"Score: {self.score}"
-                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.Alignment.CENTER)
+                self.ui.draw_text(text, self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
@@ -496,7 +496,7 @@ class Game(ui.Menu):
                 minutes = seconds // TPS
                 seconds %= TPS
                 text = f"Time: {minutes}:{seconds:02}.{ms:02}"
-                self.ui.draw_text(text, self.board_x+5, self.board_y+7, align=ui.Alignment.CENTER)
+                self.ui.draw_text(text, self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
