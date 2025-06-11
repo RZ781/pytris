@@ -36,7 +36,7 @@ bag_type = 0
 objective = 0
 garbage_type = 0
 infinite_soft_drop = False
-infinite_hold = False
+hold_type = 0
 spin_type = 0
 size = 0
 
@@ -54,8 +54,9 @@ default_controls = {
 }
 
 # version 1 of the config stored the keys directly in the json
-# version 2 and 3 stores has an attribute for the keys, infinite hold, and infinite soft drop
-# version 1 and 2 use escape codes while version 3 use key names
+# version 2+ has an attribute for the keys, infinite hold, and infinite soft drop
+# version 1-2 use escape codes while version 3+ use key names
+# version 4+ doesn't have infinite hold
 controls_config = config.load("controls")
 if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 3):
     if "version" in controls_config:
@@ -70,7 +71,6 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
     controls = {game.Key(int(a)): b for a, b in keys.items()}
     if version >= 2:
         infinite_soft_drop = controls_config["infinite_soft_drop"]
-        infinite_hold = controls_config["infinite_hold"]
     # convert escape codes to key names
     if version < 3:
         for control, s in controls.items():
@@ -84,10 +84,9 @@ else:
     controls = default_controls.copy()
 
 controls_config = {
-    "version": 3,
+    "version": 4,
     "keys": {key.value: controls[key] for key in controls},
-    "infinite_soft_drop": infinite_soft_drop,
-    "infinite_hold": infinite_hold
+    "infinite_soft_drop": infinite_soft_drop
 }
 
 try:
@@ -95,7 +94,7 @@ try:
     playing = True
     option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Infinite Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
+        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -140,13 +139,13 @@ try:
                 board_height = 20
             x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), False)
             x.set_objective(objective_type, objective_count)
-            x.set_controls(controls, infinite_soft_drop, infinite_hold)
+            x.set_controls(controls, infinite_soft_drop, game.HoldType(hold_type))
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
             x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True)
             x.set_objective(game.Objective.NONE, 0)
-            x.set_controls(controls, infinite_soft_drop, False)
+            x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 2:
             preset = main_ui.menu(("Marathon", "Classic", "40 Lines", "Ultra", "Survival", "Big Mode", "4 Wide", "Chaos"))
@@ -181,9 +180,7 @@ try:
             controls_config["infinite_soft_drop"] = infinite_soft_drop
             config.save("controls", controls_config)
         elif option == 7:
-            infinite_hold = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_hold else 1) == 0
-            controls_config["infinite_hold"] = infinite_hold
-            config.save("controls", controls_config)
+            hold_type = main_ui.menu(("No Hold", "Normal", "Infinite Hold"), starting_option=hold_type)
         elif option == 8:
             size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 9:

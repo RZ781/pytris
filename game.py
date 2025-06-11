@@ -38,6 +38,11 @@ class GarbageType(enum.Enum):
     FAST_CLEAN = 4
     BACKFIRE = 5
 
+class HoldType(enum.Enum):
+    NONE = 0
+    NORMAL = 1
+    INFINITE = 2
+
 class PieceType:
     def __init__(self, shape: List[List[int]], colour: ui.Colour, name: str) -> None:
         shapes = []
@@ -184,7 +189,7 @@ class Game(ui.Menu):
         self.objective_count = 0
         self.garbage_type = garbage_type
         self.infinite_soft_drop = False
-        self.infinite_hold = False
+        self.hold_type = HoldType.NORMAL
         self.spin_type = spin_type
         self.controls = {}
         self.board = {}
@@ -217,10 +222,10 @@ class Game(ui.Menu):
         self.objective_type = objective_type
         self.objective_count = objective_count
 
-    def set_controls(self, controls: Dict[Key, str], infinite_soft_drop: bool, infinite_hold: bool) -> None:
+    def set_controls(self, controls: Dict[Key, str], infinite_soft_drop: bool, hold_type: HoldType) -> None:
         self.controls = controls
         self.infinite_soft_drop = infinite_soft_drop
-        self.infinite_hold = infinite_hold
+        self.hold_type = hold_type
 
     def board_get(self, x: int, y: int) -> bool:
         if y >= self.board_height:
@@ -536,10 +541,10 @@ class Game(ui.Menu):
                     self.score += 1
             self.redraw_counters()
         if c == self.controls[Key.HOLD] and not repeated:
-            if not self.held:
+            if not self.held and self.hold_type != HoldType.NONE:
                 self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
                 self.redraw_hold_piece(colour=ui.Colour.BLACK)
-                if not self.infinite_hold:
+                if self.hold_type == HoldType.NORMAL:
                     self.held = True
                 self.ground_ticks = LOCK_TIME * TPS
                 self.fall_ticks = TPS / self.fall_speed
