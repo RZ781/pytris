@@ -154,6 +154,7 @@ try:
             size         = (0, 0, 0, 0, 0, 2, 1, 0)[preset]
             spin_type    = (0, 3, 0, 0, 0, 2, 2, 1)[preset]
             garbage_type = (0, 0, 0, 0, 2, 0, 0, 5)[preset]
+            hold_type    = (1, 0, 1, 1, 1, 1, 1, 0)[preset]
         elif option == 3:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 4:
