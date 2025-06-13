@@ -622,10 +622,11 @@ class Game(ui.Menu):
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.board_x-1, y+self.board_y)
 
         # draw hold border
-        for x in range(5):
-            for y in range(6):
-                if x == 0 or y in (0, 5):
-                    self.ui.set_pixel(ui.Colour.WHITE, x+self.hold_x-1, y+self.hold_y-1)
+        if self.hold_type != HoldType.NONE:
+            for x in range(5):
+                for y in range(6):
+                    if x == 0 or y in (0, 5):
+                        self.ui.set_pixel(ui.Colour.WHITE, x+self.hold_x-1, y+self.hold_y-1)
 
         # draw next piece border
         for x in range(5):
