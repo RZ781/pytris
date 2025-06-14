@@ -58,7 +58,7 @@ default_controls = {
 # version 1-2 use escape codes while version 3+ use key names
 # version 4+ doesn't have infinite hold
 controls_config = config.load("controls")
-if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 3):
+if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 4):
     if "version" in controls_config:
         version = controls_config["version"]
     else:
