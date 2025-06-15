@@ -36,7 +36,7 @@ bag_type = 0
 objective = 0
 garbage_type = 0
 infinite_soft_drop = False
-hold_type = 0
+hold_type = 1
 spin_type = 0
 size = 0
 
