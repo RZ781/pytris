@@ -35,6 +35,7 @@ else:
 bag_type = 0
 objective = 0
 garbage_type = 0
+garbage_cancelling = True
 infinite_soft_drop = False
 hold_type = 1
 spin_type = 0
@@ -94,7 +95,7 @@ try:
     playing = True
     option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "UI Options", "Quit"), starting_option=option)
+        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "Garbage Cancelling", "UI Options", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -137,13 +138,13 @@ try:
             else:
                 board_width = 20
                 board_height = 20
-            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), False)
+            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), garbage_cancelling, False)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, game.HoldType(hold_type))
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True)
+            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True, True)
             x.set_objective(game.Objective.NONE, 0)
             x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
             main_ui.main_loop(x, tps=game.TPS)
@@ -155,6 +156,7 @@ try:
             spin_type    = (0, 3, 0, 0, 0, 2, 2, 1)[preset]
             garbage_type = (0, 0, 0, 0, 2, 0, 0, 5)[preset]
             hold_type    = (1, 0, 1, 1, 1, 1, 1, 0)[preset]
+            garbage_cancelling = bool((1, 1, 1, 1, 0, 1, 1, 0)[preset])
         elif option == 3:
             objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 4:
@@ -189,6 +191,8 @@ try:
         elif option == 10:
             garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
         elif option == 11:
+            garbage_cancelling = main_ui.menu(("Enable", "Disable"), 0 if garbage_cancelling else 1) == 0
+        elif option == 12:
             main_ui.options_menu()
         else:
             playing = False

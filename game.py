@@ -182,12 +182,13 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, connect: bool) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, garbage_cancelling: bool, connect: bool) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = Objective.NONE
         self.objective_count = 0
         self.garbage_type = garbage_type
+        self.garbage_cancelling = garbage_cancelling
         self.infinite_soft_drop = False
         self.hold_type = HoldType.NORMAL
         self.spin_type = spin_type
@@ -343,7 +344,7 @@ class Game(ui.Menu):
                     lines = int(math.log(1 + 1.25 * (self.combo - 1)))
                 else:
                     lines = int(lines * (1 + 0.25 * (self.combo - 1)))
-            while lines > 0 and len(self.garbage_queue) > 0:
+            while lines > 0 and len(self.garbage_queue) > 0 and self.garbage_cancelling:
                 if lines >= self.garbage_queue[0]:
                     lines -= self.garbage_queue.pop(0)
                 else:
