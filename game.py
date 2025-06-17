@@ -182,7 +182,7 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, garbage_cancelling: bool, connect: bool) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, garbage_cancelling: bool, connection: Optional[multiplayer.Connection]) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = Objective.NONE
@@ -211,13 +211,10 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
-        self.enable_garbage_queue = connect or garbage_type != GarbageType.NONE
+        self.enable_garbage_queue = connection is not None or garbage_type != GarbageType.NONE
         self.garbage_queue = []
         self.countdown = 3 * TPS
-        if connect:
-            self.connection = multiplayer.connect_to_server()
-        else:
-            self.connection = None
+        self.connection = connection
 
     def set_objective(self, objective_type: Objective, objective_count: int) -> None:
         self.objective_type = objective_type

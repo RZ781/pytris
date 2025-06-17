@@ -1,5 +1,5 @@
 import select, socket, random
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 PYTRIS_PORT = 51737
 PROTOCOL_VERSION = 0
@@ -62,7 +62,10 @@ def server() -> None:
                     else:
                         exit(f"Unknown command {command}")
 
-def connect_to_server() -> Connection:
+def connect_to_server() -> Optional[Connection]:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", PYTRIS_PORT))
+    try:
+        s.connect(("127.0.0.1", PYTRIS_PORT))
+    except:
+        return None
     return Connection(s)

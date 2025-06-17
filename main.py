@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys
+import sys, time
 import game, ui, config, multiplayer
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
@@ -138,13 +138,20 @@ try:
             else:
                 board_width = 20
                 board_height = 20
-            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), garbage_cancelling, False)
+            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), garbage_cancelling, None)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, game.HoldType(hold_type))
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
+            connection = multiplayer.connect_to_server()
+            if connection is None:
+                main_ui.clear()
+                main_ui.draw_text("No server found", main_ui.width//2, main_ui.height//5, align=ui.Alignment.CENTER)
+                main_ui.update_screen()
+                time.sleep(3)
+                continue
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True, True)
+            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True, connection)
             x.set_objective(game.Objective.NONE, 0)
             x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
             main_ui.main_loop(x, tps=game.TPS)
