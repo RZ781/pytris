@@ -38,7 +38,7 @@ garbage_type = 0
 garbage_cancelling = True
 infinite_soft_drop = False
 hold_type = 1
-spin_type = 0
+spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
 size = 0
 
 default_controls = {
@@ -138,9 +138,10 @@ try:
             else:
                 board_width = 20
                 board_height = 20
-            x = game.Game(randomiser, board_width, board_height, game.SpinType(spin_type), game.GarbageType(garbage_type), garbage_cancelling, None)
+            x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_type), garbage_cancelling, None)
             x.set_objective(objective_type, objective_count)
             x.set_controls(controls, infinite_soft_drop, game.HoldType(hold_type))
+            x.set_spins(*map(game.SpinType, spin_type))
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 1:
             connection = multiplayer.connect_to_server()
@@ -151,7 +152,7 @@ try:
                 time.sleep(3)
                 continue
             randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.SpinType.ALL_MINI, game.GarbageType.NONE, True, connection)
+            x = game.Game(randomiser, 10, 20, game.GarbageType.NONE, True, connection)
             x.set_objective(game.Objective.NONE, 0)
             x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
             main_ui.main_loop(x, tps=game.TPS)
@@ -160,7 +161,10 @@ try:
             objective    = (0, 0, 2, 5, 0, 0, 0, 5)[preset]
             bag_type     = (0, 4, 0, 0, 0, 0, 0, 1)[preset]
             size         = (0, 0, 0, 0, 0, 2, 1, 0)[preset]
-            spin_type    = (0, 3, 0, 0, 0, 2, 2, 1)[preset]
+            spin_type[0] = (2, 0, 2, 2, 2, 2, 2, 2)[preset]
+            spin_type[1] = (1, 0, 1, 1, 1, 1, 1, 2)[preset]
+            spin_type[2] = (0, 0, 0, 0, 0, 0, 0, 2)[preset]
+            spin_type[3] = (0, 0, 0, 0, 0, 1, 1, 2)[preset]
             garbage_type = (0, 0, 0, 0, 2, 0, 0, 5)[preset]
             hold_type    = (1, 0, 1, 1, 1, 1, 1, 0)[preset]
             garbage_cancelling = bool((1, 1, 1, 1, 0, 1, 1, 0)[preset])
@@ -194,7 +198,12 @@ try:
         elif option == 8:
             size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 9:
-            spin_type = main_ui.menu(("T Spin", "All Spin", "All Mini", "None"), starting_option=spin_type)
+            choice = 0
+            while True:
+                choice = main_ui.menu(("Close", "T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece"), starting_option=choice)
+                if choice == 0:
+                    break
+                spin_type[choice-1] = main_ui.menu(("None", "Mini Spin", "Full Spin"), starting_option=spin_type[choice-1])
         elif option == 10:
             garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
         elif option == 11:

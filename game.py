@@ -25,10 +25,9 @@ class Objective(enum.Enum):
     TIME = 2
 
 class SpinType(enum.Enum):
-    T_SPIN = 0
-    ALL_SPIN = 1
-    ALL_MINI = 2
-    NONE = 3
+    NONE = 0
+    MINI = 1
+    SPIN = 2
 
 class GarbageType(enum.Enum):
     NONE = 0
@@ -182,7 +181,7 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, spin_type: SpinType, garbage_type: GarbageType, garbage_cancelling: bool, connection: Optional[multiplayer.Connection]) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, garbage_type: GarbageType, garbage_cancelling: bool, connection: Optional[multiplayer.Connection]) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = Objective.NONE
@@ -191,7 +190,10 @@ class Game(ui.Menu):
         self.garbage_cancelling = garbage_cancelling
         self.infinite_soft_drop = False
         self.hold_type = HoldType.NORMAL
-        self.spin_type = spin_type
+        self.t_spin = SpinType.SPIN
+        self.mini_t_spin = SpinType.MINI
+        self.immobile_t = SpinType.NONE
+        self.all_spin = SpinType.NONE
         self.controls = {}
         self.board = {}
         self.hold_piece = None
@@ -225,6 +227,12 @@ class Game(ui.Menu):
         self.infinite_soft_drop = infinite_soft_drop
         self.hold_type = hold_type
 
+    def set_spins(self, t_spin: SpinType, mini_t_spin: SpinType, immobile_t: SpinType, all_spin: SpinType) -> None:
+        self.t_spin = t_spin
+        self.mini_t_spin = mini_t_spin
+        self.immobile_t = immobile_t
+        self.all_spin = all_spin
+
     def board_get(self, x: int, y: int) -> bool:
         if y >= self.board_height:
             return True
@@ -252,10 +260,11 @@ class Game(ui.Menu):
         self.current_piece.lock()
 
         # spin detection
-        spin = False
-        mini_spin = False
+        spin_type = SpinType.NONE
         if self.current_piece.rotation_last:
-            if self.current_piece.base is pieces[PIECE_T] and self.spin_type != SpinType.NONE:
+            t_spin = False
+            mini_t_spin = False
+            if self.current_piece.base is pieces[PIECE_T]:
                 corners = 0
                 front_corners = 0
                 back_corners = 0
@@ -272,25 +281,29 @@ class Game(ui.Menu):
                     else:
                         back_corners += corner_filled
                 if front_corners == 2 and back_corners >= 1:
-                    spin = True
+                    t_spin = True
                 elif front_corners == 1 and back_corners == 2:
                     if self.current_piece.last_kick == 4:
-                        spin = True
+                        t_spin = True
                     else:
-                        mini_spin = True
-            elif self.spin_type in (SpinType.ALL_SPIN, SpinType.ALL_MINI):
-                immobile = True
-                for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)):
-                    moved = self.current_piece.move(dx, dy)
-                    if moved:
-                        immobile = False
-                        self.current_piece.move(-dx, -dy)
-                        break
-                if immobile:
-                    if self.spin_type == SpinType.ALL_SPIN:
-                        spin = True
-                    else:
-                        mini_spin = True
+                        mini_t_spin = True
+            immobile = True
+            for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)):
+                moved = self.current_piece.move(dx, dy)
+                if moved:
+                    immobile = False
+                    self.current_piece.move(-dx, -dy)
+                    break
+            if t_spin:
+                spin_type = self.t_spin
+            elif mini_t_spin:
+                spin_type = self.mini_t_spin
+            elif immobile:
+                if self.current_piece.base is pieces[PIECE_T]:
+                    spin_type = self.immobile_t
+                else:
+                    spin_type = self.all_spin
+
 
         # clear lines
         full = []
@@ -311,7 +324,7 @@ class Game(ui.Menu):
 
         # check all clear, b2b, combo
         all_clear = len(self.board) == 0
-        if spin or mini_spin:
+        if spin_type != SpinType.NONE:
             if len(full) > 0:
                 self.b2b += 1
         else:
@@ -326,7 +339,7 @@ class Game(ui.Menu):
 
         # send and cancel garbage
         if len(full) > 0:
-            if spin:
+            if spin_type == SpinType.SPIN:
                 lines = len(full) * 2
             elif len(full) == 4:
                 lines = 4
@@ -365,9 +378,9 @@ class Game(ui.Menu):
             self.garbage_queue = []
 
         # add score
-        if spin:
+        if spin_type == SpinType.SPIN:
             multiplier = (400, 800, 1200, 1600)[len(full)]
-        elif mini_spin:
+        elif spin_type == SpinType.MINI:
             multiplier = (100, 200, 400)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
@@ -387,9 +400,9 @@ class Game(ui.Menu):
 
         # action text
         name = ("", "Single", "Double", "Triple", "Quad")[len(full)]
-        if spin:
+        if spin_type == SpinType.SPIN:
             name = f"{self.current_piece.name} Spin {name}"
-        elif mini_spin:
+        elif spin_type == SpinType.MINI:
             name = f"Mini {self.current_piece.name} Spin {name}"
         if self.b2b > 1 and len(full) > 0:
             if self.b2b == 2:
