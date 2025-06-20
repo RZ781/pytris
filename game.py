@@ -257,8 +257,6 @@ class Game(ui.Menu):
         return piece
 
     def lock_piece(self) -> None:
-        self.current_piece.lock()
-
         # spin detection
         spin_type = SpinType.NONE
         if self.current_piece.rotation_last:
@@ -304,8 +302,8 @@ class Game(ui.Menu):
                 else:
                     spin_type = self.all_spin
 
-
         # clear lines
+        self.current_piece.lock()
         full = []
         for y, line in self.board.items():
             if all([c != ui.Colour.BLACK for c in line]):
