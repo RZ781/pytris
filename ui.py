@@ -76,6 +76,4 @@ class UI:
     def clear(self) -> None: raise NotImplementedError
     def update_screen(self) -> None: raise NotImplementedError
     def main_loop(self, menu: Menu, tps: int = 10) -> None: raise NotImplementedError
-    def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int: raise NotImplementedError
     def get_key(self) -> str: raise NotImplementedError
-    def options_menu(self) -> None: raise NotImplementedError

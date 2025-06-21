@@ -1,6 +1,63 @@
 #!/usr/bin/env python3
 import sys, time
 import game, ui, config, multiplayer
+from typing import Collection, Union
+
+class Menu(ui.Menu):
+    def __init__(self, options: Collection[Union[str, Collection[str]]], current: int) -> None:
+        self.columns = []
+        self.n_options = len(options)
+        length = max(len(option) for option in options)
+        for i in range(length):
+            column = []
+            for option in options:
+                if isinstance(option, str) and i == 0:
+                    column.append(option)
+                elif isinstance(option, tuple) and i < len(option):
+                    column.append(option[i])
+                else:
+                    column.append("")
+            self.columns.append(column)
+        self.current = current
+
+    def init(self, ui: ui.UI) -> None:
+        self.ui = ui
+        self.resize(ui.width, ui.height)
+
+    def resize(self, width: int, height: int) -> None:
+        self.ui.clear()
+        text_width = max(max(len(x)//2 + 4 for x in column) for column in self.columns)
+        self.menu_x = (width - text_width) // 2
+        self.menu_y = height // 5
+        column_x = self.menu_x + 1
+        for column in self.columns:
+            for i, option in enumerate(column):
+                self.ui.draw_text(option, column_x, self.menu_y+i)
+            max_length = max(len(option) for option in column)
+            column_x += max_length // 2 + 4
+        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
+        self.ui.update_screen()
+
+    def key(self, c: str, repeated: bool = False) -> None:
+        self.ui.set_pixel(ui.Colour.BLACK, self.menu_x, self.menu_y + self.current)
+        self.ui.update_screen()
+        if c == "Up" or c == 'k':
+            self.current -= 1
+        elif c == "Down" or c == 'j':
+            self.current += 1
+        elif (c == "Return" or c == "Space") and not repeated:
+            raise ui.ExitException
+        self.current %= self.n_options
+        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
+        self.ui.update_screen()
+
+    def tick(self) -> None:
+        pass
+
+def menu(options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
+    menu = Menu(options, starting_option)
+    main_ui.main_loop(menu)
+    return menu.current
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
 
@@ -95,7 +152,7 @@ try:
     playing = True
     option = 0
     while playing:
-        option = main_ui.menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "Garbage Cancelling", "UI Options", "Quit"), starting_option=option)
+        option = menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "Garbage Cancelling", "Quit"), starting_option=option)
         if option == 0:
             randomiser: game.Randomiser
             if bag_type == 0:
@@ -157,7 +214,7 @@ try:
             x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
             main_ui.main_loop(x, tps=game.TPS)
         elif option == 2:
-            preset = main_ui.menu(("Marathon", "Classic", "40 Lines", "Ultra", "Survival", "Big Mode", "4 Wide", "Chaos"))
+            preset = menu(("Marathon", "Classic", "40 Lines", "Ultra", "Survival", "Big Mode", "4 Wide", "Chaos"))
             objective    = (0, 0, 2, 5, 0, 0, 0, 5)[preset]
             bag_type     = (0, 4, 0, 0, 0, 0, 0, 1)[preset]
             size         = (0, 0, 0, 0, 0, 2, 1, 0)[preset]
@@ -169,12 +226,12 @@ try:
             hold_type    = (1, 0, 1, 1, 1, 1, 1, 0)[preset]
             garbage_cancelling = bool((1, 1, 1, 1, 0, 1, 1, 0)[preset])
         elif option == 3:
-            objective = main_ui.menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
+            objective = menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
         elif option == 4:
             choice = 0
             while True:
                 options = ("Close", "Defaults") + tuple((CONTROL_NAMES[key.value], controls[key]) for key in game.Key)
-                choice = main_ui.menu(options, starting_option=choice)
+                choice = menu(options, starting_option=choice)
                 if choice == 0:
                     break
                 elif choice == 1:
@@ -188,28 +245,26 @@ try:
             controls_config["keys"] = {key.value: controls[key] for key in controls}
             config.save("controls", controls_config)
         elif option == 5:
-            bag_type = main_ui.menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
+            bag_type = menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
         elif option == 6:
-            infinite_soft_drop = main_ui.menu(("Enable", "Disable"), starting_option = 0 if infinite_soft_drop else 1) == 0
+            infinite_soft_drop = menu(("Enable", "Disable"), starting_option = 0 if infinite_soft_drop else 1) == 0
             controls_config["infinite_soft_drop"] = infinite_soft_drop
             config.save("controls", controls_config)
         elif option == 7:
-            hold_type = main_ui.menu(("No Hold", "Normal", "Infinite Hold"), starting_option=hold_type)
+            hold_type = menu(("No Hold", "Normal", "Infinite Hold"), starting_option=hold_type)
         elif option == 8:
-            size = main_ui.menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
+            size = menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
         elif option == 9:
             choice = 0
             while True:
-                choice = main_ui.menu(("Close", "T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece"), starting_option=choice)
+                choice = menu(("Close", "T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece"), starting_option=choice)
                 if choice == 0:
                     break
-                spin_type[choice-1] = main_ui.menu(("None", "Mini Spin", "Full Spin"), starting_option=spin_type[choice-1])
+                spin_type[choice-1] = menu(("None", "Mini Spin", "Full Spin"), starting_option=spin_type[choice-1])
         elif option == 10:
-            garbage_type = main_ui.menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
+            garbage_type = menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
         elif option == 11:
-            garbage_cancelling = main_ui.menu(("Enable", "Disable"), 0 if garbage_cancelling else 1) == 0
-        elif option == 12:
-            main_ui.options_menu()
+            garbage_cancelling = menu(("Enable", "Disable"), 0 if garbage_cancelling else 1) == 0
         else:
             playing = False
 except KeyboardInterrupt: # ctrl-c

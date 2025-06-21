@@ -145,78 +145,8 @@ class BaseTerminalUI(ui.UI):
         sys.stdout.flush()
         self.buffer = ""
 
-    def menu(self, options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
-        menu = TerminalMenu(options, starting_option)
-        self.main_loop(menu)
-        return menu.current
-
-    def options_menu(self) -> None:
-        options = ("Colours", "Beep", "Close")
-        option = 0
-        while True:
-            option = self.menu(options, starting_option=option)
-            if option == 0:
-                self.mode = self.menu(BaseTerminalUI.MODES, starting_option=self.mode)
-                config.save("colours", {"mode": BaseTerminalUI.MODES[self.mode]})
-            elif option == 1:
-                self.enable_beep = self.menu(("Enable", "Disable"), starting_option = 0 if self.enable_beep else 1) == 0
-                config.save("beep", {"enabled": self.enable_beep})
-            else:
-                break
-
     def get_key(self) -> str: raise NotImplementedError
     def detect_colour_mode(self) -> int: raise NotImplementedError
-
-class TerminalMenu(ui.Menu):
-    def __init__(self, options: Collection[Union[str, Collection[str]]], current: int) -> None:
-        self.columns = []
-        self.n_options = len(options)
-        length = max(len(option) for option in options)
-        for i in range(length):
-            column = []
-            for option in options:
-                if isinstance(option, str) and i == 0:
-                    column.append(option)
-                elif isinstance(option, tuple) and i < len(option):
-                    column.append(option[i])
-                else:
-                    column.append("")
-            self.columns.append(column)
-        self.current = current
-
-    def init(self, ui: ui.UI) -> None:
-        self.ui = ui
-        self.resize(ui.width, ui.height)
-
-    def resize(self, width: int, height: int) -> None:
-        self.ui.clear()
-        text_width = max(max(len(x)//2 + 4 for x in column) for column in self.columns)
-        self.menu_x = (width - text_width) // 2
-        self.menu_y = height // 5
-        column_x = self.menu_x + 1
-        for column in self.columns:
-            for i, option in enumerate(column):
-                self.ui.draw_text(option, column_x, self.menu_y+i)
-            max_length = max(len(option) for option in column)
-            column_x += max_length // 2 + 4
-        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-
-    def key(self, c: str, repeated: bool = False) -> None:
-        self.ui.draw_text(" ", self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-        if c == "Up" or c == 'k':
-            self.current -= 1
-        elif c == "Down" or c == 'j':
-            self.current += 1
-        elif c == "Return" or c == "Space":
-            raise ui.ExitException
-        self.current %= self.n_options
-        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-
-    def tick(self) -> None:
-        pass
 
 if sys.platform == "win32":
     import msvcrt
