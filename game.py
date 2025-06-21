@@ -494,7 +494,7 @@ class Game(ui.Menu):
             if self.ticks % 600 == 0:
                 self.receive_garbage(4)
         elif self.garbage_type == GarbageType.FAST_CLEAN:
-            if self.ticks % 300 == 0:
+            if self.ticks % 210 == 0:
                 self.receive_garbage(4)
         if self.objective_type == Objective.TIME:
             if self.ticks >= self.objective_count * TPS:
