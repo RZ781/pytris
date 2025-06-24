@@ -111,11 +111,11 @@ class PlayButton(menu.Button):
 
 objective_menu = menu.Menu([
     menu.Selection("None"),
-    menu.Selection("1 minutes"),
-    menu.Selection("2 minutes"),
     menu.Selection("20 lines"),
     menu.Selection("40 lines"),
     menu.Selection("100 lines"),
+    menu.Selection("1 minutes"),
+    menu.Selection("2 minutes")
 ])
 bag_type_menu = menu.Menu([
     menu.Selection("7 bag"),
