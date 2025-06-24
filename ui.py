@@ -56,9 +56,6 @@ ESCAPE_CODE_TO_NAME = {
     "\x1b[6~": "Page Down",
 }
 
-class ExitException(Exception):
-    pass
-
 class Menu:
     def init(self, ui: "UI") -> None: raise NotImplementedError
     def tick(self) -> None: raise NotImplementedError
@@ -75,5 +72,7 @@ class UI:
     def beep(self) -> None: raise NotImplementedError
     def clear(self) -> None: raise NotImplementedError
     def update_screen(self) -> None: raise NotImplementedError
-    def main_loop(self, menu: Menu, tps: int = 10) -> None: raise NotImplementedError
+    def main_loop(self, tps: int = 10) -> None: raise NotImplementedError
+    def push_menu(self, menu: Menu) -> None: raise NotImplementedError
+    def pop_menu(self) -> None: raise NotImplementedError
     def get_key(self) -> str: raise NotImplementedError

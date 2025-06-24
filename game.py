@@ -463,7 +463,7 @@ class Game(ui.Menu):
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
-                raise ui.ExitException
+                self.ui.pop_menu()
             return
         if self.countdown:
             self.countdown -= 1
@@ -532,7 +532,7 @@ class Game(ui.Menu):
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
             if c == self.controls[Key.FORFEIT]:
-                raise ui.ExitException
+                self.ui.pop_menu()
             return
         if self.countdown:
             return

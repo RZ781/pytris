@@ -1,5 +1,5 @@
 import config, ui, pygame
-from typing import Optional, Collection, Union, Dict
+from typing import Optional, Collection, Union, Dict, List
 
 pygame.init()
 KEY_TO_NAME = {
@@ -21,8 +21,10 @@ class PygameUI(ui.UI):
     screen: pygame.Surface
     font: pygame.font.Font
     keys: Dict[str, int]
+    menus: List[ui.Menu]
 
     def __init__(self) -> None:
+        self.menus = []
         self.inital_options = None
         self.target_width = self.width = 40
         self.target_height = self.height = 32
@@ -40,39 +42,47 @@ class PygameUI(ui.UI):
     def quit(self) -> None:
         pygame.quit()
 
-    def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
+    def main_loop(self, tps: int = 60) -> None:
         keys = {}
-        try:
-            clock = pygame.time.Clock()
-            menu.init(self)
-            while True:
-                for event in pygame.event.get():
-                    if event.type == pygame.KEYDOWN:
-                        key = key_name(event)
-                        keys[key] = 0
-                    elif event.type == pygame.KEYUP:
-                        name = key_name(event)
-                        if name in keys:
-                            keys.pop(name)
-                    elif event.type == pygame.QUIT:
-                        pygame.quit()
-                        exit()
-                    elif event.type == pygame.WINDOWRESIZED:
-                        self.pixel_size = max(2, min(event.x // self.target_width, event.y // self.target_height))
-                        self.width = event.x // self.pixel_size
-                        self.height = event.y // self.pixel_size
-                        self.font = pygame.font.SysFont("courier", self.pixel_size)
-                        menu.resize(self.width, self.height)
-                for key, frame in keys.items():
-                    if frame == 0:
-                        menu.key(key)
-                    if frame >= DAS and (frame - DAS) % ARR == 0:
-                        menu.key(key, repeated=True)
-                    keys[key] += 1
-                menu.tick()
-                clock.tick(tps)
-        except ui.ExitException:
-            return
+        clock = pygame.time.Clock()
+        prev_menu = None
+        while len(self.menus) > 0:
+            menu = self.menus[-1]
+            if menu is not prev_menu:
+                menu.resize(self.width, self.height)
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    key = key_name(event)
+                    keys[key] = 0
+                elif event.type == pygame.KEYUP:
+                    name = key_name(event)
+                    if name in keys:
+                        keys.pop(name)
+                elif event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.WINDOWRESIZED:
+                    self.pixel_size = max(2, min(event.x // self.target_width, event.y // self.target_height))
+                    self.width = event.x // self.pixel_size
+                    self.height = event.y // self.pixel_size
+                    self.font = pygame.font.SysFont("courier", self.pixel_size)
+                    menu.resize(self.width, self.height)
+            for key, frame in keys.items():
+                if frame == 0:
+                    menu.key(key)
+                if frame >= DAS and (frame - DAS) % ARR == 0:
+                    menu.key(key, repeated=True)
+                keys[key] += 1
+            menu.tick()
+            clock.tick(tps)
+            prev_menu = menu
+
+    def push_menu(self, menu: ui.Menu) -> None:
+        self.menus.append(menu)
+        menu.init(self)
+
+    def pop_menu(self) -> None:
+        self.menus.pop()
 
     def clear(self) -> None:
         self.screen.fill(ui.COLOURS[ui.Colour.BLACK])

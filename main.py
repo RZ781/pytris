@@ -1,63 +1,6 @@
 #!/usr/bin/env python3
 import sys, time
-import game, ui, config, multiplayer
-from typing import Collection, Union
-
-class Menu(ui.Menu):
-    def __init__(self, options: Collection[Union[str, Collection[str]]], current: int) -> None:
-        self.columns = []
-        self.n_options = len(options)
-        length = max(len(option) for option in options)
-        for i in range(length):
-            column = []
-            for option in options:
-                if isinstance(option, str) and i == 0:
-                    column.append(option)
-                elif isinstance(option, tuple) and i < len(option):
-                    column.append(option[i])
-                else:
-                    column.append("")
-            self.columns.append(column)
-        self.current = current
-
-    def init(self, ui: ui.UI) -> None:
-        self.ui = ui
-        self.resize(ui.width, ui.height)
-
-    def resize(self, width: int, height: int) -> None:
-        self.ui.clear()
-        text_width = max(max(len(x)//2 + 4 for x in column) for column in self.columns)
-        self.menu_x = (width - text_width) // 2
-        self.menu_y = height // 5
-        column_x = self.menu_x + 1
-        for column in self.columns:
-            for i, option in enumerate(column):
-                self.ui.draw_text(option, column_x, self.menu_y+i)
-            max_length = max(len(option) for option in column)
-            column_x += max_length // 2 + 4
-        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-
-    def key(self, c: str, repeated: bool = False) -> None:
-        self.ui.set_pixel(ui.Colour.BLACK, self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-        if c == "Up" or c == 'k':
-            self.current -= 1
-        elif c == "Down" or c == 'j':
-            self.current += 1
-        elif (c == "Return" or c == "Space") and not repeated:
-            raise ui.ExitException
-        self.current %= self.n_options
-        self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
-        self.ui.update_screen()
-
-    def tick(self) -> None:
-        pass
-
-def menu(options: Collection[Union[str, Collection[str]]], starting_option: int = 0) -> int:
-    menu = Menu(options, starting_option)
-    main_ui.main_loop(menu)
-    return menu.current
+import game, ui, config, multiplayer, menu
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
 
@@ -89,14 +32,6 @@ else:
     import terminal_ui
     main_ui = terminal_ui.TerminalUI()
 
-bag_type = 0
-objective = 0
-garbage_type = 0
-garbage_cancelling = True
-infinite_soft_drop = False
-hold_type = 1
-spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
-size = 0
 
 default_controls = {
     game.Key.LEFT: "Left",
@@ -147,126 +82,63 @@ controls_config = {
     "infinite_soft_drop": infinite_soft_drop
 }
 
+class PlayButton(menu.Button):
+    def __init__(self) -> None:
+        self.name = "Play"
+    def click(self) -> None:
+        randomiser: game.Randomiser = (
+            game.BagRandomiser(1, 0),
+            game.BagRandomiser(2, 0),
+            game.BagRandomiser(1, 1),
+            game.BagRandomiser(1, 2),
+            game.ClassicRandomiser()
+        )[bag_type_menu.current]
+        objective_type = (
+            game.Objective.NONE,
+            game.Objective.LINES,
+            game.Objective.LINES,
+            game.Objective.LINES,
+            game.Objective.TIME,
+            game.Objective.TIME
+        )[objective_menu.current]
+        objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
+        x = game.Game(randomiser, 10, 20, game.GarbageType.NONE, True, None)
+        x.set_objective(objective_type, objective_count)
+        x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType.NORMAL)
+        x.set_spins(game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE)
+        spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
+        main_ui.push_menu(x)
+
+objective_menu = menu.Menu([
+    menu.Selection("None"),
+    menu.Selection("1 minutes"),
+    menu.Selection("2 minutes"),
+    menu.Selection("20 lines"),
+    menu.Selection("40 lines"),
+    menu.Selection("100 lines"),
+])
+bag_type_menu = menu.Menu([
+    menu.Selection("7 bag"),
+    menu.Selection("14 bag"),
+    menu.Selection("7+1 bag"),
+    menu.Selection("7+2 bag"),
+    menu.Selection("Classic")
+])
+soft_drop_menu = menu.Menu([
+    menu.Selection("Enable"),
+    menu.Selection("Disable")
+])
+main_menu = menu.Menu([
+    PlayButton(),
+    menu.Submenu("Objectives", objective_menu),
+    menu.Submenu("Bag Type", bag_type_menu),
+    menu.Submenu("Infinfite Soft Drop", soft_drop_menu)
+])
+
 try:
     main_ui.init()
-    playing = True
-    option = 0
-    while playing:
-        option = menu(("Play", "Multiplayer", "Presets", "Objective", "Controls", "Bag Type", "Infinite Soft Drop", "Hold", "Board Size", "Spin Detection", "Garbage", "Garbage Cancelling", "Quit"), starting_option=option)
-        if option == 0:
-            randomiser: game.Randomiser
-            if bag_type == 0:
-                randomiser = game.BagRandomiser(1, 0)
-            elif bag_type == 1:
-                randomiser = game.BagRandomiser(2, 0)
-            elif bag_type == 2:
-                randomiser = game.BagRandomiser(1, 1)
-            elif bag_type == 3:
-                randomiser = game.BagRandomiser(1, 2)
-            else:
-                randomiser = game.ClassicRandomiser()
-            if objective == 0:
-                objective_type = game.Objective.NONE
-                objective_count = 0
-            elif objective == 1:
-                objective_type = game.Objective.LINES
-                objective_count = 20
-            elif objective == 2:
-                objective_type = game.Objective.LINES
-                objective_count = 40
-            elif objective == 3:
-                objective_type = game.Objective.LINES
-                objective_count = 100
-            elif objective == 4:
-                objective_type = game.Objective.TIME
-                objective_count = 60
-            else:
-                objective_type = game.Objective.TIME
-                objective_count = 120
-            if size == 0:
-                board_width = 10
-                board_height = 20
-            elif size == 1:
-                board_width = 4
-                board_height = 24
-            elif size == 2:
-                board_width = 5
-                board_height = 10
-            else:
-                board_width = 20
-                board_height = 20
-            x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_type), garbage_cancelling, None)
-            x.set_objective(objective_type, objective_count)
-            x.set_controls(controls, infinite_soft_drop, game.HoldType(hold_type))
-            x.set_spins(*map(game.SpinType, spin_type))
-            main_ui.main_loop(x, tps=game.TPS)
-        elif option == 1:
-            connection = multiplayer.connect_to_server()
-            if connection is None:
-                main_ui.clear()
-                main_ui.draw_text("No server found", main_ui.width//2, main_ui.height//5, align=ui.Alignment.CENTER)
-                main_ui.update_screen()
-                time.sleep(3)
-                continue
-            randomiser = game.BagRandomiser(1, 0)
-            x = game.Game(randomiser, 10, 20, game.GarbageType.NONE, True, connection)
-            x.set_objective(game.Objective.NONE, 0)
-            x.set_controls(controls, infinite_soft_drop, game.HoldType.NORMAL)
-            main_ui.main_loop(x, tps=game.TPS)
-        elif option == 2:
-            preset = menu(("Marathon", "Classic", "40 Lines", "Ultra", "Survival", "Big Mode", "4 Wide", "Chaos"))
-            objective    = (0, 0, 2, 5, 0, 0, 0, 5)[preset]
-            bag_type     = (0, 4, 0, 0, 0, 0, 0, 1)[preset]
-            size         = (0, 0, 0, 0, 0, 2, 1, 0)[preset]
-            spin_type[0] = (2, 0, 2, 2, 2, 2, 2, 2)[preset]
-            spin_type[1] = (1, 0, 1, 1, 1, 1, 1, 2)[preset]
-            spin_type[2] = (0, 0, 0, 0, 0, 0, 0, 2)[preset]
-            spin_type[3] = (0, 0, 0, 0, 0, 1, 1, 2)[preset]
-            garbage_type = (0, 0, 0, 0, 2, 0, 0, 5)[preset]
-            hold_type    = (1, 0, 1, 1, 1, 1, 1, 0)[preset]
-            garbage_cancelling = bool((1, 1, 1, 1, 0, 1, 1, 0)[preset])
-        elif option == 3:
-            objective = menu(("None", "20 lines", "40 lines", "100 lines", "1 minute", "2 minutes"), starting_option=objective)
-        elif option == 4:
-            choice = 0
-            while True:
-                options = ("Close", "Defaults") + tuple((CONTROL_NAMES[key.value], controls[key]) for key in game.Key)
-                choice = menu(options, starting_option=choice)
-                if choice == 0:
-                    break
-                elif choice == 1:
-                    controls = default_controls.copy()
-                    continue
-                else:
-                    key = game.Key(choice - 2)
-                main_ui.draw_text(f"Press key for {CONTROL_NAMES[key.value].lower()}", main_ui.width // 2, main_ui.height // 10, align=ui.Alignment.CENTER)
-                main_ui.update_screen()
-                controls[key] = main_ui.get_key()
-            controls_config["keys"] = {key.value: controls[key] for key in controls}
-            config.save("controls", controls_config)
-        elif option == 5:
-            bag_type = menu(("7 Bag", "14 Bag", "7+1 Bag", "7+2 Bag", "Classic"), starting_option=bag_type)
-        elif option == 6:
-            infinite_soft_drop = menu(("Enable", "Disable"), starting_option = 0 if infinite_soft_drop else 1) == 0
-            controls_config["infinite_soft_drop"] = infinite_soft_drop
-            config.save("controls", controls_config)
-        elif option == 7:
-            hold_type = menu(("No Hold", "Normal", "Infinite Hold"), starting_option=hold_type)
-        elif option == 8:
-            size = menu(("Normal", "4 Wide", "Big Mode", "Massive (20x20)"), starting_option=size)
-        elif option == 9:
-            choice = 0
-            while True:
-                choice = menu(("Close", "T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece"), starting_option=choice)
-                if choice == 0:
-                    break
-                spin_type[choice-1] = menu(("None", "Mini Spin", "Full Spin"), starting_option=spin_type[choice-1])
-        elif option == 10:
-            garbage_type = menu(("None", "Slow Cheese", "Fast Cheese", "Slow Clean", "Fast Clean", "Backfire"), starting_option=garbage_type)
-        elif option == 11:
-            garbage_cancelling = menu(("Enable", "Disable"), 0 if garbage_cancelling else 1) == 0
-        else:
-            playing = False
+    main_ui.push_menu(main_menu)
+    main_ui.main_loop()
 except KeyboardInterrupt: # ctrl-c
     pass
 finally:
