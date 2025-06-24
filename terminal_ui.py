@@ -1,6 +1,6 @@
 import sys, time, os, shutil, select
 import config, ui
-from typing import Optional, Collection, Union
+from typing import Optional, Collection, Union, List
 
 SCANCODE_TO_NAME = {
     0x48: "Up",
@@ -61,8 +61,10 @@ class BaseTerminalUI(ui.UI):
         {c: "\x1b[0m" if c == ui.Colour.BLACK else "\x1b[7m" for c in ui.Colour}, # monochrome
     ]
     reset_code = "\x1b[0m"
+    menus: List[ui.Menu]
 
     def __init__(self) -> None:
+        self.menus = []
         self.fg_colour = ui.Colour.WHITE
         self.bg_colour = ui.Colour.BLACK
         self.buffer = ""
@@ -80,6 +82,13 @@ class BaseTerminalUI(ui.UI):
         beep = config.load("beep")
         if beep:
             self.enable_beep = beep["enabled"]
+
+    def push_menu(self, menu: ui.Menu) -> None:
+        self.menus.append(menu)
+        menu.init(self)
+
+    def pop_menu(self) -> None:
+        self.menus.pop()
 
     def clear(self) -> None:
         self.buffer += "\x1b[0m\x1b[2J\x1b[3J"
@@ -161,26 +170,27 @@ if sys.platform == "win32":
             self.goto(0, 0)
             self.update_screen()
 
-        def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
-            try:
-                self.clear()
-                self.update_screen()
-                menu.init(self)
-                while True:
-                    terminal_size = shutil.get_terminal_size()
-                    width = terminal_size.columns // 2
-                    height = terminal_size.lines
-                    if width != self.width or height != self.height:
-                        self.width = width
-                        self.height = height
-                        menu.resize(width, height)
-                    end_time = time.perf_counter()
-                    if msvcrt.kbhit():
-                        menu.key(self.get_key())
-                    menu.tick()
-                    time.sleep(1/tps)
-            except ui.ExitException:
-                return
+        def main_loop(self, tps: int = 60) -> None:
+            self.clear()
+            self.update_screen()
+            prev_menu = None
+            while len(self.menus) > 0:
+                menu = self.menus[-1]
+                if menu is not prev_menu:
+                    menu.resize(self.width, self.height)
+                terminal_size = shutil.get_terminal_size()
+                width = terminal_size.columns // 2
+                height = terminal_size.lines
+                if width != self.width or height != self.height:
+                    self.width = width
+                    self.height = height
+                    menu.resize(width, height)
+                end_time = time.perf_counter()
+                if msvcrt.kbhit():
+                    menu.key(self.get_key())
+                menu.tick()
+                time.sleep(1/tps)
+                prev_menu = menu
 
         def get_key(self) -> str:
             c = msvcrt.getch()
@@ -215,31 +225,32 @@ else:
             self.goto(0, 0)
             self.update_screen()
 
-        def main_loop(self, menu: ui.Menu, tps: int = 60) -> None:
-            try:
-                self.clear()
-                self.update_screen()
-                menu.init(self)
-                time_left = 1/tps
-                while True:
-                    start_time = time.perf_counter()
-                    r, _, _ = select.select([0], [], [], time_left)
-                    terminal_size = shutil.get_terminal_size()
-                    width = terminal_size.columns // 2
-                    height = terminal_size.lines
-                    if width != self.width or height != self.height:
-                        self.width = width
-                        self.height = height
-                        menu.resize(width, height)
-                    end_time = time.perf_counter()
-                    time_left -= end_time - start_time
-                    if r:
-                        menu.key(self.get_key())
-                    while time_left < 0:
-                        time_left += 1/tps
-                        menu.tick()
-            except ui.ExitException:
-                return
+        def main_loop(self, tps: int = 60) -> None:
+            self.clear()
+            self.update_screen()
+            time_left = 1/tps
+            prev_menu = None
+            while len(self.menus) > 0:
+                menu = self.menus[-1]
+                if menu is not prev_menu:
+                    menu.resize(self.width, self.height)
+                start_time = time.perf_counter()
+                r, _, _ = select.select([0], [], [], time_left)
+                terminal_size = shutil.get_terminal_size()
+                width = terminal_size.columns // 2
+                height = terminal_size.lines
+                if width != self.width or height != self.height:
+                    self.width = width
+                    self.height = height
+                    menu.resize(width, height)
+                end_time = time.perf_counter()
+                time_left -= end_time - start_time
+                if r:
+                    menu.key(self.get_key())
+                while time_left < 0:
+                    time_left += 1/tps
+                    menu.tick()
+                prev_menu = menu
 
         def get_key(self) -> str:
             s = os.read(0, 100).decode("utf8")

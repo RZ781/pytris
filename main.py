@@ -132,7 +132,7 @@ main_menu = menu.Menu([
     PlayButton(),
     menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Bag Type", bag_type_menu),
-    menu.Submenu("Infinfite Soft Drop", soft_drop_menu)
+    menu.Submenu("Infinite Soft Drop", soft_drop_menu)
 ])
 
 try:
