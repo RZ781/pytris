@@ -104,7 +104,7 @@ class PlayButton(menu.Button):
         objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
         x = game.Game(randomiser, 10, 20, game.GarbageType.NONE, True, None)
         x.set_objective(objective_type, objective_count)
-        x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType.NORMAL)
+        x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
         x.set_spins(game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE)
         spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
         main_ui.push_menu(x)
@@ -117,6 +117,7 @@ objective_menu = menu.Menu([
     menu.Selection("1 minutes"),
     menu.Selection("2 minutes")
 ])
+
 bag_type_menu = menu.Menu([
     menu.Selection("7 bag"),
     menu.Selection("14 bag"),
@@ -124,15 +125,24 @@ bag_type_menu = menu.Menu([
     menu.Selection("7+2 bag"),
     menu.Selection("Classic")
 ])
+
 soft_drop_menu = menu.Menu([
     menu.Selection("Enable"),
     menu.Selection("Disable")
 ])
+
+hold_menu = menu.Menu([
+    menu.Selection("No Hold"),
+    menu.Selection("Normal"),
+    menu.Selection("Infinite Hold"),
+])
+
 main_menu = menu.Menu([
     PlayButton(),
     menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Bag Type", bag_type_menu),
-    menu.Submenu("Infinite Soft Drop", soft_drop_menu)
+    menu.Submenu("Infinite Soft Drop", soft_drop_menu),
+    menu.Submenu("Hold", hold_menu)
 ])
 
 try:
