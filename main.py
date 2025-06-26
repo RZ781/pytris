@@ -142,7 +142,8 @@ main_menu = menu.Menu([
     menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Bag Type", bag_type_menu),
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
-    menu.Submenu("Hold", hold_menu)
+    menu.Submenu("Hold", hold_menu),
+    menu.Selection("Quit")
 ])
 
 try:
