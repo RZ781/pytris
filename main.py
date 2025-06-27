@@ -102,7 +102,7 @@ class PlayButton(menu.Button):
             game.Objective.TIME
         )[objective_menu.current]
         objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
-        x = game.Game(randomiser, 10, 20, game.GarbageType.NONE, True, None)
+        x = game.Game(randomiser, 10, 20, game.GarbageType(garbage_menu.current), True, None)
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
         x.set_spins(game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE)
@@ -134,7 +134,16 @@ soft_drop_menu = menu.Menu([
 hold_menu = menu.Menu([
     menu.Selection("No Hold"),
     menu.Selection("Normal"),
-    menu.Selection("Infinite Hold"),
+    menu.Selection("Infinite Hold")
+])
+
+garbage_menu = menu.Menu([
+    menu.Selection("None"),
+    menu.Selection("Slow Cheese"),
+    menu.Selection("Fast Cheese"),
+    menu.Selection("Slow Clean"),
+    menu.Selection("Fast Clean"),
+    menu.Selection("Backfire")
 ])
 
 main_menu = menu.Menu([
@@ -143,6 +152,7 @@ main_menu = menu.Menu([
     menu.Submenu("Bag Type", bag_type_menu),
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
     menu.Submenu("Hold", hold_menu),
+    menu.Submenu("Garbage", garbage_menu),
     menu.Selection("Quit")
 ])
 
