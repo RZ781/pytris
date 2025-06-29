@@ -35,11 +35,11 @@ class Selection(Button):
         self.ui.pop_menu()
 
 class Menu(ui.Menu):
-    def __init__(self, options: Sequence[MenuOption]) -> None:
+    def __init__(self, options: Sequence[MenuOption], current: int = 0) -> None:
         self.columns = [options]
         self.n_options = len(options)
         length = max(len(option.get_name()) for option in options)
-        self.current = 0
+        self.current = current
 
     def init(self, ui: ui.UI) -> None:
         self.ui = ui

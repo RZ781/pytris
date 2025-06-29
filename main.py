@@ -135,7 +135,7 @@ hold_menu = menu.Menu([
     menu.Selection("No Hold"),
     menu.Selection("Normal"),
     menu.Selection("Infinite Hold")
-])
+], 1)
 
 garbage_menu = menu.Menu([
     menu.Selection("None"),
