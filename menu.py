@@ -21,16 +21,12 @@ class Submenu(Button):
     def __init__(self, name: str, menu: ui.Menu) -> None:
         self.name = name
         self.menu = menu
-    def get_name(self) -> str:
-        return self.name
     def click(self) -> None:
         self.ui.push_menu(self.menu)
 
 class Selection(Button):
     def __init__(self, name: str) -> None:
         self.name = name
-    def get_name(self) -> str:
-        return self.name
     def click(self) -> None:
         self.ui.pop_menu()
 

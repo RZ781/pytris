@@ -109,6 +109,14 @@ class PlayButton(menu.Button):
         spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
         main_ui.push_menu(x)
 
+class SoftDropSelection(menu.Button):
+    def __init__(self, name):
+        self.name = name
+    def click(self):
+        self.ui.pop_menu()
+        controls_config["infinite_soft_drop"] = soft_drop_menu.current == 0
+        config.save("controls", controls_config)
+
 objective_menu = menu.Menu([
     menu.Selection("None"),
     menu.Selection("20 lines"),
@@ -127,9 +135,9 @@ bag_type_menu = menu.Menu([
 ])
 
 soft_drop_menu = menu.Menu([
-    menu.Selection("Enable"),
-    menu.Selection("Disable")
-])
+    SoftDropSelection("Enable"),
+    SoftDropSelection("Disable")
+], 0 if infinite_soft_drop else 1)
 
 hold_menu = menu.Menu([
     menu.Selection("No Hold"),
