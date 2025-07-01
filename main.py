@@ -101,8 +101,10 @@ class PlayButton(menu.Button):
             game.Objective.TIME,
             game.Objective.TIME
         )[objective_menu.current]
+        board_width = (10, 4, 5, 20)[board_size_menu.current]
+        board_height = (20, 24, 10, 20)[board_size_menu.current]
         objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
-        x = game.Game(randomiser, 10, 20, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, None)
+        x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, None)
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
         x.set_spins(game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE)
@@ -145,6 +147,13 @@ hold_menu = menu.Menu([
     menu.Selection("Infinite Hold")
 ], 1)
 
+board_size_menu = menu.Menu([
+    menu.Selection("Normal"),
+    menu.Selection("4 Wide"),
+    menu.Selection("Big Mode"),
+    menu.Selection("Massive (20x20)")
+])
+
 garbage_menu = menu.Menu([
     menu.Selection("None"),
     menu.Selection("Slow Cheese"),
@@ -165,6 +174,7 @@ main_menu = menu.Menu([
     menu.Submenu("Bag Type", bag_type_menu),
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
     menu.Submenu("Hold", hold_menu),
+    menu.Submenu("Board Size", board_size_menu),
     menu.Submenu("Garbage", garbage_menu),
     menu.Submenu("Garbage Cancelling", garbage_cancelling_menu),
     menu.Selection("Quit")
