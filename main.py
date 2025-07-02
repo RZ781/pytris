@@ -107,8 +107,7 @@ class PlayButton(menu.Button):
         x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, None)
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
-        x.set_spins(game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE)
-        spin_type = [2, 1, 0, 0] # t spins, mini t spins, immobile t pieces, immobile pieces
+        x.set_spins(*(game.SpinType(m.current) for m in spin_menus))
         main_ui.push_menu(x)
 
 class SoftDropSelection(menu.Button):
@@ -168,6 +167,13 @@ garbage_cancelling_menu = menu.Menu([
     menu.Selection("Disable")
 ])
 
+spin_names = ("T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece")
+spin_menus = [menu.Menu([menu.Selection("None"), menu.Selection("Mini Spin"), menu.Selection("Full Spin")]) for i in range(4)]
+
+spin_type_menu = menu.Menu([menu.Selection("Close")] + [
+    menu.Submenu(name, m) for name, m in zip(spin_names, spin_menus)
+])
+
 main_menu = menu.Menu([
     PlayButton(),
     menu.Submenu("Objectives", objective_menu),
@@ -175,6 +181,7 @@ main_menu = menu.Menu([
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
     menu.Submenu("Hold", hold_menu),
     menu.Submenu("Board Size", board_size_menu),
+    menu.Submenu("Spin Detection", spin_type_menu),
     menu.Submenu("Garbage", garbage_menu),
     menu.Submenu("Garbage Cancelling", garbage_cancelling_menu),
     menu.Selection("Quit")
