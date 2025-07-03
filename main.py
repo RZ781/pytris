@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys, time
 import game, ui, config, multiplayer, menu
+from typing import Sequence
 
 CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
 
@@ -111,12 +112,44 @@ class PlayButton(menu.Button):
         main_ui.push_menu(x)
 
 class SoftDropSelection(menu.Button):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
-    def click(self):
+    def click(self) -> None:
         self.ui.pop_menu()
         controls_config["infinite_soft_drop"] = soft_drop_menu.current == 0
         config.save("controls", controls_config)
+
+class PresetButton(menu.Button):
+    def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool):
+        self.name = name
+        self.objective = objective
+        self.bag_type = bag_type
+        self.board_size = board_size
+        self.spin_types = spin_types
+        self.garbage_type = garbage_type
+        self.hold_type = hold_type
+        self.garbage_cancelling = garbage_cancelling
+    def click(self) -> None:
+        self.ui.pop_menu()
+        objective_menu.current = self.objective
+        bag_type_menu.current = self.bag_type
+        board_size_menu.current = self.board_size
+        for i, m in enumerate(spin_menus):
+            m.current = self.spin_types[i]
+        garbage_menu.current = self.garbage_type
+        hold_menu.current = self.hold_type
+        garbage_cancelling_menu.current = 0 if self.garbage_cancelling else 1
+
+preset_menu = menu.Menu([
+    PresetButton("Marathon", 0, 0, 0, [2, 1, 0, 0], 0, 1, True),
+    PresetButton("Classic",  0, 4, 0, [0, 0, 0, 0], 0, 0, True),
+    PresetButton("40 Lines", 2, 0, 0, [2, 1, 0, 0], 0, 1, True),
+    PresetButton("Ultra",    5, 0, 0, [2, 1, 0, 0], 0, 1, True),
+    PresetButton("Survival", 0, 0, 0, [2, 1, 0, 0], 2, 1, False),
+    PresetButton("Big Mode", 0, 0, 2, [2, 1, 0, 1], 0, 1, True),
+    PresetButton("4 Wide",   0, 0, 1, [2, 1, 0, 1], 0, 1, True),
+    PresetButton("Chaos",    5, 1, 0, [2, 2, 2, 2], 5, 0, False),
+])
 
 objective_menu = menu.Menu([
     menu.Selection("None"),
@@ -176,6 +209,7 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 
 main_menu = menu.Menu([
     PlayButton(),
+    menu.Submenu("Presets", preset_menu),
     menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Bag Type", bag_type_menu),
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
