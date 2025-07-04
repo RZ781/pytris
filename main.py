@@ -3,8 +3,6 @@ import sys, time
 import game, ui, config, multiplayer, menu
 from typing import Sequence
 
-CONTROL_NAMES = ("Left", "Right", "Soft Drop", "Hard Drop", "Rotate", "Rotate Clockwise", "Rotate Anticlockwise", "Rotate 180", "Hold", "Forfeit")
-
 try:
     import pygame
     pygame_support = True
@@ -85,7 +83,7 @@ controls_config = {
 
 class PlayButton(menu.Button):
     def __init__(self) -> None:
-        self.name = "Play"
+        self.name = ["Play"]
     def click(self) -> None:
         randomiser: game.Randomiser = (
             game.BagRandomiser(1, 0),
@@ -109,19 +107,43 @@ class PlayButton(menu.Button):
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
         x.set_spins(*(game.SpinType(m.current) for m in spin_menus))
-        main_ui.push_menu(x)
+        self.ui.push_menu(x)
 
 class SoftDropSelection(menu.Button):
     def __init__(self, name: str) -> None:
-        self.name = name
+        self.name = [name]
     def click(self) -> None:
         self.ui.pop_menu()
         controls_config["infinite_soft_drop"] = soft_drop_menu.current == 0
         config.save("controls", controls_config)
 
+class ControlMenu(ui.Menu):
+    def __init__(self, name: str, key: game.Key):
+        self.name = name
+        self.control = key
+    def init(self, ui):
+        self.ui = ui
+        self.resize(ui.width, ui.height)
+    def resize(self, width, height):
+        self.ui.draw_text(f"Press key for {self.name.lower()}", self.ui.width // 2, self.ui.height // 10, align=ui.Alignment.CENTER)
+        self.ui.update_screen()
+    def key(self, c):
+        controls[self.control] = c
+        self.ui.pop_menu()
+    def tick(self):
+        pass
+
+class ControlButton(menu.Submenu):
+    def __init__(self, name: str, key: game.Key) -> None:
+        self.name = name
+        self.key = key
+        self.menu = ControlMenu(name, key)
+    def get_name(self):
+        return [self.name, controls[self.key]]
+
 class PresetButton(menu.Button):
     def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool):
-        self.name = name
+        self.name = [name]
         self.objective = objective
         self.bag_type = bag_type
         self.board_size = board_size
@@ -139,6 +161,20 @@ class PresetButton(menu.Button):
         garbage_menu.current = self.garbage_type
         hold_menu.current = self.hold_type
         garbage_cancelling_menu.current = 0 if self.garbage_cancelling else 1
+
+controls_menu = menu.Menu([
+    menu.Selection("Close"),
+    ControlButton("Left", game.Key.LEFT),
+    ControlButton("Right", game.Key.RIGHT),
+    ControlButton("Soft Drop", game.Key.SOFT_DROP),
+    ControlButton("Hard Drop", game.Key.HARD_DROP),
+    ControlButton("Rotate", game.Key.ROTATE),
+    ControlButton("Rotate Clockwise", game.Key.CLOCKWISE),
+    ControlButton("Rotate Anticlockwise", game.Key.ANTICLOCKWISE),
+    ControlButton("Rotate 180", game.Key.ROTATE_180),
+    ControlButton("Hold", game.Key.HOLD),
+    ControlButton("Forfeit", game.Key.FORFEIT)
+])
 
 preset_menu = menu.Menu([
     PresetButton("Marathon", 0, 0, 0, [2, 1, 0, 0], 0, 1, True),
@@ -211,6 +247,7 @@ main_menu = menu.Menu([
     PlayButton(),
     menu.Submenu("Presets", preset_menu),
     menu.Submenu("Objectives", objective_menu),
+    menu.Submenu("Controls", controls_menu),
     menu.Submenu("Bag Type", bag_type_menu),
     menu.Submenu("Infinite Soft Drop", soft_drop_menu),
     menu.Submenu("Hold", hold_menu),
