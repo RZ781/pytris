@@ -31,7 +31,6 @@ else:
     import terminal_ui
     main_ui = terminal_ui.TerminalUI()
 
-
 default_controls = {
     game.Key.LEFT: "Left",
     game.Key.RIGHT: "Right",
@@ -118,28 +117,36 @@ class SoftDropSelection(menu.Button):
         config.save("controls", controls_config)
 
 class ControlMenu(ui.Menu):
-    def __init__(self, name: str, key: game.Key):
+    def __init__(self, name: str, key: game.Key) -> None:
         self.name = name
         self.control = key
-    def init(self, ui):
+    def init(self, ui: ui.UI) -> None:
         self.ui = ui
         self.resize(ui.width, ui.height)
-    def resize(self, width, height):
+    def resize(self, width: int, height: int) -> None:
         self.ui.draw_text(f"Press key for {self.name.lower()}", self.ui.width // 2, self.ui.height // 10, align=ui.Alignment.CENTER)
         self.ui.update_screen()
-    def key(self, c):
+    def key(self, c: str, repeated: bool = False) -> None:
         controls[self.control] = c
         self.ui.pop_menu()
-    def tick(self):
+    def tick(self) -> None:
         pass
 
 class ControlButton(menu.Submenu):
     def __init__(self, name: str, key: game.Key) -> None:
-        self.name = name
+        self.control_name = name
         self.key = key
         self.menu = ControlMenu(name, key)
-    def get_name(self):
-        return [self.name, controls[self.key]]
+    def get_name(self) -> Sequence[str]:
+        return [self.control_name, controls[self.key]]
+
+class ControlsCloseButton(menu.Button):
+    def __init__(self) -> None:
+        self.name = ["Close"]
+    def click(self) -> None:
+        controls_config["keys"] = {key.value: controls[key] for key in controls}
+        config.save("controls", controls_config)
+        self.ui.pop_menu()
 
 class PresetButton(menu.Button):
     def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool):
@@ -163,7 +170,7 @@ class PresetButton(menu.Button):
         garbage_cancelling_menu.current = 0 if self.garbage_cancelling else 1
 
 controls_menu = menu.Menu([
-    menu.Selection("Close"),
+    ControlsCloseButton(),
     ControlButton("Left", game.Key.LEFT),
     ControlButton("Right", game.Key.RIGHT),
     ControlButton("Soft Drop", game.Key.SOFT_DROP),
