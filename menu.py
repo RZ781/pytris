@@ -38,7 +38,6 @@ class Menu(ui.Menu):
 
     def init(self, ui: ui.UI) -> None:
         self.ui = ui
-        self.resize(ui.width, ui.height)
         for option in self.options:
             option.init(ui)
 

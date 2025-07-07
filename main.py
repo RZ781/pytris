@@ -122,7 +122,6 @@ class ControlMenu(ui.Menu):
         self.control = key
     def init(self, ui: ui.UI) -> None:
         self.ui = ui
-        self.resize(ui.width, ui.height)
     def resize(self, width: int, height: int) -> None:
         self.ui.draw_text(f"Press key for {self.name.lower()}", self.ui.width // 2, self.ui.height // 10, align=ui.Alignment.CENTER)
         self.ui.update_screen()
