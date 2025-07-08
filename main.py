@@ -81,28 +81,43 @@ controls_config = {
 }
 
 class PlayButton(menu.Button):
-    def __init__(self) -> None:
-        self.name = ["Play"]
+    def __init__(self, name, multiplayer=False) -> None:
+        self.name = [name]
+        self.multiplayer = multiplayer
     def click(self) -> None:
-        randomiser: game.Randomiser = (
-            game.BagRandomiser(1, 0),
-            game.BagRandomiser(2, 0),
-            game.BagRandomiser(1, 1),
-            game.BagRandomiser(1, 2),
-            game.ClassicRandomiser()
-        )[bag_type_menu.current]
-        objective_type = (
-            game.Objective.NONE,
-            game.Objective.LINES,
-            game.Objective.LINES,
-            game.Objective.LINES,
-            game.Objective.TIME,
-            game.Objective.TIME
-        )[objective_menu.current]
-        board_width = (10, 4, 5, 20)[board_size_menu.current]
-        board_height = (20, 24, 10, 20)[board_size_menu.current]
-        objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
-        x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, None)
+        randomiser: game.Randomiser
+        if self.multiplayer:
+            randomiser = game.BagRandomiser(1, 0)
+            objective_type = game.Objective.NONE
+            objective_count = 0
+            board_width = 10
+            board_height = 20
+            connection = multiplayer.connect_to_server()
+            if connection is None:
+                self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
+                self.ui.update_screen()
+                return
+        else:
+            randomiser = (
+                game.BagRandomiser(1, 0),
+                game.BagRandomiser(2, 0),
+                game.BagRandomiser(1, 1),
+                game.BagRandomiser(1, 2),
+                game.ClassicRandomiser()
+            )[bag_type_menu.current]
+            objective_type = (
+                game.Objective.NONE,
+                game.Objective.LINES,
+                game.Objective.LINES,
+                game.Objective.LINES,
+                game.Objective.TIME,
+                game.Objective.TIME
+            )[objective_menu.current]
+            objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
+            board_width = (10, 4, 5, 20)[board_size_menu.current]
+            board_height = (20, 24, 10, 20)[board_size_menu.current]
+            connection = None
+        x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, connection)
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
         x.set_spins(*(game.SpinType(m.current) for m in spin_menus))
@@ -250,7 +265,8 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 ])
 
 main_menu = menu.Menu([
-    PlayButton(),
+    PlayButton("Play"),
+    PlayButton("Multiplayer", multiplayer=True),
     menu.Submenu("Presets", preset_menu),
     menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Controls", controls_menu),
