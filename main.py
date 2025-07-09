@@ -92,6 +92,10 @@ class PlayButton(menu.Button):
             objective_count = 0
             board_width = 10
             board_height = 20
+            garbage_type = game.GarbageType.NONE
+            garbage_cancelling = True
+            hold_type = game.HoldType.NORMAL
+            spin_types = [game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE]
             connection = multiplayer.connect_to_server()
             if connection is None:
                 self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
@@ -117,10 +121,14 @@ class PlayButton(menu.Button):
             board_width = (10, 4, 5, 20)[board_size_menu.current]
             board_height = (20, 24, 10, 20)[board_size_menu.current]
             connection = None
-        x = game.Game(randomiser, board_width, board_height, game.GarbageType(garbage_menu.current), garbage_cancelling_menu.current == 0, connection)
+            garbage_type = game.GarbageType(garbage_menu.current)
+            garbage_cancelling = garbage_cancelling_menu.current == 0
+            hold_type = game.HoldType(hold_menu.current)
+            spin_types = [game.SpinType(m.current) for m in spin_menus]
+        x = game.Game(randomiser, board_width, board_height, garbage_type, garbage_cancelling, connection)
         x.set_objective(objective_type, objective_count)
-        x.set_controls(controls, soft_drop_menu.current == 0, game.HoldType(hold_menu.current))
-        x.set_spins(*(game.SpinType(m.current) for m in spin_menus))
+        x.set_controls(controls, soft_drop_menu.current == 0, hold_type)
+        x.set_spins(*spin_types)
         self.ui.push_menu(x)
 
 class SoftDropSelection(menu.Button):
