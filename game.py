@@ -379,7 +379,7 @@ class Game(ui.Menu):
         if spin_type == SpinType.SPIN:
             multiplier = (400, 800, 1200, 1600)[len(full)]
         elif spin_type == SpinType.MINI:
-            multiplier = (100, 200, 400)[len(full)]
+            multiplier = (100, 200, 400, 800)[len(full)]
         else:
             multiplier = (0, 100, 300, 500, 800)[len(full)]
         if self.combo > 1:
