@@ -275,16 +275,16 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 main_menu = menu.Menu([
     PlayButton("Play"),
     PlayButton("Multiplayer", multiplayer=True),
-    menu.Submenu("Presets", preset_menu),
-    menu.Submenu("Objectives", objective_menu),
     menu.Submenu("Controls", controls_menu),
-    menu.Submenu("Bag Type", bag_type_menu),
-    menu.Submenu("Infinite Soft Drop", soft_drop_menu),
-    menu.Submenu("Hold", hold_menu),
-    menu.Submenu("Board Size", board_size_menu),
+    menu.Submenu("Presets", preset_menu),
+    menu.Submenu("Objectives", objective_menu, show_option=True),
+    menu.Submenu("Bag Type", bag_type_menu, show_option=True),
+    menu.Submenu("Infinite Soft Drop", soft_drop_menu, show_option=True),
+    menu.Submenu("Hold", hold_menu, show_option=True),
+    menu.Submenu("Board Size", board_size_menu, show_option=True),
+    menu.Submenu("Garbage", garbage_menu, show_option=True),
+    menu.Submenu("Garbage Cancelling", garbage_cancelling_menu, show_option=True),
     menu.Submenu("Spin Detection", spin_type_menu),
-    menu.Submenu("Garbage", garbage_menu),
-    menu.Submenu("Garbage Cancelling", garbage_cancelling_menu),
     menu.Selection("Quit")
 ])
 
