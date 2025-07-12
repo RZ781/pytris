@@ -149,6 +149,8 @@ class ControlMenu(ui.Menu):
         self.ui.draw_text(f"Press key for {self.name.lower()}", self.ui.width // 2, self.ui.height // 10, align=ui.Alignment.CENTER)
         self.ui.update_screen()
     def key(self, c: str, repeated: bool = False) -> None:
+        if repeated:
+            return
         controls[self.control] = c
         self.ui.pop_menu()
     def tick(self) -> None:

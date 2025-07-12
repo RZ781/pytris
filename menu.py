@@ -4,7 +4,7 @@ from typing import Sequence, Union
 class MenuOption:
     def init(self, ui: ui.UI) -> None: raise NotImplementedError
     def get_name(self) -> Sequence[str]: raise NotImplementedError
-    def key_pressed(self, key: str) -> None: raise NotImplementedError
+    def key_pressed(self, key: str, repeated: bool) -> None: raise NotImplementedError
 
 class Button(MenuOption):
     name: Sequence[str]
@@ -12,7 +12,9 @@ class Button(MenuOption):
         self.ui = ui
     def get_name(self) -> Sequence[str]:
         return self.name
-    def key_pressed(self, key: str) -> None:
+    def key_pressed(self, key: str, repeated: bool) -> None:
+        if repeated:
+            return
         if key == "Space" or key == "Return":
             self.click()
     def click(self) -> None: raise NotImplementedError
@@ -25,7 +27,7 @@ class Submenu(Button):
     def get_name(self) -> Sequence[str]:
         if self.show_option:
             current_option = self.menu.options[self.menu.current]
-            return [self.option_name] + current_option.get_name()
+            return [self.option_name] + list(current_option.get_name())
         else:
             return [self.option_name]
     def click(self) -> None:
@@ -76,7 +78,7 @@ class Menu(ui.Menu):
         elif c == "Down":
             self.current += 1
         else:
-            self.options[self.current].key_pressed(c)
+            self.options[self.current].key_pressed(c, repeated)
         self.current %= self.n_options
         self.ui.draw_text(">", self.menu_x, self.menu_y + self.current)
         self.ui.update_screen()
