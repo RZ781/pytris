@@ -268,7 +268,7 @@ garbage_cancelling_menu = menu.Menu([
 ])
 
 spin_names = ("T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece")
-spin_menus = [menu.Menu([menu.Selection("None"), menu.Selection("Mini Spin"), menu.Selection("Full Spin")]) for i in range(4)]
+spin_menus = [menu.Menu([menu.Selection("None"), menu.Selection("Mini Spin"), menu.Selection("Full Spin")], default) for default in (2, 1, 0, 0)]
 
 spin_type_menu = menu.Menu([menu.Selection("Close")] + [
     menu.Submenu(name, m) for name, m in zip(spin_names, spin_menus)
