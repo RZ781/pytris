@@ -11,13 +11,22 @@ except Exception:
 
 terminal = False
 server = False
+server_address = None
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         terminal = True
     elif arg == "--server":
         server = True
+    elif arg.startswith("--address="):
+        if server_address is None:
+            server_address = arg[len("--address="):]
+        else:
+            exit("Argument address is repeated")
     else:
         exit(f"Invalid argument {arg}")
+
+if server_address is None:
+    server_address = "127.0.0.1"
 
 if server:
     multiplayer.server()
@@ -96,7 +105,7 @@ class PlayButton(menu.Button):
             garbage_cancelling = True
             hold_type = game.HoldType.NORMAL
             spin_types = [game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE]
-            connection = multiplayer.connect_to_server()
+            connection = multiplayer.connect_to_server(server_address)
             if connection is None:
                 self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
                 self.ui.update_screen()

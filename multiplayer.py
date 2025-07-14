@@ -62,10 +62,10 @@ def server() -> None:
                     else:
                         exit(f"Unknown command {command}")
 
-def connect_to_server() -> Optional[Connection]:
+def connect_to_server(address) -> Optional[Connection]:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect(("127.0.0.1", PYTRIS_PORT))
+        s.connect((address, PYTRIS_PORT))
     except:
         return None
     return Connection(s)
