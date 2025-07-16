@@ -11,22 +11,16 @@ except Exception:
 
 terminal = False
 server = False
-server_address = None
+server_address = "127.0.0.1"
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         terminal = True
     elif arg == "--server":
         server = True
     elif arg.startswith("--address="):
-        if server_address is None:
-            server_address = arg[len("--address="):]
-        else:
-            exit("Argument address is repeated")
+        server_address = arg[len("--address="):]
     else:
         exit(f"Invalid argument {arg}")
-
-if server_address is None:
-    server_address = "127.0.0.1"
 
 if server:
     multiplayer.server()
@@ -90,7 +84,7 @@ controls_config = {
 }
 
 class PlayButton(menu.Button):
-    def __init__(self, name, multiplayer=False) -> None:
+    def __init__(self, name: str, multiplayer: bool = False) -> None:
         self.name = [name]
         self.multiplayer = multiplayer
     def click(self) -> None:
@@ -165,13 +159,15 @@ class ControlMenu(ui.Menu):
     def tick(self) -> None:
         pass
 
-class ControlButton(menu.Submenu):
+class ControlButton(menu.Button):
     def __init__(self, name: str, key: game.Key) -> None:
         self.control_name = name
         self.key = key
         self.menu = ControlMenu(name, key)
     def get_name(self) -> Sequence[str]:
         return [self.control_name, controls[self.key]]
+    def click(self) -> None:
+        self.ui.push_menu(self.menu)
 
 class ControlsCloseButton(menu.Button):
     def __init__(self) -> None:

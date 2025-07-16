@@ -20,7 +20,7 @@ class Button(MenuOption):
     def click(self) -> None: raise NotImplementedError
 
 class Submenu(Button):
-    def __init__(self, name: str, menu: ui.Menu, show_option: bool = False) -> None:
+    def __init__(self, name: str, menu: "Menu", show_option: bool = False) -> None:
         self.option_name = name
         self.show_option = show_option
         self.menu = menu
