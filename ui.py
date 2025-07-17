@@ -76,3 +76,4 @@ class UI:
     def push_menu(self, menu: Menu) -> None: raise NotImplementedError
     def pop_menu(self) -> None: raise NotImplementedError
     def get_key(self) -> str: raise NotImplementedError
+    def get_options_menu(self) -> Menu: raise NotImplementedError

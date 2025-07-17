@@ -1,5 +1,5 @@
 import sys, time, os, shutil, select
-import config, ui
+import config, ui, menu
 from typing import Optional, Collection, Union, List
 
 SCANCODE_TO_NAME = {
@@ -46,6 +46,22 @@ COLOURS_8_BIT = {
     ui.Colour.MAGENTA: 129,
 }
 
+class BeepSelection(menu.Button):
+    def __init__(self, name: str, value: bool) -> None:
+        self.name = [name]
+        self.value = value
+    def click(self) -> None:
+        self.ui.pop_menu()
+        config.save("beep", {"enabled": self.value})
+
+class ModeSelection(menu.Button):
+    def __init__(self, name: str) -> None:
+        self.name = [name]
+        self.value = name
+    def click(self) -> None:
+        self.ui.pop_menu()
+        config.save("colours", {"mode": self.value})
+
 class BaseTerminalUI(ui.UI):
     MODES = ["4 bit", "8 bit", "24 bit", "Monochrome"]
     fg_colour_codes = [
@@ -72,16 +88,28 @@ class BaseTerminalUI(ui.UI):
         terminal_size = shutil.get_terminal_size()
         self.width = terminal_size.columns // 2
         self.height = terminal_size.lines
+        self.mode_menu = menu.Menu([ModeSelection(mode) for mode in BaseTerminalUI.MODES])
+        self.beep_menu = menu.Menu([
+            BeepSelection("Enable", True),
+            BeepSelection("Disable", False)
+        ])
+        self.options_menu = menu.Menu([
+            menu.Submenu("Colours", self.mode_menu),
+            menu.Submenu("Beep", self.beep_menu),
+            menu.Selection("Close")
+        ])
+        beep = config.load("beep")
+        if beep:
+            self.beep_menu.current = 0 if beep["enabled"] else 1
+        else:
+            self.beep_menu.current = 1
         self.mode = self.detect_colour_mode()
         colour_mode = config.load("colours")
         if colour_mode:
             mode = colour_mode["mode"]
             if mode in BaseTerminalUI.MODES:
                 self.mode = BaseTerminalUI.MODES.index(mode)
-        self.enable_beep = False
-        beep = config.load("beep")
-        if beep:
-            self.enable_beep = beep["enabled"]
+        self.mode_menu.current = self.mode
 
     def push_menu(self, menu: ui.Menu) -> None:
         self.menus.append(menu)
@@ -103,7 +131,7 @@ class BaseTerminalUI(ui.UI):
                 self.bg_colour = ui.Colour.BLACK
                 self.set_bg_colour(old_bg_colour)
             else:
-                self.buffer += TerminalUI.fg_colour_codes[self.mode][colour]
+                self.buffer += TerminalUI.fg_colour_codes[self.mode_menu.current][colour]
                 self.fg_colour = colour
 
     def set_bg_colour(self, colour: ui.Colour) -> None:
@@ -116,7 +144,7 @@ class BaseTerminalUI(ui.UI):
                 self.bg_colour = ui.Colour.BLACK
                 self.set_fg_colour(old_fg_colour)
             else:
-                self.buffer += TerminalUI.bg_colour_codes[self.mode][colour]
+                self.buffer += TerminalUI.bg_colour_codes[self.mode_menu.current][colour]
                 self.bg_colour = colour
 
     def goto(self, x: float, y: float) -> None:
@@ -134,10 +162,10 @@ class BaseTerminalUI(ui.UI):
 
     def set_pixel(self, colour: ui.Colour, x: int, y: int) -> None:
         self.goto(x, y)
-        if self.mode == 3 and colour == ui.Colour.LIGHT_GREY:
+        if self.mode_menu.current == 3 and colour == ui.Colour.LIGHT_GREY:
             self.set_bg_colour(ui.Colour.BLACK)
             self.buffer += "''"
-        elif self.mode == 3 and colour == ui.Colour.WHITE:
+        elif self.mode_menu.current == 3 and colour == ui.Colour.WHITE:
             self.set_bg_colour(ui.Colour.BLACK)
             self.buffer += "##"
         else:
@@ -145,7 +173,7 @@ class BaseTerminalUI(ui.UI):
             self.buffer += "  "
 
     def beep(self) -> None:
-        if self.enable_beep:
+        if self.beep_menu.current == 0:
             self.buffer += "\x07"
 
     def update_screen(self) -> None:
@@ -153,6 +181,9 @@ class BaseTerminalUI(ui.UI):
         sys.stdout.write(self.buffer)
         sys.stdout.flush()
         self.buffer = ""
+
+    def get_options_menu(self) -> menu.Menu:
+        return self.options_menu
 
     def get_key(self) -> str: raise NotImplementedError
     def detect_colour_mode(self) -> int: raise NotImplementedError

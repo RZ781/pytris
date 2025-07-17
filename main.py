@@ -292,6 +292,7 @@ main_menu = menu.Menu([
     menu.Submenu("Garbage", garbage_menu, show_option=True),
     menu.Submenu("Garbage Cancelling", garbage_cancelling_menu, show_option=True),
     menu.Submenu("Spin Detection", spin_type_menu),
+    menu.Submenu("UI Options", main_ui.get_options_menu()),
     menu.Selection("Quit")
 ])
 

@@ -1,4 +1,4 @@
-import config, ui, pygame
+import config, ui, pygame, menu
 from typing import Optional, Collection, Union, Dict, List
 
 pygame.init()
@@ -17,6 +17,14 @@ def key_name(event: pygame.event.Event) -> str:
         return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
     return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
 
+class BeepSelection(menu.Button):
+    def __init__(self, name: str, value: bool) -> None:
+        self.name = [name]
+        self.value = value
+    def click(self) -> None:
+        self.ui.pop_menu()
+        config.save("beep", {"enabled": self.value})
+
 class PygameUI(ui.UI):
     screen: pygame.Surface
     font: pygame.font.Font
@@ -29,12 +37,21 @@ class PygameUI(ui.UI):
         self.target_width = self.width = 40
         self.target_height = self.height = 32
         self.pixel_size = 25
-        self.enable_beep = False
         self.screen = pygame.display.set_mode((self.width * self.pixel_size, self.height * self.pixel_size), pygame.RESIZABLE)
         self.font = pygame.font.SysFont("courier", self.pixel_size)
+        self.beep_menu = menu.Menu([
+            BeepSelection("Enable", True),
+            BeepSelection("Disable", False)
+        ])
+        self.options_menu = menu.Menu([
+            menu.Submenu("Beep", self.beep_menu),
+            menu.Selection("Close")
+        ])
         beep = config.load("beep")
         if beep:
-            self.enable_beep = beep["enabled"]
+            self.beep_menu.current = 0 if beep["enabled"] else 1
+        else:
+            self.beep_menu.current = 1
 
     def init(self) -> None:
         pygame.display.set_caption("Pytris")
@@ -123,3 +140,6 @@ class PygameUI(ui.UI):
         while key is None:
             key = self.get_key_nonblocking()
         return key
+
+    def get_options_menu(self) -> menu.Menu:
+        return self.options_menu
