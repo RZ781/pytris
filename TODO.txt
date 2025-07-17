@@ -1,2 +1,4 @@
  - add other rotation systems
- - add online multiplayer
+ - enter server address within game
+ - lobbies in multiplayer
+ - adjustable handling settings
