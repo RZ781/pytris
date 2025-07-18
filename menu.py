@@ -2,13 +2,13 @@ import ui
 from typing import Sequence, Union
 
 class MenuOption:
-    def init(self, ui: ui.UI) -> None: raise NotImplementedError
+    def init(self, ui: ui.UI, menu: "Menu") -> None: raise NotImplementedError
     def get_name(self) -> Sequence[str]: raise NotImplementedError
     def key_pressed(self, key: str, repeated: bool) -> None: raise NotImplementedError
 
 class Button(MenuOption):
     name: Sequence[str]
-    def init(self, ui: ui.UI) -> None:
+    def init(self, ui: ui.UI, menu: "Menu") -> None:
         self.ui = ui
     def get_name(self) -> Sequence[str]:
         return self.name
@@ -39,6 +39,25 @@ class Selection(Button):
     def click(self) -> None:
         self.ui.pop_menu()
 
+class NumberSelector(MenuOption):
+    def __init__(self, name: str, value: int, minimum: int, maximum: int, formatting: str):
+        self.name = name
+        self.value = value
+        self.minimum = minimum
+        self.maximum = maximum
+        self.formatting = formatting
+    def init(self, ui: ui.UI, menu: "Menu") -> None:
+        self.ui = ui
+        self.menu = menu
+    def get_name(self) -> Sequence[str]:
+        return [self.name, self.formatting.format(self.value)]
+    def key_pressed(self, key: str, repeated: bool) -> None:
+        if key == "Left" and self.value > self.minimum:
+            self.value -= 1
+        elif key == "Right" and self.value < self.maximum:
+            self.value += 1
+        self.menu.resize(self.ui.width, self.ui.height)
+
 class Menu(ui.Menu):
     def __init__(self, options: Sequence[MenuOption], current: int = 0) -> None:
         self.options = options
@@ -48,7 +67,7 @@ class Menu(ui.Menu):
     def init(self, ui: ui.UI) -> None:
         self.ui = ui
         for option in self.options:
-            option.init(ui)
+            option.init(ui, self)
 
     def resize(self, width: int, height: int) -> None:
         self.ui.clear()

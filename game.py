@@ -3,7 +3,6 @@ import ui, multiplayer
 from typing import List, Optional, Dict
 
 TPS = 60 # ticks per second
-LOCK_TIME = 0.5 # seconds
 LOCK_COUNT = 15
 MISCLICK_PROTECT_TIME = 0.15 # seconds
 
@@ -181,7 +180,7 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, garbage_type: GarbageType, garbage_cancelling: bool, connection: Optional[multiplayer.Connection]) -> None:
+    def __init__(self, randomiser: Randomiser, width: int, height: int, garbage_type: GarbageType, garbage_cancelling: bool, lock_delay: int) -> None:
         self.board_width = width
         self.board_height = height
         self.objective_type = Objective.NONE
@@ -197,9 +196,10 @@ class Game(ui.Menu):
         self.controls = {}
         self.board = {}
         self.hold_piece = None
+        self.lock_delay = lock_delay
         self.fall_speed = 1.2
         self.fall_ticks = TPS / self.fall_speed
-        self.ground_ticks = LOCK_TIME * TPS
+        self.ground_ticks = self.lock_delay
         self.randomiser = randomiser
         self.lock_count = LOCK_COUNT
         self.death_ticks = None
@@ -213,10 +213,14 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
-        self.enable_garbage_queue = connection is not None or garbage_type != GarbageType.NONE
+        self.enable_garbage_queue = garbage_type != GarbageType.NONE
         self.garbage_queue = []
         self.countdown = 3 * TPS
+        self.connection = None
+
+    def set_connection(self, connection: multiplayer.Connection) -> None:
         self.connection = connection
+        self.enable_garbage_queue = True
 
     def set_objective(self, objective_type: Objective, objective_count: int) -> None:
         self.objective_type = objective_type
@@ -415,7 +419,7 @@ class Game(ui.Menu):
         name = name.strip()
 
         # reset state and redraw
-        self.ground_ticks = LOCK_TIME * TPS
+        self.ground_ticks = self.lock_delay
         self.fall_ticks = TPS / self.fall_speed
         self.lock_count = LOCK_COUNT
         self.current_piece = self.next_piece()
@@ -434,7 +438,7 @@ class Game(ui.Menu):
     def lock_reset(self) -> None:
         if self.current_piece.on_floor() and self.lock_count:
             self.lock_count -= 1
-            self.ground_ticks = LOCK_TIME * TPS
+            self.ground_ticks = self.lock_delay
 
     def init(self, main_ui: ui.UI) -> None:
         self.ui = main_ui
@@ -555,7 +559,7 @@ class Game(ui.Menu):
                 self.redraw_hold_piece(colour=ui.Colour.BLACK)
                 if self.hold_type == HoldType.NORMAL:
                     self.held = True
-                self.ground_ticks = LOCK_TIME * TPS
+                self.ground_ticks = self.lock_delay
                 self.fall_ticks = TPS / self.fall_speed
                 self.lock_count = LOCK_COUNT
                 if self.hold_piece:

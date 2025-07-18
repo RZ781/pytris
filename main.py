@@ -99,11 +99,7 @@ class PlayButton(menu.Button):
             garbage_cancelling = True
             hold_type = game.HoldType.NORMAL
             spin_types = [game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE]
-            connection = multiplayer.connect_to_server(server_address)
-            if connection is None:
-                self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
-                self.ui.update_screen()
-                return
+            lock_delay = 30
         else:
             randomiser = (
                 game.BagRandomiser(1, 0),
@@ -123,15 +119,22 @@ class PlayButton(menu.Button):
             objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
             board_width = (10, 4, 5, 20)[board_size_menu.current]
             board_height = (20, 24, 10, 20)[board_size_menu.current]
-            connection = None
             garbage_type = game.GarbageType(garbage_menu.current)
             garbage_cancelling = garbage_cancelling_menu.current == 0
             hold_type = game.HoldType(hold_menu.current)
             spin_types = [game.SpinType(m.current) for m in spin_menus]
-        x = game.Game(randomiser, board_width, board_height, garbage_type, garbage_cancelling, connection)
+            lock_delay = lock_delay_selector.value
+        x = game.Game(randomiser, board_width, board_height, garbage_type, garbage_cancelling, lock_delay)
         x.set_objective(objective_type, objective_count)
         x.set_controls(controls, soft_drop_menu.current == 0, hold_type)
         x.set_spins(*spin_types)
+        if self.multiplayer:
+            connection = multiplayer.connect_to_server(server_address)
+            if connection is None:
+                self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
+                self.ui.update_screen()
+                return
+            x.set_connection(connection)
         self.ui.push_menu(x)
 
 class SoftDropSelection(menu.Button):
@@ -279,6 +282,8 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
     menu.Submenu(name, m) for name, m in zip(spin_names, spin_menus)
 ])
 
+lock_delay_selector = menu.NumberSelector("Lock Delay", 30, 0, 60, "{} frames")
+
 main_menu = menu.Menu([
     PlayButton("Play"),
     PlayButton("Multiplayer", multiplayer=True),
@@ -292,6 +297,7 @@ main_menu = menu.Menu([
     menu.Submenu("Garbage", garbage_menu, show_option=True),
     menu.Submenu("Garbage Cancelling", garbage_cancelling_menu, show_option=True),
     menu.Submenu("Spin Detection", spin_type_menu),
+    lock_delay_selector,
     menu.Submenu("UI Options", main_ui.get_options_menu()),
     menu.Selection("Quit")
 ])
