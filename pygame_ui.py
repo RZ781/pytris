@@ -9,9 +9,6 @@ KEY_TO_NAME = {
     pygame.K_LEFT: "Left"
 }
 
-ARR = 4
-DAS = 10
-
 def key_name(event: pygame.event.Event) -> str:
     if event.unicode:
         return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
@@ -43,8 +40,12 @@ class PygameUI(ui.UI):
             BeepSelection("Enable", True),
             BeepSelection("Disable", False)
         ])
+        self.das_selector = menu.NumberSelector("DAS", 10, 1, 20, "{} frames")
+        self.arr_selector = menu.NumberSelector("ARR", 4, 1, 20, "{} frames")
         self.options_menu = menu.Menu([
             menu.Submenu("Beep", self.beep_menu),
+            self.das_selector,
+            self.arr_selector,
             menu.Selection("Close")
         ])
         beep = config.load("beep")
@@ -87,7 +88,7 @@ class PygameUI(ui.UI):
             for key, frame in keys.items():
                 if frame == 0:
                     menu.key(key)
-                if frame >= DAS and (frame - DAS) % ARR == 0:
+                if frame >= self.das_selector.value and (frame - self.das_selector.value) % self.arr_selector.value == 0:
                     menu.key(key, repeated=True)
                 keys[key] += 1
             menu.tick()
