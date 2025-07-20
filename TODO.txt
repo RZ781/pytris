@@ -1,4 +1,3 @@
  - add other rotation systems
  - enter server address within game
  - lobbies in multiplayer
- - adjustable handling settings
