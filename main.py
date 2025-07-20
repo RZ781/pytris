@@ -88,18 +88,11 @@ class PlayButton(menu.Button):
         self.name = [name]
         self.multiplayer = multiplayer
     def click(self) -> None:
+        config = game.GameConfig()
         randomiser: game.Randomiser
         if self.multiplayer:
             randomiser = game.BagRandomiser(1, 0)
-            objective_type = game.Objective.NONE
-            objective_count = 0
-            board_width = 10
-            board_height = 20
-            garbage_type = game.GarbageType.NONE
-            garbage_cancelling = True
-            hold_type = game.HoldType.NORMAL
             spin_types = [game.SpinType.SPIN, game.SpinType.MINI, game.SpinType.NONE, game.SpinType.NONE]
-            lock_delay = 30
         else:
             randomiser = (
                 game.BagRandomiser(1, 0),
@@ -108,7 +101,7 @@ class PlayButton(menu.Button):
                 game.BagRandomiser(1, 2),
                 game.ClassicRandomiser()
             )[bag_type_menu.current]
-            objective_type = (
+            config.objective_type = (
                 game.Objective.NONE,
                 game.Objective.LINES,
                 game.Objective.LINES,
@@ -116,17 +109,16 @@ class PlayButton(menu.Button):
                 game.Objective.TIME,
                 game.Objective.TIME
             )[objective_menu.current]
-            objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
-            board_width = (10, 4, 5, 20)[board_size_menu.current]
-            board_height = (20, 24, 10, 20)[board_size_menu.current]
-            garbage_type = game.GarbageType(garbage_menu.current)
-            garbage_cancelling = garbage_cancelling_menu.current == 0
-            hold_type = game.HoldType(hold_menu.current)
+            config.objective_count = (0, 20, 40, 100, 60, 120)[objective_menu.current]
+            config.width = (10, 4, 5, 20)[board_size_menu.current]
+            config.height = (20, 24, 10, 20)[board_size_menu.current]
+            config.garbage_type = game.GarbageType(garbage_menu.current)
+            config.garbage_cancelling = garbage_cancelling_menu.current == 0
+            config.hold_type = game.HoldType(hold_menu.current)
+            config.lock_delay = lock_delay_selector.value
             spin_types = [game.SpinType(m.current) for m in spin_menus]
-            lock_delay = lock_delay_selector.value
-        x = game.Game(randomiser, board_width, board_height, garbage_type, garbage_cancelling, lock_delay)
-        x.set_objective(objective_type, objective_count)
-        x.set_controls(controls, soft_drop_menu.current == 0, hold_type)
+        config.infinite_soft_drop = soft_drop_menu.current == 0
+        x = game.Game(config, randomiser, controls)
         x.set_spins(*spin_types)
         if self.multiplayer:
             connection = multiplayer.connect_to_server(server_address)

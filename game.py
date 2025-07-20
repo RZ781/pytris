@@ -60,7 +60,7 @@ class Piece:
         self.base = base
         self.game = game
         self.name = self.base.name
-        self.x = (self.game.board_width - len(self.base.shapes[0][0])) // 2
+        self.x = (self.game.config.width - len(self.base.shapes[0][0])) // 2
         self.y = -2
         self.rotation = 0
         self.rotation_last = False
@@ -129,7 +129,7 @@ class Piece:
             else:
                 self.x = self.y = 1
         else:
-            self.x = (self.game.board_width - len(self.base.shapes[0][0])) // 2
+            self.x = (self.game.config.width - len(self.base.shapes[0][0])) // 2
             self.y = -2
 
     def rotate(self, rotation_change: int) -> bool:
@@ -172,6 +172,18 @@ class Piece:
 class Randomiser:
     def next_piece(self) -> int: raise NotImplementedError
 
+class GameConfig:
+    def __init__(self) -> None:
+        self.width = 10
+        self.height = 20
+        self.lock_delay = 30
+        self.garbage_type = GarbageType.NONE
+        self.garbage_cancelling = True
+        self.objective_type = Objective.NONE
+        self.objective_count = 0
+        self.infinite_soft_drop = False
+        self.hold_type = HoldType.NORMAL
+
 class Game(ui.Menu):
     board: Dict[int, List[ui.Colour]]
     hold_piece: Optional[Piece]
@@ -180,26 +192,18 @@ class Game(ui.Menu):
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
 
-    def __init__(self, randomiser: Randomiser, width: int, height: int, garbage_type: GarbageType, garbage_cancelling: bool, lock_delay: int) -> None:
-        self.board_width = width
-        self.board_height = height
-        self.objective_type = Objective.NONE
-        self.objective_count = 0
-        self.garbage_type = garbage_type
-        self.garbage_cancelling = garbage_cancelling
-        self.infinite_soft_drop = False
-        self.hold_type = HoldType.NORMAL
+    def __init__(self, config: GameConfig, randomiser: Randomiser, controls: Dict[Key, str]) -> None:
+        self.config = config
         self.t_spin = SpinType.SPIN
         self.mini_t_spin = SpinType.MINI
         self.immobile_t = SpinType.NONE
         self.all_spin = SpinType.NONE
-        self.controls = {}
+        self.controls = controls
         self.board = {}
         self.hold_piece = None
-        self.lock_delay = lock_delay
         self.fall_speed = 1.2
         self.fall_ticks = TPS / self.fall_speed
-        self.ground_ticks = self.lock_delay
+        self.ground_ticks = config.lock_delay
         self.randomiser = randomiser
         self.lock_count = LOCK_COUNT
         self.death_ticks = None
@@ -213,7 +217,7 @@ class Game(ui.Menu):
         self.ticks = 0
         self.b2b = 0
         self.combo = 0
-        self.enable_garbage_queue = garbage_type != GarbageType.NONE
+        self.enable_garbage_queue = config.garbage_type != GarbageType.NONE
         self.garbage_queue = []
         self.countdown = 3 * TPS
         self.connection = None
@@ -222,15 +226,6 @@ class Game(ui.Menu):
         self.connection = connection
         self.enable_garbage_queue = True
 
-    def set_objective(self, objective_type: Objective, objective_count: int) -> None:
-        self.objective_type = objective_type
-        self.objective_count = objective_count
-
-    def set_controls(self, controls: Dict[Key, str], infinite_soft_drop: bool, hold_type: HoldType) -> None:
-        self.controls = controls
-        self.infinite_soft_drop = infinite_soft_drop
-        self.hold_type = hold_type
-
     def set_spins(self, t_spin: SpinType, mini_t_spin: SpinType, immobile_t: SpinType, all_spin: SpinType) -> None:
         self.t_spin = t_spin
         self.mini_t_spin = mini_t_spin
@@ -238,9 +233,9 @@ class Game(ui.Menu):
         self.all_spin = all_spin
 
     def board_get(self, x: int, y: int) -> bool:
-        if y >= self.board_height:
+        if y >= self.config.height:
             return True
-        if not 0 <= x < self.board_width:
+        if not 0 <= x < self.config.width:
             return True
         if y not in self.board:
             return False
@@ -248,7 +243,7 @@ class Game(ui.Menu):
 
     def board_set(self, x: int, y: int, colour: ui.Colour) -> None:
         if y not in self.board:
-            self.board[y] = [ui.Colour.BLACK] * self.board_width
+            self.board[y] = [ui.Colour.BLACK] * self.config.width
         self.board[y][x] = colour
 
     def create_piece(self) -> Piece:
@@ -274,7 +269,7 @@ class Game(ui.Menu):
                 for dx, dy in ((0, 0), (0, 2), (2, 0), (2, 2)):
                     x = self.current_piece.x + dx
                     y = self.current_piece.y + dy
-                    if 0 <= x < self.board_width and 0 <= y < self.board_height:
+                    if 0 <= x < self.config.width and 0 <= y < self.config.height:
                         corner_filled = self.board_get(x, y)
                     else:
                         corner_filled = True
@@ -356,7 +351,7 @@ class Game(ui.Menu):
                     lines = int(math.log(1 + 1.25 * (self.combo - 1)))
                 else:
                     lines = int(lines * (1 + 0.25 * (self.combo - 1)))
-            while lines > 0 and len(self.garbage_queue) > 0 and self.garbage_cancelling:
+            while lines > 0 and len(self.garbage_queue) > 0 and self.config.garbage_cancelling:
                 if lines >= self.garbage_queue[0]:
                     lines -= self.garbage_queue.pop(0)
                 else:
@@ -367,13 +362,13 @@ class Game(ui.Menu):
         # receive garbage
         if len(self.garbage_queue) > 0 and len(full) == 0:
             for lines in self.garbage_queue:
-                line = [ui.Colour.DARK_GREY] * self.board_width
-                line[random.randint(0, self.board_width-1)] = ui.Colour.BLACK
+                line = [ui.Colour.DARK_GREY] * self.config.width
+                line[random.randint(0, self.config.width-1)] = ui.Colour.BLACK
                 for _ in range(lines):
                     for i in sorted(self.board.keys()):
                         self.board[i-1] = self.board[i]
                         self.board.pop(i)
-                    self.board[self.board_height-1] = line.copy()
+                    self.board[self.config.height-1] = line.copy()
                     if self.current_piece.intersect():
                         self.current_piece.y -= 1
             self.redraw()
@@ -419,7 +414,7 @@ class Game(ui.Menu):
         name = name.strip()
 
         # reset state and redraw
-        self.ground_ticks = self.lock_delay
+        self.ground_ticks = self.config.lock_delay
         self.fall_ticks = TPS / self.fall_speed
         self.lock_count = LOCK_COUNT
         self.current_piece = self.next_piece()
@@ -427,32 +422,32 @@ class Game(ui.Menu):
         self.no_hard_drop_ticks = int(MISCLICK_PROTECT_TIME * TPS)
         self.redraw()
         if name:
-            self.ui.draw_text(name, self.board_x+self.board_width//2, self.board_y-4, align=ui.Alignment.CENTER)
+            self.ui.draw_text(name, self.board_x+self.config.width//2, self.board_y-4, align=ui.Alignment.CENTER)
         if len(full) > 0:
             self.ui.beep()
         if self.current_piece.intersect():
-            self.ui.draw_text("You died", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.draw_text("You died", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
             self.ui.update_screen()
             self.end_game()
 
     def lock_reset(self) -> None:
         if self.current_piece.on_floor() and self.lock_count:
             self.lock_count -= 1
-            self.ground_ticks = self.lock_delay
+            self.ground_ticks = self.config.lock_delay
 
     def init(self, main_ui: ui.UI) -> None:
         self.ui = main_ui
         self.resize(main_ui.width, main_ui.height)
 
     def resize(self, width: int, height: int) -> None:
-        self.board_x = (width - self.board_width) // 2
-        self.board_y = (height - self.board_height) // 2
+        self.board_x = (width - self.config.width) // 2
+        self.board_y = (height - self.config.height) // 2
         if self.enable_garbage_queue:
             self.hold_x = self.board_x - 7
         else:
             self.hold_x = self.board_x - 5
         self.hold_y = self.board_y + 1
-        self.next_x = self.board_x + self.board_width + 1
+        self.next_x = self.board_x + self.config.width + 1
         self.next_y = self.board_y + 1
         self.counter_x = self.hold_x - 5
         self.counter_y = self.board_y + 15
@@ -481,40 +476,40 @@ class Game(ui.Menu):
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     self.receive_garbage(int.from_bytes(data))
                 elif command == multiplayer.CMD_EXIT:
-                    self.ui.draw_text("Disconnected", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
-                    self.ui.draw_text("from server", self.board_x+self.board_width//2, self.board_y+8, align=ui.Alignment.CENTER)
+                    self.ui.draw_text("Disconnected", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
+                    self.ui.draw_text("from server", self.board_x+self.config.width//2, self.board_y+8, align=ui.Alignment.CENTER)
                     self.ui.update_screen()
                     self.end_game()
                     return
                 else:
                     exit(f"Unknown command from server: {command}")
-        if self.garbage_type == GarbageType.SLOW_CHEESE:
+        if self.config.garbage_type == GarbageType.SLOW_CHEESE:
             if self.ticks % 300 == 0:
                 self.receive_garbage(1)
-        elif self.garbage_type == GarbageType.FAST_CHEESE:
+        elif self.config.garbage_type == GarbageType.FAST_CHEESE:
             if self.ticks % 120 == 0:
                 self.receive_garbage(1)
-        elif self.garbage_type == GarbageType.SLOW_CLEAN:
+        elif self.config.garbage_type == GarbageType.SLOW_CLEAN:
             if self.ticks % 600 == 0:
                 self.receive_garbage(4)
-        elif self.garbage_type == GarbageType.FAST_CLEAN:
+        elif self.config.garbage_type == GarbageType.FAST_CLEAN:
             if self.ticks % 210 == 0:
                 self.receive_garbage(4)
-        if self.objective_type == Objective.TIME:
-            if self.ticks >= self.objective_count * TPS:
+        if self.config.objective_type == Objective.TIME:
+            if self.ticks >= self.config.objective_count * TPS:
                 text = f"Score: {self.score}"
-                self.ui.draw_text(text, self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+                self.ui.draw_text(text, self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
-        elif self.objective_type == Objective.LINES:
-            if self.lines >= self.objective_count:
+        elif self.config.objective_type == Objective.LINES:
+            if self.lines >= self.config.objective_count:
                 seconds = self.ticks // TPS
                 ms = int((self.ticks % TPS) / TPS * 1000)
                 minutes = seconds // TPS
                 seconds %= TPS
                 text = f"Time: {minutes}:{seconds:02}.{ms:02}"
-                self.ui.draw_text(text, self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+                self.ui.draw_text(text, self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
                 self.ui.update_screen()
                 self.end_game()
                 return
@@ -543,23 +538,23 @@ class Game(ui.Menu):
         self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
-            self.ui.draw_text("Forfeited", self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.draw_text("Forfeited", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
             self.ui.update_screen()
             self.end_game()
             return
         if c == self.controls[Key.SOFT_DROP]:
-            count = 25 if self.infinite_soft_drop else 1
+            count = self.config.height * 2 if self.config.infinite_soft_drop else 1
             for i in range(count):
                 if self.current_piece.move(0, 1):
                     self.score += 1
             self.redraw_counters()
         if c == self.controls[Key.HOLD] and not repeated:
-            if not self.held and self.hold_type != HoldType.NONE:
+            if not self.held and self.config.hold_type != HoldType.NONE:
                 self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
                 self.redraw_hold_piece(colour=ui.Colour.BLACK)
-                if self.hold_type == HoldType.NORMAL:
+                if self.config.hold_type == HoldType.NORMAL:
                     self.held = True
-                self.ground_ticks = self.lock_delay
+                self.ground_ticks = self.config.lock_delay
                 self.fall_ticks = TPS / self.fall_speed
                 self.lock_count = LOCK_COUNT
                 if self.hold_piece:
@@ -601,13 +596,13 @@ class Game(ui.Menu):
     def send_garbage(self, lines: int) -> None:
         if self.connection is not None:
             self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
-        if self.garbage_type == GarbageType.BACKFIRE:
+        if self.config.garbage_type == GarbageType.BACKFIRE:
             self.receive_garbage(lines)
 
     def receive_garbage(self, lines: int) -> None:
         if lines < 1:
             return
-        y = self.board_y + self.board_height - sum(self.garbage_queue) - 1
+        y = self.board_y + self.config.height - sum(self.garbage_queue) - 1
         for i in range(lines-1):
             self.ui.set_pixel(ui.Colour.BRIGHT_RED, self.board_x - 2, y)
             y -= 1
@@ -629,13 +624,13 @@ class Game(ui.Menu):
             left = -2
         else:
             left = 0
-        for x in range(left, self.board_width+2):
-            for y in range(self.board_height+1):
-                if x in (-2, 0, self.board_width+1) or y == self.board_height:
+        for x in range(left, self.config.width+2):
+            for y in range(self.config.height+1):
+                if x in (-2, 0, self.config.width+1) or y == self.config.height:
                     self.ui.set_pixel(ui.Colour.WHITE, x+self.board_x-1, y+self.board_y)
 
         # draw hold border
-        if self.hold_type != HoldType.NONE:
+        if self.config.hold_type != HoldType.NONE:
             for x in range(5):
                 for y in range(6):
                     if x == 0 or y in (0, 5):
@@ -656,7 +651,7 @@ class Game(ui.Menu):
 
         # draw garbage meter
         if self.enable_garbage_queue:
-            y = self.board_y + self.board_height - 1
+            y = self.board_y + self.config.height - 1
             for lines in self.garbage_queue:
                 if lines == 0:
                     continue
@@ -679,7 +674,7 @@ class Game(ui.Menu):
         self.redraw_hold_piece()
         self.redraw_counters()
         if self.countdown > 0:
-            self.ui.draw_text(str(self.countdown//TPS), self.board_x+self.board_width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.draw_text(str(self.countdown//TPS), self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
         if update:
             self.ui.update_screen()
 
