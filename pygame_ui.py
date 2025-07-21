@@ -41,7 +41,7 @@ class PygameUI(ui.UI):
             BeepSelection("Disable", False)
         ])
         self.das_selector = menu.NumberSelector("DAS", 10, 1, 20, "{} frames")
-        self.arr_selector = menu.NumberSelector("ARR", 4, 1, 20, "{} frames")
+        self.arr_selector = menu.NumberSelector("ARR", 4, 0, 20, "{} frames")
         self.options_menu = menu.Menu([
             menu.Submenu("Beep", self.beep_menu),
             self.das_selector,
@@ -88,8 +88,12 @@ class PygameUI(ui.UI):
             for key, frame in keys.items():
                 if frame == 0:
                     menu.key(key)
-                if frame >= self.das_selector.value and (frame - self.das_selector.value) % self.arr_selector.value == 0:
-                    menu.key(key, repeated=True)
+                if frame >= self.das_selector.value:
+                    if self.arr_selector.value == 0:
+                        for i in range(256):
+                            menu.key(key, repeated=True)
+                    elif (frame - self.das_selector.value) % self.arr_selector.value == 0:
+                        menu.key(key, repeated=True)
                 keys[key] += 1
             menu.tick()
             clock.tick(tps)
