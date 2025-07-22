@@ -637,10 +637,10 @@ class Game(ui.Menu):
                         self.ui.set_pixel(ui.Colour.WHITE, x+self.hold_x-1, y+self.hold_y-1)
 
         # draw next piece border
-        for x in range(5):
+        for x in range(6):
             for y in range(14):
-                if x == 4 or y in (0, 13):
-                    self.ui.set_pixel(ui.Colour.WHITE, x+self.next_x, y+self.next_y-1)
+                if x in (0, 5) or y in (0, 13):
+                    self.ui.set_pixel(ui.Colour.WHITE, x+self.next_x-1, y+self.next_y-1)
 
         # draw board
         for y, row in self.board.items():
