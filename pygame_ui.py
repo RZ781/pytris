@@ -1,6 +1,9 @@
 import config, ui, pygame, menu
 from typing import Optional, Collection, Union, Dict, List
 
+DEFAULT_DAS = 20
+DEFAULT_ARR = 3
+
 pygame.init()
 KEY_TO_NAME = {
     pygame.K_UP: "Up",
@@ -42,6 +45,8 @@ class PygameUI(ui.UI):
         ])
         self.das_selector = menu.NumberSelector("DAS", 10, 1, 20, "{} frames")
         self.arr_selector = menu.NumberSelector("ARR", 4, 0, 20, "{} frames")
+        self.das = DEFAULT_DAS
+        self.arr = DEFAULT_ARR
         self.options_menu = menu.Menu([
             menu.Submenu("Beep", self.beep_menu),
             self.das_selector,
@@ -68,6 +73,12 @@ class PygameUI(ui.UI):
             menu = self.menus[-1]
             if menu is not prev_menu:
                 menu.resize(self.width, self.height)
+            if menu.enable_custom_handling():
+                self.das = self.das_selector.value
+                self.arr = self.arr_selector.value
+            else:
+                self.das = DEFAULT_DAS
+                self.arr = DEFAULT_ARR
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     key = key_name(event)
@@ -88,11 +99,11 @@ class PygameUI(ui.UI):
             for key, frame in keys.items():
                 if frame == 0:
                     menu.key(key)
-                if frame >= self.das_selector.value:
-                    if self.arr_selector.value == 0:
-                        for i in range(256):
+                if frame >= self.das:
+                    if self.arr == 0:
+                        for i in range(16):
                             menu.key(key, repeated=True)
-                    elif (frame - self.das_selector.value) % self.arr_selector.value == 0:
+                    elif (frame - self.das) % self.arr == 0:
                         menu.key(key, repeated=True)
                 keys[key] += 1
             menu.tick()

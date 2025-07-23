@@ -64,6 +64,9 @@ class Menu(ui.Menu):
         self.n_options = len(options)
         self.current = current
 
+    def enable_custom_handling(self) -> bool:
+        return False
+
     def init(self, ui: ui.UI) -> None:
         self.ui = ui
         for option in self.options:

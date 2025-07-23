@@ -222,6 +222,9 @@ class Game(ui.Menu):
         self.countdown = 3 * TPS
         self.connection = None
 
+    def enable_custom_handling(self) -> bool:
+        return True
+
     def set_connection(self, connection: multiplayer.Connection) -> None:
         self.connection = connection
         self.enable_garbage_queue = True
