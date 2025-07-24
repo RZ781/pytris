@@ -141,6 +141,8 @@ class ControlMenu(ui.Menu):
     def __init__(self, name: str, key: game.Key) -> None:
         self.name = name
         self.control = key
+    def enable_custom_handling(self) -> bool:
+        return False
     def init(self, ui: ui.UI) -> None:
         self.ui = ui
     def resize(self, width: int, height: int) -> None:
