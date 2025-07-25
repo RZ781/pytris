@@ -65,6 +65,8 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
     controls = {game.Key(int(a)): b for a, b in keys.items()}
     if version >= 2:
         infinite_soft_drop = controls_config["infinite_soft_drop"]
+    else:
+        infinite_soft_drop = False
     # convert escape codes to key names
     if version < 3:
         for control, s in controls.items():
@@ -76,6 +78,7 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
     controls = default_controls | controls
 else:
     controls = default_controls.copy()
+    infinite_soft_drop = False
 
 controls_config = {
     "version": 4,
