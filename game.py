@@ -582,7 +582,7 @@ class Game(ui.Menu):
         if c == self.controls[Key.ANTICLOCKWISE] and not repeated:
             if self.current_piece.rotate(-1):
                 self.lock_reset()
-        if c == self.controls[Key.ROTATE] or c == self.controls[Key.CLOCKWISE] and not repeated:
+        if (c == self.controls[Key.ROTATE] or c == self.controls[Key.CLOCKWISE]) and not repeated:
             if self.current_piece.rotate(1):
                 self.lock_reset()
         if c == self.controls[Key.ROTATE_180] and not repeated:
