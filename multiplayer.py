@@ -25,7 +25,7 @@ class Connection:
         commands = []
         while len(self.buf) >= 3:
             command = self.buf[0]
-            length = int.from_bytes(self.buf[1:3])
+            length = int.from_bytes(self.buf[1:3], "big")
             if len(self.buf) < 3 + length:
                 break
             commands.append((command, self.buf[3:3+length]))

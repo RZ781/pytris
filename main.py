@@ -75,7 +75,7 @@ if controls_config and ("version" not in controls_config or 1 <= controls_config
             elif s in ui.ESCAPE_CODE_TO_NAME:
                 controls[control] = ui.ESCAPE_CODE_TO_NAME[s]
     # add missing keys
-    controls = default_controls | controls
+    controls = {**default_controls, **controls}
 else:
     controls = default_controls.copy()
     infinite_soft_drop = False

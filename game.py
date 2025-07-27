@@ -477,7 +477,7 @@ class Game(ui.Menu):
             messages = self.connection.recv()
             for command, data in messages:
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
-                    self.receive_garbage(int.from_bytes(data))
+                    self.receive_garbage(int.from_bytes(data, "big"))
                 elif command == multiplayer.CMD_EXIT:
                     self.ui.draw_text("Disconnected", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
                     self.ui.draw_text("from server", self.board_x+self.config.width//2, self.board_y+8, align=ui.Alignment.CENTER)
@@ -598,7 +598,7 @@ class Game(ui.Menu):
 
     def send_garbage(self, lines: int) -> None:
         if self.connection is not None:
-            self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes())
+            self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes(1, "big"))
         if self.config.garbage_type == GarbageType.BACKFIRE:
             self.receive_garbage(lines)
 
