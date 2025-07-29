@@ -205,6 +205,8 @@ if sys.platform == "win32":
             self.clear()
             self.update_screen()
             prev_menu = None
+            time_left = 1/tps
+            start_time = time.perf_counter()
             while len(self.menus) > 0:
                 menu = self.menus[-1]
                 if menu is not prev_menu:
@@ -217,11 +219,15 @@ if sys.platform == "win32":
                     self.height = height
                     menu.resize(width, height)
                 end_time = time.perf_counter()
+                time_left -= end_time - start_time
+                start_time = end_time
                 if msvcrt.kbhit():
                     menu.key(self.get_key())
-                menu.tick()
-                time.sleep(1/tps)
+                while time_left < 0:
+                    menu.tick()
+                    time_left += 1/tps
                 prev_menu = menu
+                time.sleep(time_left)
 
         def get_key(self) -> str:
             c = msvcrt.getch()
@@ -261,11 +267,11 @@ else:
             self.update_screen()
             time_left = 1/tps
             prev_menu = None
+            start_time = time.perf_counter()
             while len(self.menus) > 0:
                 menu = self.menus[-1]
                 if menu is not prev_menu:
                     menu.resize(self.width, self.height)
-                start_time = time.perf_counter()
                 r, _, _ = select.select([0], [], [], time_left)
                 terminal_size = shutil.get_terminal_size()
                 width = terminal_size.columns // 2
@@ -276,6 +282,7 @@ else:
                     menu.resize(width, height)
                 end_time = time.perf_counter()
                 time_left -= end_time - start_time
+                start_time = end_time
                 if r:
                     menu.key(self.get_key())
                 while time_left < 0:
