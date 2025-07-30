@@ -111,6 +111,33 @@ class BaseTerminalUI(ui.UI):
                 self.mode = BaseTerminalUI.MODES.index(mode)
         self.mode_menu.current = self.mode
 
+    def main_loop(self, tps: int = 60) -> None:
+        self.clear()
+        self.update_screen()
+        time_left = 1/tps
+        prev_menu = None
+        start_time = time.perf_counter()
+        while len(self.menus) > 0:
+            menu = self.menus[-1]
+            if menu is not prev_menu:
+                menu.resize(self.width, self.height)
+            terminal_size = shutil.get_terminal_size()
+            width = terminal_size.columns // 2
+            height = terminal_size.lines
+            if width != self.width or height != self.height:
+                self.width = width
+                self.height = height
+                menu.resize(width, height)
+            if self.check_keyboard_and_wait(time_left):
+                menu.key(self.get_key())
+            end_time = time.perf_counter()
+            time_left -= end_time - start_time
+            start_time = end_time
+            while time_left < 0:
+                time_left += 1/tps
+                menu.tick()
+            prev_menu = menu
+
     def push_menu(self, menu: ui.Menu) -> None:
         self.menus.append(menu)
         menu.init(self)
@@ -187,6 +214,7 @@ class BaseTerminalUI(ui.UI):
 
     def get_key(self) -> str: raise NotImplementedError
     def detect_colour_mode(self) -> int: raise NotImplementedError
+    def check_keyboard_and_wait(self, t: float) -> bool: raise NotImplementedError
 
 if sys.platform == "win32":
     import msvcrt
@@ -201,34 +229,6 @@ if sys.platform == "win32":
             self.goto(0, 0)
             self.update_screen()
 
-        def main_loop(self, tps: int = 60) -> None:
-            self.clear()
-            self.update_screen()
-            prev_menu = None
-            time_left = 1/tps
-            start_time = time.perf_counter()
-            while len(self.menus) > 0:
-                menu = self.menus[-1]
-                if menu is not prev_menu:
-                    menu.resize(self.width, self.height)
-                terminal_size = shutil.get_terminal_size()
-                width = terminal_size.columns // 2
-                height = terminal_size.lines
-                if width != self.width or height != self.height:
-                    self.width = width
-                    self.height = height
-                    menu.resize(width, height)
-                end_time = time.perf_counter()
-                time_left -= end_time - start_time
-                start_time = end_time
-                if msvcrt.kbhit():
-                    menu.key(self.get_key())
-                while time_left < 0:
-                    menu.tick()
-                    time_left += 1/tps
-                prev_menu = menu
-                time.sleep(time_left)
-
         def get_key(self) -> str:
             c = msvcrt.getch()
             if c == b'\xe0' or c == b'\x00':
@@ -241,6 +241,10 @@ if sys.platform == "win32":
 
         def detect_colour_mode(self) -> int:
             return 1
+
+        def check_keyboard_and_wait(self, t: float) -> bool:
+            time.sleep(t)
+            return msvcrt.kbhit()
 
 else:
     import termios
@@ -262,34 +266,6 @@ else:
             self.goto(0, 0)
             self.update_screen()
 
-        def main_loop(self, tps: int = 60) -> None:
-            self.clear()
-            self.update_screen()
-            time_left = 1/tps
-            prev_menu = None
-            start_time = time.perf_counter()
-            while len(self.menus) > 0:
-                menu = self.menus[-1]
-                if menu is not prev_menu:
-                    menu.resize(self.width, self.height)
-                r, _, _ = select.select([0], [], [], time_left)
-                terminal_size = shutil.get_terminal_size()
-                width = terminal_size.columns // 2
-                height = terminal_size.lines
-                if width != self.width or height != self.height:
-                    self.width = width
-                    self.height = height
-                    menu.resize(width, height)
-                end_time = time.perf_counter()
-                time_left -= end_time - start_time
-                start_time = end_time
-                if r:
-                    menu.key(self.get_key())
-                while time_left < 0:
-                    time_left += 1/tps
-                    menu.tick()
-                prev_menu = menu
-
         def get_key(self) -> str:
             s = os.read(0, 100).decode("utf8")
             if s in ui.ESCAPE_CODE_TO_NAME:
@@ -305,3 +281,7 @@ else:
                 return 2
             else:
                 return 0
+
+        def check_keyboard_and_wait(self, t: float) -> bool:
+            r, _, _ = select.select([0], [], [], t)
+            return len(r) != 0
