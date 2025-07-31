@@ -453,7 +453,7 @@ class Game(ui.Menu):
         self.next_x = self.board_x + self.config.width + 1
         self.next_y = self.board_y + 1
         self.counter_x = self.hold_x - 5
-        self.counter_y = self.board_y + 15
+        self.counter_y = self.board_y + 13
         self.redraw()
 
     def end_game(self) -> None:
@@ -473,6 +473,7 @@ class Game(ui.Menu):
                 self.redraw()
             return
         self.ticks += 1
+        self.redraw_timer()
         if self.connection is not None:
             messages = self.connection.recv()
             for command, data in messages:
@@ -685,6 +686,12 @@ class Game(ui.Menu):
         self.ui.draw_text(f"Level: {self.level}", self.counter_x, self.counter_y)
         self.ui.draw_text(f"Lines: {self.lines}", self.counter_x, self.counter_y+1)
         self.ui.draw_text(f"Score: {self.score}", self.counter_x, self.counter_y+2)
+
+    def redraw_timer(self) -> None:
+        seconds = self.ticks // 60
+        minutes = seconds // 60
+        seconds %= 60
+        self.ui.draw_text(f"Time: {minutes}:{seconds:02}", self.counter_x, self.counter_y+4)
 
 class ClassicRandomiser(Randomiser):
     previous: int
