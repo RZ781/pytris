@@ -178,7 +178,7 @@ class ControlsCloseButton(menu.Button):
         self.ui.pop_menu()
 
 class PresetButton(menu.Button):
-    def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool):
+    def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool, lock_delay: int):
         self.name = [name]
         self.objective = objective
         self.bag_type = bag_type
@@ -187,6 +187,7 @@ class PresetButton(menu.Button):
         self.garbage_type = garbage_type
         self.hold_type = hold_type
         self.garbage_cancelling = garbage_cancelling
+        self.lock_delay = lock_delay
     def click(self) -> None:
         self.ui.pop_menu()
         objective_menu.current = self.objective
@@ -197,6 +198,7 @@ class PresetButton(menu.Button):
         garbage_menu.current = self.garbage_type
         hold_menu.current = self.hold_type
         garbage_cancelling_menu.current = 0 if self.garbage_cancelling else 1
+        lock_delay_selector.value = self.lock_delay
 
 controls_menu = menu.Menu([
     ControlsCloseButton(),
@@ -213,14 +215,14 @@ controls_menu = menu.Menu([
 ])
 
 preset_menu = menu.Menu([
-    PresetButton("Marathon", 0, 0, 0, [2, 1, 0, 0], 0, 1, True),
-    PresetButton("Classic",  0, 4, 0, [0, 0, 0, 0], 0, 0, True),
-    PresetButton("40 Lines", 2, 0, 0, [2, 1, 0, 0], 0, 1, True),
-    PresetButton("Ultra",    5, 0, 0, [2, 1, 0, 0], 0, 1, True),
-    PresetButton("Survival", 0, 0, 0, [2, 1, 0, 0], 2, 1, False),
-    PresetButton("Big Mode", 0, 0, 2, [2, 1, 0, 1], 0, 1, True),
-    PresetButton("4 Wide",   0, 0, 1, [2, 1, 0, 1], 0, 1, True),
-    PresetButton("Chaos",    5, 1, 0, [2, 2, 2, 2], 5, 0, False),
+    PresetButton("Marathon", 0, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
+    PresetButton("Classic",  0, 4, 0, [0, 0, 0, 0], 0, 0, True, 1),
+    PresetButton("40 Lines", 2, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
+    PresetButton("Ultra",    5, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
+    PresetButton("Survival", 0, 0, 0, [2, 1, 0, 0], 2, 1, False, 30),
+    PresetButton("Big Mode", 0, 0, 2, [2, 1, 0, 1], 0, 1, True, 30),
+    PresetButton("4 Wide",   0, 0, 1, [2, 1, 0, 1], 0, 1, True, 30),
+    PresetButton("Chaos",    5, 1, 0, [2, 2, 2, 2], 5, 0, False, 30),
 ])
 
 objective_menu = menu.Menu([
