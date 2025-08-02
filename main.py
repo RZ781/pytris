@@ -178,7 +178,16 @@ class ControlsCloseButton(menu.Button):
         self.ui.pop_menu()
 
 class PresetButton(menu.Button):
-    def __init__(self, name: str, objective: int, bag_type: int, board_size: int, spin_types: Sequence[int], garbage_type: int, hold_type: int, garbage_cancelling: bool, lock_delay: int):
+    def __init__(self,
+                 name: str,
+                 objective: int = 0,
+                 bag_type: int = 0,
+                 board_size: int = 0,
+                 spin_types: Sequence[int] = [2, 1, 0, 0],
+                 garbage_type: int = 0,
+                 hold_type: int = 1,
+                 garbage_cancelling: bool = True,
+                 lock_delay: int = 30):
         self.name = [name]
         self.objective = objective
         self.bag_type = bag_type
@@ -215,14 +224,14 @@ controls_menu = menu.Menu([
 ])
 
 preset_menu = menu.Menu([
-    PresetButton("Marathon", 0, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
-    PresetButton("Classic",  0, 4, 0, [0, 0, 0, 0], 0, 0, True, 1),
-    PresetButton("40 Lines", 2, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
-    PresetButton("Ultra",    5, 0, 0, [2, 1, 0, 0], 0, 1, True, 30),
-    PresetButton("Survival", 0, 0, 0, [2, 1, 0, 0], 2, 1, False, 30),
-    PresetButton("Big Mode", 0, 0, 2, [2, 1, 0, 1], 0, 1, True, 30),
-    PresetButton("4 Wide",   0, 0, 1, [2, 1, 0, 1], 0, 1, True, 30),
-    PresetButton("Chaos",    5, 1, 0, [2, 2, 2, 2], 5, 0, False, 30),
+    PresetButton("Marathon"),
+    PresetButton("Classic", bag_type=4, spin_types=[0, 0, 0, 0], hold_type=0, lock_delay=1),
+    PresetButton("40 Lines", objective=2),
+    PresetButton("Ultra", objective=5),
+    PresetButton("Survival", garbage_type=2, garbage_cancelling=False),
+    PresetButton("Big Mode", board_size=2, spin_types=[2, 1, 0, 1]),
+    PresetButton("4 Wide", board_size=1, spin_types=[2, 1, 0, 1]),
+    PresetButton("Chaos", objective=5, bag_type=1, spin_types=[2, 2, 2, 2], garbage_type=5, hold_type=0, garbage_cancelling=False),
 ])
 
 objective_menu = menu.Menu([
