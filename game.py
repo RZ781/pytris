@@ -534,7 +534,7 @@ class Game(ui.Menu):
 
     def key(self, c: str, repeated: bool = False) -> None:
         if self.death_ticks is not None:
-            if c == self.controls[Key.FORFEIT]:
+            if c == self.controls[Key.FORFEIT] and not repeated:
                 self.ui.pop_menu()
             return
         if self.countdown:
