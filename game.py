@@ -537,15 +537,15 @@ class Game(ui.Menu):
             if c == self.controls[Key.FORFEIT] and not repeated:
                 self.ui.pop_menu()
             return
-        if self.countdown:
-            return
-        self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
             self.ui.draw_text("Forfeited", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
             self.ui.update_screen()
             self.end_game()
             return
+        if self.countdown:
+            return
+        self.current_piece.draw(self.board_x, self.board_y, colour=ui.Colour.BLACK)
         if c == self.controls[Key.SOFT_DROP]:
             count = self.config.height * 2 if self.config.infinite_soft_drop else 1
             for i in range(count):
