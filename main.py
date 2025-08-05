@@ -126,8 +126,8 @@ class PlayButton(menu.Button):
         if self.multiplayer:
             connection = multiplayer.connect_to_server(server_address)
             if connection is None:
-                self.ui.draw_text("No server found", main_ui.width//2, main_ui.height//5 - 2, align=ui.Alignment.CENTER)
-                self.ui.update_screen()
+                self.menu.info_text = "No server found"
+                self.menu.resize(self.ui.width, self.ui.height)
                 return
             x.set_connection(connection)
         self.ui.push_menu(x)
@@ -163,11 +163,11 @@ class ControlButton(menu.Button):
     def __init__(self, name: str, key: game.Key) -> None:
         self.control_name = name
         self.key = key
-        self.menu = ControlMenu(name, key)
+        self.control_menu = ControlMenu(name, key)
     def get_name(self) -> Sequence[str]:
         return [self.control_name, controls[self.key]]
     def click(self) -> None:
-        self.ui.push_menu(self.menu)
+        self.ui.push_menu(self.control_menu)
 
 class ControlsCloseButton(menu.Button):
     def __init__(self) -> None:

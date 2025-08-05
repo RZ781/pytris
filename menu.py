@@ -10,6 +10,7 @@ class Button(MenuOption):
     name: Sequence[str]
     def init(self, ui: ui.UI, menu: "Menu") -> None:
         self.ui = ui
+        self.menu = menu
     def get_name(self) -> Sequence[str]:
         return self.name
     def key_pressed(self, key: str, repeated: bool) -> None:
@@ -23,15 +24,15 @@ class Submenu(Button):
     def __init__(self, name: str, menu: "Menu", show_option: bool = False) -> None:
         self.option_name = name
         self.show_option = show_option
-        self.menu = menu
+        self.submenu = menu
     def get_name(self) -> Sequence[str]:
         if self.show_option:
-            current_option = self.menu.options[self.menu.current]
+            current_option = self.submenu.options[self.submenu.current]
             return [self.option_name] + list(current_option.get_name())
         else:
             return [self.option_name]
     def click(self) -> None:
-        self.ui.push_menu(self.menu)
+        self.ui.push_menu(self.submenu)
 
 class Selection(Button):
     def __init__(self, name: str) -> None:
@@ -56,6 +57,8 @@ class NumberSelector(MenuOption):
             self.value -= 1
         elif key == "Right" and self.value < self.maximum:
             self.value += 1
+        elif key == "Space" or key == "Return":
+            self.menu.info_text = "Adjust value with left and right"
         self.menu.resize(self.ui.width, self.ui.height)
 
 class Menu(ui.Menu):
@@ -63,6 +66,7 @@ class Menu(ui.Menu):
         self.options = options
         self.n_options = len(options)
         self.current = current
+        self.info_text = ""
 
     def enable_custom_handling(self) -> bool:
         return False
@@ -74,6 +78,7 @@ class Menu(ui.Menu):
 
     def resize(self, width: int, height: int) -> None:
         self.ui.clear()
+        self.ui.draw_text(self.info_text, self.ui.width//2, self.ui.height//5 - 2, align=ui.Alignment.CENTER)
         names = [list(option.get_name()) for option in self.options]
         max_row_length = max(len(name) for name in names)
         columns = []
