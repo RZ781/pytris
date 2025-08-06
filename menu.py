@@ -58,7 +58,7 @@ class NumberSelector(MenuOption):
         elif key == "Right" and self.value < self.maximum:
             self.value += 1
         elif key == "Space" or key == "Return":
-            self.menu.info_text = "Adjust value with left and right"
+            self.menu.set_info_text("Adjust value with left and right")
         self.menu.resize(self.ui.width, self.ui.height)
 
 class Menu(ui.Menu):
@@ -67,6 +67,7 @@ class Menu(ui.Menu):
         self.n_options = len(options)
         self.current = current
         self.info_text = ""
+        self.info_text_ticks = 0
 
     def enable_custom_handling(self) -> bool:
         return False
@@ -111,4 +112,11 @@ class Menu(ui.Menu):
         self.ui.update_screen()
 
     def tick(self) -> None:
-        pass
+        self.info_text_ticks -= 1
+        if self.info_text_ticks == 0:
+            self.info_text = ""
+            self.resize(self.ui.width, self.ui.height)
+
+    def set_info_text(self, text):
+        self.info_text = text
+        self.info_text_ticks = 120

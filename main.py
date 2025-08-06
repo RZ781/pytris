@@ -126,7 +126,7 @@ class PlayButton(menu.Button):
         if self.multiplayer:
             connection = multiplayer.connect_to_server(server_address)
             if connection is None:
-                self.menu.info_text = "No server found"
+                self.menu.set_info_text("No server found")
                 self.menu.resize(self.ui.width, self.ui.height)
                 return
             x.set_connection(connection)
