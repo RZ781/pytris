@@ -21,16 +21,21 @@ class Button(MenuOption):
     def click(self) -> None: raise NotImplementedError
 
 class Submenu(Button):
-    def __init__(self, name: str, menu: "Menu", show_option: bool = False) -> None:
+    def __init__(self, name: str, menu: ui.Menu) -> None:
         self.option_name = name
-        self.show_option = show_option
         self.submenu = menu
     def get_name(self) -> Sequence[str]:
-        if self.show_option:
-            current_option = self.submenu.options[self.submenu.current]
-            return [self.option_name] + list(current_option.get_name())
-        else:
-            return [self.option_name]
+        return [self.option_name]
+    def click(self) -> None:
+        self.ui.push_menu(self.submenu)
+
+class PreviewSubmenu(Button):
+    def __init__(self, name: str, menu: "Menu") -> None:
+        self.option_name = name
+        self.submenu = menu
+    def get_name(self) -> Sequence[str]:
+        current_option = self.submenu.options[self.submenu.current]
+        return [self.option_name] + list(current_option.get_name())
     def click(self) -> None:
         self.ui.push_menu(self.submenu)
 
@@ -117,6 +122,6 @@ class Menu(ui.Menu):
             self.info_text = ""
             self.resize(self.ui.width, self.ui.height)
 
-    def set_info_text(self, text):
+    def set_info_text(self, text: str) -> None:
         self.info_text = text
         self.info_text_ticks = 120

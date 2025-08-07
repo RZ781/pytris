@@ -287,7 +287,7 @@ spin_names = ("T Spin", "Mini T Spin", "Immobile T Piece", "Immobile Piece")
 spin_menus = [menu.Menu([menu.Selection("None"), menu.Selection("Mini Spin"), menu.Selection("Full Spin")], default) for default in (2, 1, 0, 0)]
 
 spin_type_menu = menu.Menu([menu.Selection("Close")] + [
-    menu.Submenu(name, m) for name, m in zip(spin_names, spin_menus)
+    menu.PreviewSubmenu(name, m) for name, m in zip(spin_names, spin_menus)
 ])
 
 lock_delay_selector = menu.NumberSelector("Lock Delay", 30, 0, 60, "{} frames")
@@ -297,13 +297,13 @@ main_menu = menu.Menu([
     PlayButton("Multiplayer", multiplayer=True),
     menu.Submenu("Controls", controls_menu),
     menu.Submenu("Presets", preset_menu),
-    menu.Submenu("Objectives", objective_menu, show_option=True),
-    menu.Submenu("Bag Type", bag_type_menu, show_option=True),
-    menu.Submenu("Infinite Soft Drop", soft_drop_menu, show_option=True),
-    menu.Submenu("Hold", hold_menu, show_option=True),
-    menu.Submenu("Board Size", board_size_menu, show_option=True),
-    menu.Submenu("Garbage", garbage_menu, show_option=True),
-    menu.Submenu("Garbage Cancelling", garbage_cancelling_menu, show_option=True),
+    menu.PreviewSubmenu("Objectives", objective_menu),
+    menu.PreviewSubmenu("Bag Type", bag_type_menu),
+    menu.PreviewSubmenu("Infinite Soft Drop", soft_drop_menu),
+    menu.PreviewSubmenu("Hold", hold_menu),
+    menu.PreviewSubmenu("Board Size", board_size_menu),
+    menu.PreviewSubmenu("Garbage", garbage_menu),
+    menu.PreviewSubmenu("Garbage Cancelling", garbage_cancelling_menu),
     menu.Submenu("Spin Detection", spin_type_menu),
     lock_delay_selector,
     menu.Submenu("UI Options", main_ui.get_options_menu()),
