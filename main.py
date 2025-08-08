@@ -3,6 +3,8 @@ import sys, time
 import game, ui, config, multiplayer, menu
 from typing import Sequence
 
+config.init()
+
 try:
     import pygame
     pygame_support = True
