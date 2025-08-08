@@ -4,7 +4,7 @@ from typing import Any
 if sys.platform == "win32":
     pytris_folder = os.path.expanduser("~/.pytris")
 else:
-    pytris_folder = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config/pytris"))
+    pytris_folder = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")) + "/pytris"
 
 def init() -> None:
     if not os.path.isdir(pytris_folder):
