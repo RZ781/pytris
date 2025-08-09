@@ -2,7 +2,7 @@ import os, json, sys
 from typing import Any
 
 if sys.platform == "win32":
-    pytris_folder = os.path.expanduser("~/.pytris")
+    pytris_folder = os.path.expanduser("~/Documents/pytris")
 else:
     pytris_folder = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")) + "/pytris"
 
