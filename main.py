@@ -49,33 +49,12 @@ default_controls = {
     game.Key.FORFEIT: "Escape",
 }
 
-# version 1 of the config stored the keys directly in the json
-# version 2+ has an attribute for the keys, infinite hold, and infinite soft drop
-# version 1-2 use escape codes while version 3+ use key names
-# version 4+ doesn't have infinite hold
 controls_config = config.load("controls")
-if controls_config and ("version" not in controls_config or 1 <= controls_config["version"] <= 4):
-    if "version" in controls_config:
-        version = controls_config["version"]
-    else:
-        version = 1
-    if version == 1:
-        keys = controls_config
-    else:
-        keys = controls_config["keys"]
+if controls_config and controls_config.get("version", None) == 4:
+    infinite_soft_drop = controls_config["infinite_soft_drop"]
     # json casts all keys to strings, so they must be converted back
+    keys = controls_config["keys"]
     controls = {game.Key(int(a)): b for a, b in keys.items()}
-    if version >= 2:
-        infinite_soft_drop = controls_config["infinite_soft_drop"]
-    else:
-        infinite_soft_drop = False
-    # convert escape codes to key names
-    if version < 3:
-        for control, s in controls.items():
-            if s in ui.ASCII_TO_NAME:
-                controls[control] = ui.ASCII_TO_NAME[s]
-            elif s in ui.ESCAPE_CODE_TO_NAME:
-                controls[control] = ui.ESCAPE_CODE_TO_NAME[s]
     # add missing keys
     controls = {**default_controls, **controls}
 else:
