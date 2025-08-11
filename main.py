@@ -1,35 +1,44 @@
-#!/usr/bin/env python3
-import sys, time
+import sys, time, importlib.util
 import game, ui, config, multiplayer, menu
 from typing import Sequence
 
 config.init()
 
-try:
-    import pygame
-    pygame_support = True
-except Exception:
-    pygame_support = False
-
-terminal = False
+use_terminal = False
+use_pygame = False
 server = False
 server_address = "127.0.0.1"
 for arg in sys.argv[1:]:
     if arg == "--terminal":
-        terminal = True
+        use_terminal = True
+    elif arg == "--pygame":
+        use_pygame = True
     elif arg == "--server":
         server = True
     elif arg.startswith("--address="):
         server_address = arg[len("--address="):]
     else:
-        exit(f"Invalid argument {arg}")
+        exit(f"error: invalid argument {arg}")
+
+if use_terminal and use_pygame:
+    exit("error: --terminal and --pygame cannot be used together")
+
+if not use_terminal and not use_pygame:
+    pygame_installed = importlib.util.find_spec("pygame") is not None
+    in_terminal = sys.stdin is not None and sys.stdin.isatty()
+    if in_terminal:
+        use_terminal = True
+    elif pygame_installed:
+        use_pygame = True
+    else:
+        exit("error: pygame is not installed and terminal is not available (use --terminal to force terminal version to run)")
 
 if server:
     multiplayer.server()
     exit()
 
 main_ui: ui.UI
-if pygame_support and not terminal:
+if use_pygame:
     import pygame_ui
     main_ui = pygame_ui.PygameUI()
 else:
