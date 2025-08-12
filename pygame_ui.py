@@ -89,7 +89,7 @@ class PygameUI(ui.UI):
                         keys.pop(name)
                 elif event.type == pygame.QUIT:
                     pygame.quit()
-                    exit()
+                    sys.exit()
                 elif event.type == pygame.WINDOWRESIZED:
                     self.pixel_size = max(2, min(event.x // self.target_width, event.y // self.target_height))
                     self.width = event.x // self.pixel_size
@@ -147,7 +147,7 @@ class PygameUI(ui.UI):
                 return key_name(event)
             elif event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                sys.exit()
             elif event.type == pygame.NOEVENT:
                 return None
 

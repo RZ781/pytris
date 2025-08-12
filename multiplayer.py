@@ -60,7 +60,7 @@ def server() -> None:
                         connection.close()
                         connections.remove(connection)
                     else:
-                        exit(f"Unknown command {command}")
+                        sys.exit(f"Unknown command {command}")
 
 def connect_to_server(address: str) -> Optional[Connection]:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -486,7 +486,7 @@ class Game(ui.Menu):
                     self.end_game()
                     return
                 else:
-                    exit(f"Unknown command from server: {command}")
+                    sys.exit(f"Unknown command from server: {command}")
         if self.config.garbage_type == GarbageType.SLOW_CHEESE:
             if self.ticks % 300 == 0:
                 self.receive_garbage(1)

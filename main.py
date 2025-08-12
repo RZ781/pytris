@@ -18,10 +18,10 @@ for arg in sys.argv[1:]:
     elif arg.startswith("--address="):
         server_address = arg[len("--address="):]
     else:
-        exit(f"error: invalid argument {arg}")
+        sys.exit(f"error: invalid argument {arg}")
 
 if use_terminal and use_pygame:
-    exit("error: --terminal and --pygame cannot be used together")
+    sys.exit("error: --terminal and --pygame cannot be used together")
 
 if not use_terminal and not use_pygame:
     pygame_installed = importlib.util.find_spec("pygame") is not None
@@ -31,11 +31,11 @@ if not use_terminal and not use_pygame:
     elif pygame_installed:
         use_pygame = True
     else:
-        exit("error: pygame is not installed and terminal is not available (use --terminal to force terminal version to run)")
+        sys.exit("error: pygame is not installed and terminal is not available (use --terminal to force terminal version to run)")
 
 if server:
     multiplayer.server()
-    exit()
+    sys.exit()
 
 main_ui: ui.UI
 if use_pygame:
