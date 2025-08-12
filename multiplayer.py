@@ -1,4 +1,4 @@
-import select, socket, random
+import select, socket, random, sys
 from typing import List, Tuple, Optional
 
 PYTRIS_PORT = 51737
