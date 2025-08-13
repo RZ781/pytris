@@ -1,4 +1,5 @@
-import config, ui, pygame, menu
+import sys, pygame
+import config, ui, menu
 from typing import Optional, Collection, Union, Dict, List
 
 DEFAULT_DAS = 20
