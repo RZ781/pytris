@@ -26,6 +26,13 @@ class BeepSelection(menu.Button):
         self.ui.pop_menu()
         config.save("beep", {"enabled": self.value})
 
+class CloseButton(menu.Button):
+    def __init__(self) -> None:
+        self.name = ["Close"]
+    def click(self) -> None:
+        self.ui.pop_menu()
+        config.save("handling", {"das": self.ui.das_selector.value, "arr": self.ui.arr_selector.value})
+
 class PygameUI(ui.UI):
     screen: pygame.Surface
     font: pygame.font.Font
@@ -46,13 +53,17 @@ class PygameUI(ui.UI):
         ])
         self.das_selector = menu.NumberSelector("DAS", 10, 1, 20, "{} frames")
         self.arr_selector = menu.NumberSelector("ARR", 4, 0, 20, "{} frames")
+        handling = config.load("handling")
+        if handling is not None:
+            self.das_selector.value = handling["das"]
+            self.arr_selector.value = handling["arr"]
         self.das = DEFAULT_DAS
         self.arr = DEFAULT_ARR
         self.options_menu = menu.Menu([
             menu.Submenu("Beep", self.beep_menu),
             self.das_selector,
             self.arr_selector,
-            menu.Selection("Close")
+            CloseButton()
         ])
         beep = config.load("beep")
         if beep:
