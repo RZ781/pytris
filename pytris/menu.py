@@ -84,7 +84,10 @@ class Menu(ui.Menu):
 
     def resize(self, width: int, height: int) -> None:
         self.ui.clear()
-        self.ui.draw_text(self.info_text, self.ui.width//2, self.ui.height//5 - 2, align=ui.Alignment.CENTER)
+        if self.info_text_ticks == 120:
+            self.ui.draw_text(self.info_text, self.ui.width//2, self.ui.height//5 - 2, align=ui.Alignment.CENTER)
+        else:
+            self.info_text_ticks = 0
         names = [list(option.get_name()) for option in self.options]
         max_row_length = max(len(name) for name in names)
         columns = []
