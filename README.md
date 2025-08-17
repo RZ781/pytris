@@ -29,7 +29,7 @@ To start a server, use:
 $ python3 pytris --server
 ```
 
-Clients can connect with by adding the argument `--address=` following with the appropriate server address
+Clients can connect with by adding the argument `--address=` following with the appropriate server address.
 
 ## Starting outside the terminal
 You can generate two shortcut files, `Pytris Terminal` and `Pytris GUI` using the `install.py` script with:
