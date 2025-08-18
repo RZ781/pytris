@@ -36,7 +36,7 @@ You can generate two shortcut files, `Pytris Terminal` and `Pytris GUI` using th
 ```
 $ python3 install.py
 ```
-Move these to `%ProgramData%\Microsoft\Windows\Start Menu\Programs` (on Windows) to be able to launch Pytris from the start menu.
+Within the terminal, or double click it using your file manager (e.g. File Explorer). This will automatically generate the shortcut files and place them in the right place within your file system.
 
 Alternatively, manually create a shell script, shortcut, or desktop file to start it with any arguments you want (or edit the generated files).
 
