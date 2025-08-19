@@ -1,4 +1,4 @@
-import sys, time, importlib.util
+import os, sys, time, importlib.util
 import game, ui, config, multiplayer, menu
 from typing import Sequence
 
@@ -28,10 +28,10 @@ if not use_terminal and not use_pygame:
     in_terminal = sys.stdin is not None and sys.stdin.isatty()
     if in_terminal:
         use_terminal = True
-    elif pygame_installed:
+    elif pygame_installed and (sys.platform != "linux" or os.environ.get("DISPLAY", "") != "" or os.environ.get("WAYLAND_DISPLAY", "") != ""):
         use_pygame = True
     else:
-        sys.exit("error: pygame is not installed and terminal is not available (use --terminal to force terminal version to run)")
+        sys.exit("error: terminal and pygame are both unavailable (use --terminal or --pygame to force one to run)")
 
 if server:
     multiplayer.server()
