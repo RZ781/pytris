@@ -540,6 +540,7 @@ class Game(ui.Menu):
         if self.paused:
             if c == self.controls[Key.PAUSE]:
                 self.paused = False
+                self.redraw()
             return
         if self.death_ticks is not None:
             if c == self.controls[Key.FORFEIT] and not repeated:
@@ -547,6 +548,7 @@ class Game(ui.Menu):
             return
         if c == self.controls[Key.PAUSE]:
             self.paused = True
+            self.redraw()
             return
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
@@ -690,6 +692,8 @@ class Game(ui.Menu):
         self.redraw_counters()
         if self.countdown > 0:
             self.ui.draw_text(str(self.countdown//TPS), self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
+        if self.paused:
+            self.ui.draw_text("Paused", self.board_x+self.config.width//2, self.board_y+6, align=ui.Alignment.CENTER)
         if update:
             self.ui.update_screen()
 
