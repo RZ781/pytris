@@ -56,6 +56,7 @@ default_controls = {
     game.Key.ROTATE_180: "a",
     game.Key.HOLD: "c",
     game.Key.FORFEIT: "Escape",
+    game.Key.PAUSE: "p",
 }
 
 controls_config = config.load("controls")
@@ -210,7 +211,8 @@ controls_menu = menu.Menu([
     ControlButton("Rotate Anticlockwise", game.Key.ANTICLOCKWISE),
     ControlButton("Rotate 180", game.Key.ROTATE_180),
     ControlButton("Hold", game.Key.HOLD),
-    ControlButton("Forfeit", game.Key.FORFEIT)
+    ControlButton("Forfeit", game.Key.FORFEIT),
+    ControlButton("Pause", game.Key.PAUSE)
 ])
 
 preset_menu = menu.Menu([

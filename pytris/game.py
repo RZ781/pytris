@@ -17,6 +17,7 @@ class Key(enum.Enum):
     ROTATE_180 = 7
     HOLD = 8
     FORFEIT = 9
+    PAUSE = 10
 
 class Objective(enum.Enum):
     NONE = 0
@@ -193,6 +194,7 @@ class Game(ui.Menu):
     garbage_queue: List[int]
 
     def __init__(self, config: GameConfig, randomiser: Randomiser, controls: Dict[Key, str]) -> None:
+        self.paused = False
         self.config = config
         self.t_spin = SpinType.SPIN
         self.mini_t_spin = SpinType.MINI
@@ -462,6 +464,8 @@ class Game(ui.Menu):
             self.connection.close()
 
     def tick(self) -> None:
+        if self.paused:
+            return
         if self.death_ticks is not None:
             self.death_ticks -= 1
             if self.death_ticks == 0:
@@ -533,9 +537,16 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def key(self, c: str, repeated: bool = False) -> None:
+        if self.paused:
+            if c == self.controls[Key.PAUSE]:
+                self.paused = False
+            return
         if self.death_ticks is not None:
             if c == self.controls[Key.FORFEIT] and not repeated:
                 self.ui.pop_menu()
+            return
+        if c == self.controls[Key.PAUSE]:
+            self.paused = True
             return
         if c == self.controls[Key.FORFEIT]:
             self.redraw()
