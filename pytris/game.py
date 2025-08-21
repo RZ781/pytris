@@ -537,24 +537,25 @@ class Game(ui.Menu):
         self.ui.update_screen()
 
     def key(self, c: str, repeated: bool = False) -> None:
+        if self.death_ticks is not None:
+            if c == self.controls[Key.FORFEIT] and not repeated:
+                self.ui.pop_menu()
+            return
+        if c == self.controls[Key.FORFEIT]:
+            self.paused = False
+            self.redraw()
+            self.ui.draw_text("Forfeited", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
+            self.ui.update_screen()
+            self.end_game()
+            return
         if self.paused:
             if c == self.controls[Key.PAUSE]:
                 self.paused = False
                 self.redraw()
             return
-        if self.death_ticks is not None:
-            if c == self.controls[Key.FORFEIT] and not repeated:
-                self.ui.pop_menu()
-            return
         if c == self.controls[Key.PAUSE]:
             self.paused = True
             self.redraw()
-            return
-        if c == self.controls[Key.FORFEIT]:
-            self.redraw()
-            self.ui.draw_text("Forfeited", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
-            self.ui.update_screen()
-            self.end_game()
             return
         if self.countdown:
             return
