@@ -1,6 +1,6 @@
 import random, sys, copy, time, enum, math
 import ui, multiplayer
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 TPS = 60 # ticks per second
 LOCK_COUNT = 15
@@ -36,6 +36,7 @@ class GarbageType(enum.Enum):
     SLOW_CLEAN = 3
     FAST_CLEAN = 4
     BACKFIRE = 5
+    DELAYED_BACKFIRE = 6
 
 class HoldType(enum.Enum):
     NONE = 0
@@ -192,6 +193,7 @@ class Game(ui.Menu):
     controls: Dict[Key, str]
     connection: Optional[multiplayer.Connection]
     garbage_queue: List[int]
+    delayed_backfire_queue: List[Tuple[int, int]]
 
     def __init__(self, config: GameConfig, randomiser: Randomiser, controls: Dict[Key, str]) -> None:
         self.paused = False
@@ -221,6 +223,7 @@ class Game(ui.Menu):
         self.combo = 0
         self.enable_garbage_queue = config.garbage_type != GarbageType.NONE
         self.garbage_queue = []
+        self.delayed_backfire_queue = []
         self.countdown = 3 * TPS
         self.connection = None
 
@@ -503,6 +506,11 @@ class Game(ui.Menu):
         elif self.config.garbage_type == GarbageType.FAST_CLEAN:
             if self.ticks % 210 == 0:
                 self.receive_garbage(4)
+        elif self.config.garbage_type == GarbageType.DELAYED_BACKFIRE:
+            for lines, tick in self.delayed_backfire_queue:
+                if tick == self.ticks:
+                    self.receive_garbage(lines)
+            self.delayed_backfire_queue = [(lines, tick) for lines, tick in self.delayed_backfire_queue if tick > self.ticks]
         if self.config.objective_type == Objective.TIME:
             if self.ticks >= self.config.objective_count * TPS:
                 text = f"Score: {self.score}"
@@ -616,6 +624,9 @@ class Game(ui.Menu):
             self.connection.send(multiplayer.CMD_SEND_GARBAGE, lines.to_bytes(1, "big"))
         if self.config.garbage_type == GarbageType.BACKFIRE:
             self.receive_garbage(lines)
+        elif self.config.garbage_type == GarbageType.DELAYED_BACKFIRE:
+            delay = random.random() * 10 + 5
+            self.delayed_backfire_queue.append((lines, int(self.ticks + TPS * delay)))
 
     def receive_garbage(self, lines: int) -> None:
         if lines < 1:

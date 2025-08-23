@@ -223,7 +223,7 @@ preset_menu = menu.Menu([
     PresetButton("Survival", garbage_type=2, garbage_cancelling=False),
     PresetButton("Big Mode", board_size=2, spin_types=[2, 1, 0, 1]),
     PresetButton("4 Wide", board_size=1, spin_types=[2, 1, 0, 1]),
-    PresetButton("Chaos", objective=5, bag_type=1, spin_types=[2, 2, 2, 2], garbage_type=5, hold_type=0, garbage_cancelling=False),
+    PresetButton("Chaos", objective=5, bag_type=1, spin_types=[2, 2, 2, 2], garbage_type=6, hold_type=0, garbage_cancelling=False),
 ])
 
 objective_menu = menu.Menu([
@@ -267,7 +267,8 @@ garbage_menu = menu.Menu([
     menu.Selection("Fast Cheese"),
     menu.Selection("Slow Clean"),
     menu.Selection("Fast Clean"),
-    menu.Selection("Backfire")
+    menu.Selection("Backfire"),
+    menu.Selection("Delayed Backfire")
 ])
 
 garbage_cancelling_menu = menu.Menu([
