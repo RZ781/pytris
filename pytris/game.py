@@ -487,8 +487,8 @@ class Game(ui.Menu):
                 if command == multiplayer.CMD_RECEIVE_GARBAGE:
                     self.receive_garbage(int.from_bytes(data, "big"))
                 elif command == multiplayer.CMD_EXIT:
-                    self.ui.draw_text("Disconnected", self.board_x+self.config.width//2, self.board_y+7, align=ui.Alignment.CENTER)
-                    self.ui.draw_text("from server", self.board_x+self.config.width//2, self.board_y+8, align=ui.Alignment.CENTER)
+                    for i, text in enumerate(("Disconnected", "from server")):
+                        self.ui.draw_text(text, self.board_x+self.config.width//2, self.board_y+7+i, align=ui.Alignment.CENTER)
                     self.ui.update_screen()
                     self.end_game()
                     return
