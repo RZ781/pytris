@@ -66,6 +66,22 @@ class NumberSelector(MenuOption):
             self.menu.set_info_text("Adjust value with left and right")
         self.menu.resize(self.ui.width, self.ui.height)
 
+class TextInput(MenuOption):
+    def __init__(self, name: str):
+        self.name = name
+        self.value = ""
+    def init(self, ui: ui.UI, menu: "Menu") -> None:
+        self.ui = ui
+        self.menu = menu
+    def get_name(self) -> Sequence[str]:
+        return [self.name, self.value]
+    def key_pressed(self, key: str, repeated: bool) -> None:
+        if len(key) == 1:
+            self.value += key
+        elif key == "Backspace":
+            self.value = self.value[:-1]
+        self.menu.resize(self.ui.width, self.ui.height)
+
 class Menu(ui.Menu):
     def __init__(self, options: Sequence[MenuOption], current: int = 0) -> None:
         self.options = options

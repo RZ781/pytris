@@ -10,13 +10,16 @@ KEY_TO_NAME = {
     pygame.K_UP: "Up",
     pygame.K_DOWN: "Down",
     pygame.K_RIGHT: "Right",
-    pygame.K_LEFT: "Left"
+    pygame.K_LEFT: "Left",
+    pygame.K_BACKSPACE: "Backspace"
 }
 
 def key_name(event: pygame.event.Event) -> str:
+    if event.key in KEY_TO_NAME:
+        return KEY_TO_NAME[event.key]
     if event.unicode:
         return ui.ASCII_TO_NAME.get(event.unicode, event.unicode)
-    return KEY_TO_NAME.get(event.key, f"Key{event.scancode}")
+    return f"Key{event.scancode}"
 
 class BeepSelection(menu.Button):
     def __init__(self, name: str, value: bool) -> None:

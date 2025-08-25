@@ -7,7 +7,6 @@ config.init()
 use_terminal = False
 use_pygame = False
 server = False
-server_address = "127.0.0.1"
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         use_terminal = True
@@ -15,8 +14,6 @@ for arg in sys.argv[1:]:
         use_pygame = True
     elif arg == "--server":
         server = True
-    elif arg.startswith("--address="):
-        server_address = arg[len("--address="):]
     else:
         sys.exit(f"error: invalid argument {arg}")
 
@@ -115,7 +112,10 @@ class PlayButton(menu.Button):
         x = game.Game(config, randomiser, controls)
         x.set_spins(*spin_types)
         if self.multiplayer:
-            connection = multiplayer.connect_to_server(server_address)
+            server_ip = server_ip_input.value
+            if not server_ip:
+                server_ip = "127.0.0.1"
+            connection = multiplayer.connect_to_server(server_ip)
             if connection is None:
                 self.menu.set_info_text("No server found")
                 self.menu.resize(self.ui.width, self.ui.height)
@@ -285,9 +285,12 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 
 lock_delay_selector = menu.NumberSelector("Lock Delay", 30, 0, 60, "{} frames")
 
+server_ip_input = menu.TextInput("Server IP")
+
 main_menu = menu.Menu([
     PlayButton("Play"),
     PlayButton("Multiplayer", multiplayer=True),
+    server_ip_input,
     menu.Submenu("Controls", controls_menu),
     menu.Submenu("Presets", preset_menu),
     menu.PreviewSubmenu("Objectives", objective_menu),
