@@ -285,7 +285,7 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 
 lock_delay_selector = menu.NumberSelector("Lock Delay", 30, 0, 60, "{} frames")
 
-server_ip_input = menu.TextInput("Server IP")
+server_ip_input = menu.TextInput("Server IP", "Type in server IP address")
 
 main_menu = menu.Menu([
     PlayButton("Play"),

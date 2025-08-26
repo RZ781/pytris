@@ -67,8 +67,9 @@ class NumberSelector(MenuOption):
         self.menu.resize(self.ui.width, self.ui.height)
 
 class TextInput(MenuOption):
-    def __init__(self, name: str):
+    def __init__(self, name: str, info_text: str):
         self.name = name
+        self.info_text = info_text
         self.value = ""
     def init(self, ui: ui.UI, menu: "Menu") -> None:
         self.ui = ui
@@ -80,6 +81,8 @@ class TextInput(MenuOption):
             self.value += key
         elif key == "Backspace":
             self.value = self.value[:-1]
+        elif key == "Return" and not repeated:
+            self.menu.set_info_text(self.info_text)
         self.menu.resize(self.ui.width, self.ui.height)
 
 class Menu(ui.Menu):
