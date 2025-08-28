@@ -75,7 +75,7 @@ class TextInput(MenuOption):
         self.ui = ui
         self.menu = menu
     def get_name(self) -> Sequence[str]:
-        return [self.name, self.value]
+        return [self.name, self.value + "⎸"]
     def key_pressed(self, key: str, repeated: bool) -> None:
         if len(key) == 1:
             self.value += key
