@@ -17,10 +17,10 @@ To run the graphical version, start with:
 $ python3 pytris --pygame
 ```
 
-> **Note** <br>
+> [!NOTE]
 > The GUI version may open when you use `python3 pytris`. If this happens, use `python3 pytris --terminal` instead.
 
-> **Note** <br>
+> [!NOTE]
 > Windows users may need to use `py` instead of `python3`.
 
 ### Multiplayer
@@ -40,5 +40,5 @@ Within the terminal, or double click it using your file manager (e.g. File Explo
 
 Alternatively, manually create a shell script, shortcut, or desktop file to start it with any arguments you want (or edit the generated files).
 
-> **Note** <br>
+> [!NOTE]
 > If you use a method to start pytris which doesn't give it a terminal, e.g. a shortcut using `pythonw.exe` on Windows or a desktop file with `Terminal=false`, the GUI version will attempt to run unless otherwise specified using `--terminal`.
