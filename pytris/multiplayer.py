@@ -36,10 +36,10 @@ class Connection:
     def close(self) -> None:
         self.socket.close()
 
-def server() -> None:
+def server(port: int) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(("", PYTRIS_PORT))
+        s.bind(("", port))
         s.listen()
         connections = []
         while True:
@@ -62,10 +62,12 @@ def server() -> None:
                     else:
                         sys.exit(f"Unknown command {command}")
 
-def connect_to_server(address: str) -> Optional[Connection]:
+def connect_to_server(address: str, port: str) -> Optional[Connection]:
+    if not port.isdigit():
+        return None
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect((address, PYTRIS_PORT))
+        s.connect((address, int(port)))
     except:
         return None
     return Connection(s)

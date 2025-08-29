@@ -7,6 +7,7 @@ config.init()
 use_terminal = False
 use_pygame = False
 server = False
+server_port = multiplayer.PYTRIS_PORT
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         use_terminal = True
@@ -14,6 +15,11 @@ for arg in sys.argv[1:]:
         use_pygame = True
     elif arg == "--server":
         server = True
+    elif arg.startswith("--port="):
+        try:
+            server_port = int(arg[len("--port="):])
+        except ValueError:
+            sys.exit("error: invalid port")
     else:
         sys.exit(f"error: invalid argument {arg}")
 
@@ -31,7 +37,7 @@ if not use_terminal and not use_pygame:
         sys.exit("error: terminal and pygame are both unavailable (use --terminal or --pygame to force one to run)")
 
 if server:
-    multiplayer.server()
+    multiplayer.server(server_port)
     sys.exit()
 
 main_ui: ui.UI
@@ -115,7 +121,10 @@ class PlayButton(menu.Button):
             server_ip = server_ip_input.value
             if not server_ip:
                 server_ip = "127.0.0.1"
-            connection = multiplayer.connect_to_server(server_ip)
+            server_port = server_port_input.value
+            if not server_port:
+                server_port = str(multiplayer.PYTRIS_PORT)
+            connection = multiplayer.connect_to_server(server_ip, server_port)
             if connection is None:
                 self.menu.set_info_text("No server found")
                 self.menu.resize(self.ui.width, self.ui.height)
@@ -286,11 +295,13 @@ spin_type_menu = menu.Menu([menu.Selection("Close")] + [
 lock_delay_selector = menu.NumberSelector("Lock Delay", 30, 0, 60, "{} frames")
 
 server_ip_input = menu.TextInput("Server IP", "Type in server IP address")
+server_port_input = menu.TextInput("Server Port", "Type in server IP address")
 
 main_menu = menu.Menu([
     PlayButton("Play"),
     PlayButton("Multiplayer", multiplayer=True),
     server_ip_input,
+    server_port_input,
     menu.Submenu("Controls", controls_menu),
     menu.Submenu("Presets", preset_menu),
     menu.PreviewSubmenu("Objectives", objective_menu),
