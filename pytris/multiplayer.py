@@ -36,7 +36,9 @@ class Connection:
     def close(self) -> None:
         self.socket.close()
 
-def server(port: int) -> None:
+def server(port: Optional[int]) -> None:
+    if port is None:
+        port = PYTRIS_PORT
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("", port))

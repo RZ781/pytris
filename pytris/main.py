@@ -7,7 +7,7 @@ config.init()
 use_terminal = False
 use_pygame = False
 server = False
-server_port = multiplayer.PYTRIS_PORT
+server_port = None
 for arg in sys.argv[1:]:
     if arg == "--terminal":
         use_terminal = True
@@ -16,6 +16,8 @@ for arg in sys.argv[1:]:
     elif arg == "--server":
         server = True
     elif arg.startswith("--port="):
+        if server_port is not None:
+            sys.exit("error: multiple ports specified")
         try:
             server_port = int(arg[len("--port="):])
         except ValueError:
