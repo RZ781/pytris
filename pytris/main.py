@@ -25,6 +25,9 @@ for arg in sys.argv[1:]:
     else:
         sys.exit(f"error: invalid argument {arg}")
 
+if server_port is not None and not server:
+    sys.exit("error: --port used with client")
+
 if use_terminal and use_pygame:
     sys.exit("error: --terminal and --pygame cannot be used together")
 
