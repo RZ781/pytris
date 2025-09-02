@@ -70,6 +70,6 @@ def connect_to_server(address: str, port: str) -> Optional[Connection]:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((address, int(port)))
-    except:
+    except Exception:
         return None
     return Connection(s)
