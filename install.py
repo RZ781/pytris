@@ -16,7 +16,10 @@ def install_module(prompt, module):
     print(prompt)
     install = ask(f"Install {module}?")
     if install:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", module])
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", module])
+        except subprocess.CalledProcessError:
+            sys.exit("Your Python installation does not have a functional version of pip. Install pip or use a virtual environment.")
     return install
 
 if not install_module("To generate the shortcuts, pyshortcuts is required.", "pyshortcuts"):
