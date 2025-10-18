@@ -1,4 +1,7 @@
 # pytris
+> **Note** <br>
+> Development of pytris has been suspended in favour of [citrus](https://github.com/RZ781/libcitrus).
+
 A modern TUI and GUI multiplayer stacker game implemented in Python.
 
 ## Dependencies
